@@ -34,8 +34,16 @@ Run the Phase-2A Runtime through the replaceable backend layer:
 python main.py
 ```
 
-The current backend is `LMFBackend`. See
-`docs/phase2a-model-backend.md` for the API boundary.
+Phase-2A progress:
+
+- Phase-2A-1 Model Backend API: DONE
+- Phase-2A-2 Backend Equivalence Validation: DONE
+- Production backend: `LMFBackend`
+- Validation backend: `MockBackend`
+- Future adapters: vLLM and API backends
+
+See `docs/phase2a-model-backend.md` for the API boundary and
+`docs/phase2a-backend-equivalence.md` for equivalence validation.
 
 Run Phase-2A tests from the repository root:
 

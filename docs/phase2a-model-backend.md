@@ -86,3 +86,14 @@ Backend validation tests are located under `tests/backend/` and run with:
 ```text
 python -m unittest discover -s tests -t . -v
 ```
+
+## Phase-2A Progress
+
+- Phase-2A-1 Model Backend API: DONE
+- Phase-2A-2 Backend Equivalence Validation: DONE
+- Current production backend: `LMFBackend`
+- Deterministic validation backend: `MockBackend`
+- Future adapters: vLLM and external API backends
+
+The equivalence contract and validation scope are documented in
+`docs/phase2a-backend-equivalence.md`.

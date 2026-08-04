@@ -40,6 +40,15 @@ Phase-2A backend tests: passed=10, failed=0
 Phase-1 submodule: unchanged at de0ecb0
 ```
 
+Verification after Phase-2A-2 Backend Equivalence Validation:
+
+```text
+Phase-1 scripted benchmark: passed=24, failed=0
+Phase-2A backend tests: passed=17, failed=0
+Real LMF smoke: PASS; execution, semantic observation, and COMPLETE artifact
+Phase-1 submodule: unchanged at de0ecb0
+```
+
 ## Backend Boundary
 
 `backend.interface.ModelBackend` accepts an engine-neutral inference request
@@ -61,8 +70,11 @@ quantization configuration, or KV-cache implementation.
 
 ## Current Status
 
+- Phase-2A-1 Model Backend API: DONE.
+- Phase-2A-2 Backend Equivalence Validation: DONE.
 - Backend interface: implemented.
-- LLaMA-Factory API adapter: implemented.
+- LLaMA-Factory API adapter: production backend.
+- MockBackend: deterministic validation backend.
 - Frozen Phase-1 `chat` compatibility surface: implemented by `ModelClient`.
 - Phase-2A Runtime factory and REPL entry: implemented.
 - Generic inference benchmark runner: implemented.
@@ -73,8 +85,8 @@ quantization configuration, or KV-cache implementation.
 
 ## Remaining Phase-2A Roadmap
 
-1. Add a real Transformers endpoint smoke test outside Runtime regression.
-2. Add a streaming-capable vLLM adapter behind the same interface.
+1. Add a streaming-capable vLLM adapter behind the same interface.
+2. Add an external API adapter behind the same interface.
 3. Add continuous NVIDIA sampling for peak SM utilization and VRAM.
 4. Add vLLM KV-cache metrics and long-context workloads.
 5. Compare backend behavior while requiring frozen L0-L6 regression on every

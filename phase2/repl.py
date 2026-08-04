@@ -10,7 +10,7 @@ def main() -> None:
     turn_index = 1
     print("=" * 72)
     print("UAEA Phase-2A Runtime Started")
-    print("Backend    : lmf")
+    print(f"Backend    : {agent.model.backend.backend_name}")
     print(f"Session    : {ledger.session_id}")
     print(f"Sandbox    : {config.sandbox_root}")
     print(f"Trajectory : {ledger.path}")

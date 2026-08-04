@@ -10,7 +10,7 @@ if str(PHASE1_ROOT) not in sys.path:
     sys.path.insert(0, str(PHASE1_ROOT))
 
 from backend.lmf_backend import LMFBackend  # noqa: E402
-from backend.model_client import ModelClient  # noqa: E402
+from backend.model_client import ModelBackend, ModelClient  # noqa: E402
 from runtime.agent_runtime import Agent  # noqa: E402
 from runtime.config import RuntimeConfig  # noqa: E402
 from runtime.ledger import LedgerStub  # noqa: E402
@@ -18,15 +18,18 @@ from runtime.sandbox import Sandbox  # noqa: E402
 from runtime.tools import ToolRegistry  # noqa: E402
 
 
-def build_agent(config: RuntimeConfig | None = None) -> tuple[Agent, LedgerStub, RuntimeConfig]:
+def build_agent(
+    config: RuntimeConfig | None = None,
+    backend: ModelBackend | None = None,
+) -> tuple[Agent, LedgerStub, RuntimeConfig]:
     runtime_config = config or RuntimeConfig.default()
     ledger = LedgerStub(runtime_config.trajectory_root)
     sandbox = Sandbox(runtime_config.project_root, runtime_config.sandbox_root)
     tools = ToolRegistry(sandbox, ledger)
-    backend = LMFBackend(
+    selected_backend = backend or LMFBackend(
         base_url=runtime_config.api_base_url,
         model_name=runtime_config.model_name,
         timeout_seconds=runtime_config.request_timeout_seconds,
     )
-    model = ModelClient(backend)
+    model = ModelClient(selected_backend)
     return Agent(model, tools, ledger), ledger, runtime_config
