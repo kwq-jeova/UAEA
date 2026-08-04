@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+benchmark/inference/results/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
