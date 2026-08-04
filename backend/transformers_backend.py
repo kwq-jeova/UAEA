@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any, Protocol
 
-from .interface import InferenceMetadata, InferenceRequest, InferenceResult, TokenUsage
+from .models import InferenceRequest, InferenceResponse, TokenUsage
 
 
 class Phase1ChatClient(Protocol):
@@ -29,7 +29,7 @@ class TransformersBackend:
     def model_name(self) -> str:
         return self._model_name
 
-    def generate(self, request: InferenceRequest) -> InferenceResult:
+    def generate(self, request: InferenceRequest) -> InferenceResponse:
         started_at = time.monotonic()
         content = self.client.chat(
             messages=[dict(message) for message in request.messages],
@@ -41,14 +41,12 @@ class TransformersBackend:
         tokens_per_second = None
         if latency_ms > 0 and usage.completion_tokens > 0:
             tokens_per_second = usage.completion_tokens / (latency_ms / 1000)
-        return InferenceResult(
-            content=content,
-            metadata=InferenceMetadata(
-                backend=self.backend_name,
-                model=self.model_name,
-                finish_reason=str(getattr(self.client, "last_finish_reason", None) or ""),
-                usage=usage,
-                latency_ms=latency_ms,
-                tokens_per_second=tokens_per_second,
-            ),
+        return InferenceResponse(
+            text=content,
+            backend=self.backend_name,
+            model=self.model_name,
+            finish_reason=str(getattr(self.client, "last_finish_reason", None) or ""),
+            usage=usage,
+            latency_ms=latency_ms,
+            tokens_per_second=tokens_per_second,
         )

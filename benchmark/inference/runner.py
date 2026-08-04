@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol, Sequence
 
-from backend.interface import InferenceRequest, ModelBackend
+from backend.model_client import ModelBackend
+from backend.models import InferenceRequest
 
 
 @dataclass(frozen=True)

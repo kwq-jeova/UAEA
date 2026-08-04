@@ -7,16 +7,13 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PHASE1_ROOT = PROJECT_ROOT / "runtime" / "phase1-runtime"
-for path in (PROJECT_ROOT, PHASE1_ROOT):
-    if str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.transformers_backend import TransformersBackend  # noqa: E402
+from backend.lmf_backend import LMFBackend  # noqa: E402
 from benchmark.inference.metrics import NvidiaSmiMetricsCollector  # noqa: E402
 from benchmark.inference.runner import InferenceBenchmarkRunner  # noqa: E402
 from benchmark.inference.workloads import uaea_phase2a_workloads  # noqa: E402
-from runtime.model_client import ModelClient  # noqa: E402
 
 
 def main() -> None:
@@ -28,8 +25,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
-    client = ModelClient(args.base_url, args.model, args.timeout)
-    backend = TransformersBackend(client, model_name=args.model)
+    backend = LMFBackend(args.base_url, args.model, args.timeout)
     runner = InferenceBenchmarkRunner(NvidiaSmiMetricsCollector(args.device))
     report = {
         "backend": backend.backend_name,

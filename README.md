@@ -27,3 +27,18 @@ docs/                initialization and migration records
 
 The governing rule is: inference backends may change, while Goal, Workflow,
 Artifact, Context, and recovery semantics remain frozen.
+
+Run the Phase-2A Runtime through the replaceable backend layer:
+
+```text
+python main.py
+```
+
+The current backend is `LMFBackend`. See
+`docs/phase2a-model-backend.md` for the API boundary.
+
+Run Phase-2A tests from the repository root:
+
+```text
+python -m unittest discover -s tests -t . -v
+```

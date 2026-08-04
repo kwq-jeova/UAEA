@@ -32,6 +32,14 @@ failed=0
 result=PASS
 ```
 
+Verification after Phase-2A-1 Model Backend integration:
+
+```text
+Phase-1 scripted benchmark: passed=24, failed=0
+Phase-2A backend tests: passed=10, failed=0
+Phase-1 submodule: unchanged at de0ecb0
+```
+
 ## Backend Boundary
 
 `backend.interface.ModelBackend` accepts an engine-neutral inference request
@@ -47,15 +55,16 @@ and returns content plus generic inference metadata. The contract exposes:
 It does not expose Transformers classes, vLLM classes, CUDA devices,
 quantization configuration, or KV-cache implementation.
 
-`TransformersBackend` wraps the existing Phase-1-compatible chat client.
-`Phase1ModelClientBridge` exposes any future `ModelBackend` through the frozen
-Phase-1 `chat`, `last_finish_reason`, and `last_usage` contract.
+`LMFBackend` wraps the existing OpenAI-compatible LLaMA-Factory endpoint.
+`ModelClient` exposes any backend through the frozen Phase-1 `chat`,
+`last_finish_reason`, and `last_usage` contract.
 
 ## Current Status
 
 - Backend interface: implemented.
-- Existing Transformers/LLaMA-Factory path adapter: implemented.
-- Frozen Phase-1 bridge: implemented.
+- LLaMA-Factory API adapter: implemented.
+- Frozen Phase-1 `chat` compatibility surface: implemented by `ModelClient`.
+- Phase-2A Runtime factory and REPL entry: implemented.
 - Generic inference benchmark runner: implemented.
 - UAEA planner, semantic observation, and artifact workloads: defined.
 - vLLM backend: deferred.

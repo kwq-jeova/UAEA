@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from backend.interface import InferenceMetadata, InferenceRequest, InferenceResult, TokenUsage
+from backend.models import InferenceRequest, InferenceResponse, TokenUsage
 from backend.phase1_bridge import Phase1ModelClientBridge
 from backend.transformers_backend import TransformersBackend
 from benchmark.inference.runner import InferenceBenchmarkRunner, WorkloadCase
@@ -31,17 +31,15 @@ class FakeBackend:
     backend_name = "fake"
     model_name = "fake-model"
 
-    def generate(self, request: InferenceRequest) -> InferenceResult:
-        return InferenceResult(
-            content="bridge response",
-            metadata=InferenceMetadata(
-                backend=self.backend_name,
-                model=self.model_name,
-                finish_reason="stop",
-                usage=TokenUsage(11, 7, 18),
-                latency_ms=12.0,
-                tokens_per_second=20.0,
-            ),
+    def generate(self, request: InferenceRequest) -> InferenceResponse:
+        return InferenceResponse(
+            text="bridge response",
+            backend=self.backend_name,
+            model=self.model_name,
+            finish_reason="stop",
+            usage=TokenUsage(11, 7, 18),
+            latency_ms=12.0,
+            tokens_per_second=20.0,
         )
 
 
