@@ -4,11 +4,15 @@ import json
 import socket
 import unittest
 from unittest.mock import patch
+from urllib.error import URLError
 
+from backend.config import BackendSettings
+from backend.factory import create_backend
 from backend.lmf_backend import LMFBackend
 from backend.mock_backend import MockBackend
 from backend.model_client import ModelBackend, ModelClient
 from backend.models import InferenceRequest
+from backend.vllm_backend import VLLMBackend
 from phase2.runtime_factory import build_agent
 
 
@@ -64,6 +68,22 @@ class BackendContractTests(unittest.TestCase):
 
         self.assert_success_contract(backend, "lmf")
 
+    @patch("backend.vllm_backend.urllib.request.urlopen")
+    def test_vllm_backend_normal_response_follows_contract(self, urlopen):
+        urlopen.return_value = FakeHTTPResponse(
+            {
+                "choices": [{"message": {"content": "vllm result"}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": 3, "completion_tokens": 2, "total_tokens": 5},
+            }
+        )
+        backend = VLLMBackend("http://127.0.0.1:8001/v1", "test-model")
+
+        self.assert_success_contract(backend, "vllm")
+        sent_request = urlopen.call_args.args[0]
+        sent_payload = json.loads(sent_request.data.decode("utf-8"))
+        self.assertEqual(sent_request.full_url, "http://127.0.0.1:8001/v1/chat/completions")
+        self.assertEqual(sent_payload["max_tokens"], self.request.max_tokens)
+
     def test_mock_failure_modes_are_structured(self):
         for mode in ("timeout", "unavailable", "invalid_response"):
             with self.subTest(mode=mode):
@@ -89,6 +109,34 @@ class BackendContractTests(unittest.TestCase):
         self.assertFalse(response.ok)
         self.assertEqual(response.error.code, "invalid_response")
 
+    @patch("backend.vllm_backend.urllib.request.urlopen", side_effect=URLError("connection refused"))
+    def test_vllm_unavailable_is_structured(self, _urlopen):
+        response = VLLMBackend("http://127.0.0.1:8001/v1", "test-model").generate(self.request)
+
+        self.assertFalse(response.ok)
+        self.assertEqual(response.error.code, "unavailable")
+        self.assertTrue(response.error.retryable)
+
+    @patch("backend.vllm_backend.urllib.request.urlopen")
+    def test_vllm_invalid_response_is_structured(self, urlopen):
+        urlopen.return_value = FakeHTTPResponse({"unexpected": True})
+
+        response = VLLMBackend("http://127.0.0.1:8001/v1", "test-model").generate(self.request)
+
+        self.assertFalse(response.ok)
+        self.assertEqual(response.error.code, "invalid_response")
+
+    def test_backend_registry_selects_vllm_without_runtime_branching(self):
+        backend = create_backend(
+            BackendSettings(
+                name="vllm",
+                base_url="http://127.0.0.1:8001/v1",
+                model_name="test-model",
+            )
+        )
+
+        self.assertIsInstance(backend, VLLMBackend)
+
     def test_model_client_converts_backend_failure_for_frozen_runtime(self):
         client = ModelClient(MockBackend(failure_mode="timeout"))
 
@@ -103,6 +151,21 @@ class BackendContractTests(unittest.TestCase):
         self.assertIs(mock_agent.model.backend, mock_backend)
         self.assertIsInstance(lmf_agent.model.backend, LMFBackend)
         self.assertEqual(type(mock_agent), type(lmf_agent))
+
+    @patch.dict(
+        "os.environ",
+        {
+            "UAEA_BACKEND": "vllm",
+            "UAEA_BACKEND_BASE_URL": "http://127.0.0.1:8001/v1",
+            "UAEA_BACKEND_MODEL": "test-vllm-model",
+        },
+        clear=False,
+    )
+    def test_runtime_factory_selects_vllm_from_backend_configuration(self):
+        agent, _, _ = build_agent()
+
+        self.assertIsInstance(agent.model.backend, VLLMBackend)
+        self.assertEqual(agent.model.backend.model_name, "test-vllm-model")
 
 
 if __name__ == "__main__":

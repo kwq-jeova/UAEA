@@ -49,6 +49,16 @@ Real LMF smoke: PASS; execution, semantic observation, and COMPLETE artifact
 Phase-1 submodule: unchanged at de0ecb0
 ```
 
+Verification after Phase-2A-3 vLLM Backend Adapter:
+
+```text
+Phase-1 scripted benchmark: passed=24, failed=0
+Phase-2A backend tests: passed=22, failed=0
+vLLM adapter contract: PASS
+Real vLLM smoke: NOT RUN; no local vLLM service available
+Phase-1 submodule: unchanged at de0ecb0
+```
+
 ## Backend Boundary
 
 `backend.interface.ModelBackend` accepts an engine-neutral inference request
@@ -72,6 +82,7 @@ quantization configuration, or KV-cache implementation.
 
 - Phase-2A-1 Model Backend API: DONE.
 - Phase-2A-2 Backend Equivalence Validation: DONE.
+- Phase-2A-3 vLLM Backend Adapter: DONE; real smoke pending a vLLM service.
 - Backend interface: implemented.
 - LLaMA-Factory API adapter: production backend.
 - MockBackend: deterministic validation backend.
@@ -79,15 +90,16 @@ quantization configuration, or KV-cache implementation.
 - Phase-2A Runtime factory and REPL entry: implemented.
 - Generic inference benchmark runner: implemented.
 - UAEA planner, semantic observation, and artifact workloads: defined.
-- vLLM backend: deferred.
+- vLLM OpenAI-compatible backend: implemented.
 - Point-in-time NVIDIA SM/VRAM collector: implemented.
 - Continuous GPU peak sampling and KV-cache metrics: deferred.
 
 ## Remaining Phase-2A Roadmap
 
-1. Add a streaming-capable vLLM adapter behind the same interface.
+1. Run the prepared real vLLM smoke when a vLLM service is available.
 2. Add an external API adapter behind the same interface.
-3. Add continuous NVIDIA sampling for peak SM utilization and VRAM.
-4. Add vLLM KV-cache metrics and long-context workloads.
-5. Compare backend behavior while requiring frozen L0-L6 regression on every
+3. Evaluate streaming only if TTFT becomes a required Runtime-independent metric.
+4. Add continuous NVIDIA sampling for peak SM utilization and VRAM.
+5. Add vLLM KV-cache metrics and long-context workloads.
+6. Compare backend behavior while requiring frozen L0-L6 regression on every
    migration change.

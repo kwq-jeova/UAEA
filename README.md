@@ -38,12 +38,15 @@ Phase-2A progress:
 
 - Phase-2A-1 Model Backend API: DONE
 - Phase-2A-2 Backend Equivalence Validation: DONE
+- Phase-2A-3 vLLM Backend Adapter: DONE (real smoke pending service)
 - Production backend: `LMFBackend`
 - Validation backend: `MockBackend`
-- Future adapters: vLLM and API backends
+- Available alternate adapter: `VLLMBackend`
+- Future adapter: external API backend
 
 See `docs/phase2a-model-backend.md` for the API boundary and
 `docs/phase2a-backend-equivalence.md` for equivalence validation.
+See `docs/phase2a-vllm-backend.md` for selection and smoke instructions.
 
 Run Phase-2A tests from the repository root:
 

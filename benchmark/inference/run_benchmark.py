@@ -10,7 +10,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.lmf_backend import LMFBackend  # noqa: E402
+from backend.config import BackendSettings, DEFAULT_BACKEND_URLS  # noqa: E402
+from backend.factory import create_backend  # noqa: E402
 from benchmark.inference.metrics import NvidiaSmiMetricsCollector  # noqa: E402
 from benchmark.inference.runner import InferenceBenchmarkRunner  # noqa: E402
 from benchmark.inference.workloads import uaea_phase2a_workloads  # noqa: E402
@@ -18,14 +19,22 @@ from benchmark.inference.workloads import uaea_phase2a_workloads  # noqa: E402
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run UAEA Phase-2A inference workloads.")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000/v1")
+    parser.add_argument("--backend", choices=("lmf", "vllm"), default="lmf")
+    parser.add_argument("--base-url")
     parser.add_argument("--model", default="DeepSeek-R1-Distill-Qwen-14B")
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
-    backend = LMFBackend(args.base_url, args.model, args.timeout)
+    backend = create_backend(
+        BackendSettings(
+            name=args.backend,
+            base_url=args.base_url or DEFAULT_BACKEND_URLS[args.backend],
+            model_name=args.model,
+            timeout_seconds=args.timeout,
+        )
+    )
     runner = InferenceBenchmarkRunner(NvidiaSmiMetricsCollector(args.device))
     report = {
         "backend": backend.backend_name,

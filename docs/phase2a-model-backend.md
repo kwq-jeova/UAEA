@@ -27,8 +27,9 @@ Artifact lifecycle, and recovery.
 ```text
 Frozen Agent
   -> backend.model_client.ModelClient
-  -> backend.lmf_backend.LMFBackend
-  -> OpenAI-compatible LLaMA-Factory API
+  -> selected backend adapter
+       -> LMFBackend  -> OpenAI-compatible LLaMA-Factory API
+       -> VLLMBackend -> OpenAI-compatible vLLM API
 ```
 
 The Phase-2A launcher is `main.py`. It constructs the frozen Agent through
@@ -74,7 +75,7 @@ It does not construct prompts or interpret task semantics.
 ```text
 ModelClient
   -> LMFBackend
-  -> future VLLMBackend
+  -> VLLMBackend
   -> future APIModelBackend
 ```
 
@@ -91,9 +92,11 @@ python -m unittest discover -s tests -t . -v
 
 - Phase-2A-1 Model Backend API: DONE
 - Phase-2A-2 Backend Equivalence Validation: DONE
+- Phase-2A-3 vLLM Backend Adapter: DONE (real smoke pending service)
 - Current production backend: `LMFBackend`
 - Deterministic validation backend: `MockBackend`
-- Future adapters: vLLM and external API backends
+- Available alternate adapter: `VLLMBackend`
+- Future adapter: external API backend
 
 The equivalence contract and validation scope are documented in
 `docs/phase2a-backend-equivalence.md`.

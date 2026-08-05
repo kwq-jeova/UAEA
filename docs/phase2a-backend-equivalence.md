@@ -80,3 +80,7 @@ contract or Runtime lifecycle failure.
 Inference backend selection is an implementation detail behind `ModelClient`.
 Future vLLM or API adapters must implement the same request, response, and error
 contract and pass the frozen Phase-1 regression suite.
+
+`VLLMBackend` now implements this contract. Its adapter-level equivalence is
+covered by contract tests; real-model semantic equivalence remains pending a
+running vLLM service.
