@@ -6,6 +6,22 @@ The adapter and contract validation are complete. A real vLLM smoke test is
 prepared but has not been run because this Windows host currently has no vLLM
 package, launch script, or listening vLLM service.
 
+The deployment environment and model-capacity gates are recorded in
+`docs/phase2a-vllm-environment.md`.
+
+## Closure Review
+
+- `LMFBackend` and `VLLMBackend` implement the same `ModelBackend` properties
+  and `generate(InferenceRequest) -> InferenceResponse` contract.
+- `ModelClient` has no LMF or vLLM branch and retains the frozen Phase-1
+  `chat()` compatibility surface.
+- Backend selection is implemented by Phase-2 `BackendSettings` and the
+  backend registry, outside Phase-1 Runtime.
+- Prompt construction, Workflow, Artifact, Observation, Context, and recovery
+  semantics remain in the unchanged Phase-1 submodule.
+
+Phase-2A-3 engineering closure status: DONE.
+
 ## Integration Choice
 
 UAEA uses vLLM's OpenAI-compatible HTTP server rather than the Python Engine

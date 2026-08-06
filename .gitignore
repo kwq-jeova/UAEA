@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .venv/
 benchmark/inference/results/
+vllm-*-process.pid
 .idea/
 .vscode/
 Thumbs.db
