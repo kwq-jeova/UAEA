@@ -84,3 +84,28 @@ contract and pass the frozen Phase-1 regression suite.
 `VLLMBackend` now implements this contract. Its adapter-level equivalence is
 covered by contract tests; real-model semantic equivalence remains pending a
 running vLLM service.
+
+## Phase-1 Runtime on vLLM Backend
+
+The Phase-1 benchmark can be driven through the backend facade without
+changing the frozen Runtime lifecycle.
+
+```text
+Phase-1 Runtime
+  -> ModelBackend API
+  -> VLLMBackend
+  -> vLLM Server
+```
+
+Benchmark entry point:
+
+```text
+python benchmark_phase1_vllm.py
+```
+
+Validation targets:
+
+- vLLM serving PASS
+- Backend contract PASS
+- Phase-1 benchmark PASS
+- Runtime behavior equivalent PASS

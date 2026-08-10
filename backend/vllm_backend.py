@@ -13,6 +13,9 @@ from .models import InferenceError, InferenceRequest, InferenceResponse, TokenUs
 class VLLMBackend:
     """Adapter for a vLLM OpenAI-compatible HTTP server."""
 
+    default_temperature = 0.2
+    default_chat_template_kwargs = {"enable_thinking": False}
+
     def __init__(
         self,
         base_url: str,
@@ -37,8 +40,9 @@ class VLLMBackend:
         payload = {
             "model": self.model_name,
             "messages": [dict(message) for message in request.messages],
-            "temperature": request.temperature,
+            "temperature": max(float(request.temperature), self.default_temperature),
             "max_tokens": request.max_tokens,
+            "chat_template_kwargs": dict(self.default_chat_template_kwargs),
         }
         http_request = urllib.request.Request(
             f"{self.base_url}/chat/completions",

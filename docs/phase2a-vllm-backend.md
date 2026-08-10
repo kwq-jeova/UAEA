@@ -2,11 +2,21 @@
 
 ## Status
 
-The adapter and contract validation are complete. A real vLLM smoke test is
-prepared but has not been run because this Windows host currently has no vLLM
-package, launch script, or listening vLLM service.
+The adapter, contract validation, and real DS14B OpenAI-compatible smoke test
+are complete.
 
-The deployment environment and model-capacity gates are recorded in
+Validated service details:
+
+- `vllm` server starts successfully on WSL2 Ubuntu 24.04
+- served model name: `ds14b-awq`
+- model path:
+  `/opt/uaea-models/models/DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4`
+- stable launch shape:
+  `--dtype half --max-model-len 16384 --gpu-memory-utilization 0.7`
+- stable generation behavior inside `VLLMBackend`:
+  clamp temperature to `0.2` minimum and set `chat_template_kwargs.enable_thinking=false`
+
+The deployment environment and model-capacity notes are recorded in
 `docs/phase2a-vllm-environment.md`.
 
 ## Closure Review
@@ -56,22 +66,32 @@ No backend selection branch is added to Phase-1 Runtime.
 
 ## Real Smoke Procedure
 
-Start a vLLM OpenAI-compatible server separately with its served model name.
-No AWQ, quantization, tensor parallel, or CUDA tuning is part of Phase-2A-3.
+Start the validated WSL script:
 
-Then run:
+```powershell
+/opt/uaea/scripts/start_vllm_ds14b.sh
+```
+
+Stop with:
+
+```powershell
+/opt/uaea/scripts/stop_vllm_ds14b.sh
+```
+
+Use the same Runtime path through the backend abstraction:
 
 ```powershell
 Set-Location D:\UAEA
-.\scripts\smoke_vllm_backend.ps1 -Model "<served-model-name>"
+$env:UAEA_BACKEND = "vllm"
+$env:UAEA_BACKEND_BASE_URL = "http://127.0.0.1:8001/v1"
+$env:UAEA_BACKEND_MODEL = "ds14b-awq"
+python main.py
 ```
 
-The script first probes `/v1/models`, selects `vllm` through environment
-configuration, and launches the same `main.py` Runtime entry. Use the same
-minimal request as the LMF smoke:
+The backend request includes a conservative generation profile:
 
 ```text
-Read README section 1 and evaluate it.
+chat_template_kwargs.enable_thinking=false
 ```
 
 Verify the trajectory contains successful capability execution, Semantic
@@ -107,3 +127,11 @@ Frozen Phase-1 L0-L6/core benchmark: 24 passed, 0 failed
 PowerShell smoke launcher syntax: PASS
 Frozen Phase-1 submodule: clean at de0ecb0
 ```
+
+Observed limitation during Phase-1 vLLM benchmark validation:
+
+- `L0-01` direct-answer path still returns a length-capped response.
+- `L1-02` structured extraction path still fails to produce a semantic
+  observation on the current DS14B AWQ serving stack.
+- Backend transport and contract validation pass, but full semantic
+  equivalence for the current checkpoint is not yet proven.

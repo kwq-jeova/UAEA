@@ -83,6 +83,8 @@ class BackendContractTests(unittest.TestCase):
         sent_payload = json.loads(sent_request.data.decode("utf-8"))
         self.assertEqual(sent_request.full_url, "http://127.0.0.1:8001/v1/chat/completions")
         self.assertEqual(sent_payload["max_tokens"], self.request.max_tokens)
+        self.assertEqual(sent_payload["temperature"], 0.2)
+        self.assertEqual(sent_payload["chat_template_kwargs"], {"enable_thinking": False})
 
     def test_mock_failure_modes_are_structured(self):
         for mode in ("timeout", "unavailable", "invalid_response"):

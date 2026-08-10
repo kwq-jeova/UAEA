@@ -8,12 +8,15 @@ from .phase1_bridge import Phase1ModelClientBridge
 from .transformers_backend import TransformersBackend
 from .vllm_backend import VLLMBackend
 
+InferenceResult = InferenceResponse
+
 __all__ = [
     "BackendSettings",
     "InferenceError",
     "InferenceMetadata",
     "InferenceRequest",
     "InferenceResponse",
+    "InferenceResult",
     "LMFBackend",
     "MockBackend",
     "ModelBackend",

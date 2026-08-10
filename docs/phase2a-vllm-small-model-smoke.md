@@ -27,7 +27,7 @@ Windows Runtime process and the frozen Phase-1 submodule.
 | Property | Value |
 |---|---|
 | Repository | `Qwen/Qwen2.5-0.5B-Instruct` |
-| Local path | `/opt/uaea-models/qwen2.5-0.5b-instruct` |
+| Local path | `/opt/uaea-models/models/qwen2.5-0.5b-instruct` |
 | HF cache | `/opt/uaea-models/cache` |
 | Revision | `7ae557604adf67be50417f59c2c2f167def9a775` |
 | Weight file | `model.safetensors`, 988,097,824 bytes |
@@ -43,11 +43,37 @@ export HF_HOME=/opt/uaea-models/cache
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HUB_DISABLE_XET=1
 /opt/uaea/vllm_env/bin/hf download Qwen/Qwen2.5-0.5B-Instruct \
-  --local-dir /opt/uaea-models/qwen2.5-0.5b-instruct \
+  --local-dir /opt/uaea-models/models/qwen2.5-0.5b-instruct \
   --max-workers 1
 ```
 
 No model file is stored under `/opt/uaea` or in the Git repository.
+
+## 3.1 WSL Model and Runtime Storage Layout
+
+```text
+Source repository:
+  /mnt/d/UAEA
+  Windows path: D:\UAEA
+
+Python environment:
+  /opt/uaea/vllm_env
+
+Model storage:
+  /opt/uaea-models/models/qwen2.5-0.5b-instruct
+
+Model cache:
+  /opt/uaea-models/cache/qwen2.5-0.5b-instruct-local-cache
+
+Runtime logs:
+  /opt/uaea-runtime/vllm/logs/
+
+Runtime pid files:
+  /opt/uaea-runtime/vllm/pid/
+
+Runtime snapshots / benchmark outputs:
+  /opt/uaea-runtime/vllm/benchmark/
+```
 
 ## 4. Commands
 

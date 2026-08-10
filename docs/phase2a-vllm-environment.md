@@ -31,6 +31,35 @@ on the Linux filesystem, for example `/opt/uaea/vllm_env`; `D:\vllm_env` may be
 used for manifests, logs, or downloaded assets, but not as the primary WSL
 virtual environment directory.
 
+## 1.1 WSL Model and Runtime Storage Layout
+
+Use separate directories for model assets and execution artifacts:
+
+```text
+Source repository:
+  /mnt/d/UAEA
+  Windows path: D:\UAEA
+
+Python environment:
+  /opt/uaea/vllm_env
+
+Model storage:
+  /opt/uaea-models/models/
+  /opt/uaea-models/models/qwen2.5-0.5b-instruct
+
+Model/cache storage:
+  /opt/uaea-models/cache/
+
+Runtime artifacts:
+  /opt/uaea-runtime/vllm/logs/
+  /opt/uaea-runtime/vllm/pid/
+  /opt/uaea-runtime/vllm/benchmark/
+```
+
+`/opt/uaea-models` should only contain model-related assets and cache. Runtime
+outputs, smoke logs, pid files, and validation snapshots belong under
+`/opt/uaea-runtime/vllm/`.
+
 ## 2. Hardware Inventory
 
 Inventory captured on 2026-08-05:
@@ -150,8 +179,8 @@ No quantization or performance flags are included.
 Terminal 1, WSL2/Linux:
 
 1. Activate the isolated environment.
-2. Start the vLLM server only after `/v1/models` can be exposed with the chosen
-   capacity path.
+2. Start the vLLM server with the validated DS14B command or
+   `/opt/uaea/scripts/start_vllm_ds14b.sh`.
 3. Confirm the served model name exactly matches UAEA configuration.
 
 Terminal 2, PowerShell:
@@ -160,10 +189,10 @@ Terminal 2, PowerShell:
 Set-Location D:\UAEA
 .\scripts\smoke_vllm_backend.ps1 `
   -BaseUrl "http://127.0.0.1:8001/v1" `
-  -Model "DeepSeek-R1-Distill-Qwen-14B"
+  -Model "ds14b-awq"
 ```
 
-Use this input:
+Use this input for the Phase-1 backend smoke:
 
 ```text
 Read README section 1 and evaluate it.
@@ -209,7 +238,7 @@ sampling; its GPU/VRAM values must be labeled accordingly.
 3. vLLM dependency dry-run reviewed and versions frozen.
 4. Qwen2 config and tokenizer load without allocating model weights.
 5. Capacity strategy approved outside this preparation task.
-6. `/v1/models` responds with the configured served model name.
+6. `/v1/models` responds with `ds14b-awq`.
 7. UAEA smoke trajectory satisfies all lifecycle assertions.
 8. Phase-1 `24/24` and Phase-2 backend tests remain green.
 
@@ -218,6 +247,8 @@ Current preparation verification:
 ```text
 Phase-1 L0-L6/core scripted benchmark: 24 passed, 0 failed
 Phase-2 backend tests: 22 passed, 0 failed
+vLLM DS14B OpenAI-compatible API smoke: PASS
+Backend integration closure: PASS
 Phase-1 submodule: clean at de0ecb0
 Packages installed by Phase-2A-4: none
 ```

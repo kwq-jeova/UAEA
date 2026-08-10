@@ -2,10 +2,10 @@
 set -euo pipefail
 
 VENV_ROOT="${VLLM_VENV_ROOT:-/opt/uaea/vllm_env}"
-MODEL_ROOT="${VLLM_SMOKE_MODEL_ROOT:-/opt/uaea-models/models/qwen2.5-0.5b-instruct}"
-SERVED_MODEL_NAME="${VLLM_SMOKE_MODEL_NAME:-Qwen2.5-0.5B-Instruct}"
-HOST="${VLLM_SMOKE_HOST:-0.0.0.0}"
-PORT="${VLLM_SMOKE_PORT:-8001}"
+MODEL_ROOT="${VLLM_DS14B_MODEL_ROOT:-/opt/uaea-models/models/DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4}"
+SERVED_MODEL_NAME="${VLLM_DS14B_MODEL_NAME:-ds14b-awq}"
+HOST="${VLLM_DS14B_HOST:-0.0.0.0}"
+PORT="${VLLM_DS14B_PORT:-8001}"
 CUDA_ROOT="${VLLM_CUDA_ROOT:-${VENV_ROOT}/lib/python3.12/site-packages/nvidia/cu13}"
 
 if [[ ! -x "${VENV_ROOT}/bin/vllm" ]]; then
@@ -13,8 +13,13 @@ if [[ ! -x "${VENV_ROOT}/bin/vllm" ]]; then
     exit 1
 fi
 
-if [[ ! -f "${MODEL_ROOT}/config.json" || ! -f "${MODEL_ROOT}/model.safetensors" ]]; then
-    printf 'Complete smoke model not found: %s\n' "${MODEL_ROOT}" >&2
+if [[ ! -f "${MODEL_ROOT}/config.json" ]]; then
+    printf 'Complete DS14B model not found: %s\n' "${MODEL_ROOT}" >&2
+    exit 1
+fi
+
+if [[ ! -f "${MODEL_ROOT}/model.safetensors.index.json" && ! -f "${MODEL_ROOT}/model.safetensors" ]]; then
+    printf 'Complete DS14B model weights not found: %s\n' "${MODEL_ROOT}" >&2
     exit 1
 fi
 
@@ -26,5 +31,8 @@ export VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER:-0}"
 
 exec "${VENV_ROOT}/bin/vllm" serve "${MODEL_ROOT}" \
     --served-model-name "${SERVED_MODEL_NAME}" \
+    --dtype half \
+    --max-model-len 16384 \
+    --gpu-memory-utilization 0.7 \
     --host "${HOST}" \
     --port "${PORT}"
