@@ -1,0 +1,183 @@
+{
+  "diagnostic": "vllm_minimal_logprobs",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "model": "ds14b-awq",
+  "summary": {
+    "total": 4,
+    "plain_bang": 2,
+    "logprobs_ok": 2,
+    "logprobs_failed": 2
+  },
+  "results": [
+    {
+      "prompt_name": "minimal_upper",
+      "prompt": "You are a local assistant.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 94.723,
+        "response": {
+          "text": "!",
+          "text_repr": "'!'",
+          "starts_with_bang": true,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": false,
+        "error": "HTTP 400: {\"error\":{\"message\":\"Out of range float values are not JSON compliant: nan\",\"type\":\"BadRequestError\",\"param\":null,\"code\":400}}",
+        "latency_ms": 491.005,
+        "response": {}
+      }
+    },
+    {
+      "prompt_name": "minimal_lower",
+      "prompt": "you are a local assistant.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 20.659,
+        "response": {
+          "text": " please",
+          "text_repr": "' please'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 19.496,
+        "response": {
+          "text": " please",
+          "text_repr": "' please'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": " please",
+          "first_token_logprob": -1.237985372543335,
+          "first_top_logprobs": {
+            " please": -1.237985372543335,
+            " Please": -2.152047872543335,
+            " I": -2.347360372543335,
+            " you": -2.527047872543335,
+            " You": -2.581735372543335,
+            " your": -3.730172872543335,
+            " i": -3.917672872543335,
+            " Your": -4.277048110961914,
+            " So": -4.331735610961914,
+            " ": -4.480173110961914
+          }
+        }
+      }
+    },
+    {
+      "prompt_name": "canonical_upper",
+      "prompt": "<|system|>\nYou are a local assistant.\n\n<|user|>\nRead README section 1 and extract: goals, risks, architecture.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 26.621,
+        "response": {
+          "text": " Then",
+          "text_repr": "' Then'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 22.364,
+        "response": {
+          "text": " Then",
+          "text_repr": "' Then'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": " Then",
+          "first_token_logprob": -1.8122429847717285,
+          "first_top_logprobs": {
+            " Then": -1.8122429847717285,
+            " How": -2.9138054847717285,
+            " \n\n": -3.0388054847717285,
+            " Use": -3.0700554847717285,
+            " Sum": -3.1091179847717285,
+            " Write": -3.1403679847717285,
+            " Also": -3.2966179847717285,
+            " What": -3.3356804847717285,
+            " I": -3.7575554847717285,
+            " For": -3.7731804847717285
+          }
+        }
+      }
+    },
+    {
+      "prompt_name": "deepseek_upper",
+      "prompt": "You are a local assistant.<｜User｜>Read README section 1 and extract: goals, risks, architecture.<｜Assistant｜><think>\n",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 21.883,
+        "response": {
+          "text": "!",
+          "text_repr": "'!'",
+          "starts_with_bang": true,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 24,
+            "total_tokens": 25,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": false,
+        "error": "HTTP 400: {\"error\":{\"message\":\"Out of range float values are not JSON compliant: nan\",\"type\":\"BadRequestError\",\"param\":null,\"code\":400}}",
+        "latency_ms": 20.706,
+        "response": {}
+      }
+    }
+  ]
+}

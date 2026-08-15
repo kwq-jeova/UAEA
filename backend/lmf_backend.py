@@ -40,6 +40,7 @@ class LMFBackend:
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
         }
+        payload.update(dict(request.generation_config or {}))
         http_request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -51,7 +52,7 @@ class LMFBackend:
             with urllib.request.urlopen(http_request, timeout=self.timeout_seconds) as response:
                 raw_body = response.read().decode("utf-8")
             data = json.loads(raw_body)
-            return self._success_response(data, started_at)
+            return self._success_response(data, started_at, payload)
         except (TimeoutError, socket.timeout) as exc:
             elapsed = time.monotonic() - started_at
             return self._error_response(
@@ -92,7 +93,7 @@ class LMFBackend:
                 retryable=True,
             )
 
-    def _success_response(self, data: dict[str, Any], started_at: float) -> InferenceResponse:
+    def _success_response(self, data: dict[str, Any], started_at: float, payload: dict[str, Any]) -> InferenceResponse:
         choice = data["choices"][0]
         message = choice["message"]
         text = message["content"]
@@ -111,6 +112,12 @@ class LMFBackend:
             usage=usage,
             latency_ms=latency_ms,
             tokens_per_second=tokens_per_second,
+            backend_metadata={
+                "endpoint": f"{self.base_url}/chat/completions",
+                "request_model": self.model_name,
+                "request_max_tokens": payload.get("max_tokens", 0),
+                "request_temperature": payload.get("temperature", 0.0),
+            },
         )
 
     def _error_response(

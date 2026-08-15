@@ -1,0 +1,417 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "ds14b-awq",
+    "timeout_seconds": 300
+  },
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1
+  },
+  "results": [
+    {
+      "case_id": "L0-01",
+      "description": "Simple stateless question should bypass planner and workflow.",
+      "level": "L0",
+      "passed": false,
+      "failures": [
+        "simple question should use one model call"
+      ],
+      "responses": [
+        "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "agent_decision_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Explain what UAEA is."
+          ]
+        },
+        "goal": {
+          "hypothesis": "",
+          "active_goal_id": "",
+          "active_goal_count": 0,
+          "active_goals": []
+        },
+        "workflow": {
+          "active_workflow_id": "",
+          "workflow_count": 0,
+          "workflows": []
+        },
+        "steps": {
+          "planned": [],
+          "executed": [],
+          "planned_count": 0,
+          "executed_count": 0,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [],
+        "planner_actions": [],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [],
+          "read_section_indexes": [],
+          "read_file_count": 0,
+          "read_section_count": 0,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 0,
+          "items": [],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [],
+          "statuses": [],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "statuses": [],
+          "messages": [],
+          "items": []
+        },
+        "semantic_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [],
+          "finish_reasons": []
+        },
+        "context": {
+          "projection_count": 0,
+          "projection_lengths": [],
+          "planner_projection_lengths": [],
+          "max_planner_projection_length": 0
+        },
+        "runtime_snapshot": {
+          "active_goal": null,
+          "active_workflow": null,
+          "workflow_count": 0,
+          "step_count": 0,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 0,
+          "recent_artifacts": [],
+          "execution_coverage": {},
+          "last_finish_reason": "length",
+          "last_answer_finish_reason": "",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "chat_answer",
+            "input_tokens": 136,
+            "output_tokens": 1536,
+            "latency_ms": 15685.29,
+            "max_tokens": 1536,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 136,
+              "completion_tokens": 1536,
+              "total_tokens": 1672
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "chat_answer",
+            "input_tokens": 361,
+            "output_tokens": 1536,
+            "latency_ms": 15105.15,
+            "max_tokens": 1536,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 361,
+              "completion_tokens": 1536,
+              "total_tokens": 1897
+            }
+          }
+        ],
+        "input_tokens": 497,
+        "output_tokens": 3072,
+        "token_usage": {
+          "input_tokens": 497,
+          "output_tokens": 3072,
+          "total_tokens": 3569
+        },
+        "latency_ms": 30793.78,
+        "peak_gpu_memory_mb": 17614,
+        "execution_latency_ms": null,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": []
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\cfef15c8-a899-47f7-a63b-c5e02ddadd13.jsonl"
+    },
+    {
+      "case_id": "L0-02",
+      "description": "Simple file read should use document capability without persistent workflow or artifact.",
+      "level": "L0",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "工具调用成功: Read section Phase-1 Runtime on vLLM Backend from D:\\UAEA\\README.md\n\n## Phase-1 Runtime on vLLM Backend\n\n```text\nPhase-1 Runtime\n  -> ModelBackend API\n  -> VLLMBackend\n  -> vLLM Server\n```\n\nRun the Phase-1 benchmark against vLLM:\n\n```text\npython benchmark_phase1_vllm.py\n```\n\nValidation targets:\n\n- vLLM serving PASS\n- Backend contract PASS\n- Phase-1 benchmark PASS\n- Runtime behavior equivalent PASS\n"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README section 1."
+          ]
+        },
+        "goal": {
+          "hypothesis": "",
+          "active_goal_id": "",
+          "active_goal_count": 0,
+          "active_goals": []
+        },
+        "workflow": {
+          "active_workflow_id": "",
+          "workflow_count": 0,
+          "workflows": []
+        },
+        "steps": {
+          "planned": [],
+          "executed": [],
+          "planned_count": 0,
+          "executed_count": 0,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_only",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime capability contract narrowed full-file read to requested section",
+            "capability": "document.read_section"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_only",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime capability contract narrowed full-file read to requested section",
+            "capability": "document.read_section"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 0,
+          "items": [],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [],
+          "statuses": [],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Phase-1 Runtime on vLLM Backend from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "fd5b8db9-1c96-4c24-b09a-7f8d0833897e",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Phase-1 Runtime on vLLM Backend from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "3bad80cd53dba21cfcf85a376b8cb28d8b1c971771819e05121fb35e2a6ca763",
+                "source_hash": "2ee81219260211efbd8088c3d92805de8926fac48c48b4c7490f2a902ff13159",
+                "size_chars": 332,
+                "section": "Phase-1 Runtime on vLLM Backend",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 80,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 81
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Phase-1 Runtime on vLLM Backend\n\n```text\nPhase-1 Runtime\n  -> ModelBackend API\n  -> VLLMBackend\n  -> vLLM Server\n```\n\nRun the Phase-1 benchmark against vLLM:\n\n```text\npython benchmark_phase1_vllm.py\n```\n\nValidation targets:\n\n- vLLM serving PASS\n- Backend contract PASS\n- Phase-1 benchmark PASS\n- Runtime behavior equivalent PASS\n",
+                "content_length": 332
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [],
+          "finish_reasons": []
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            42
+          ],
+          "planner_projection_lengths": [
+            42
+          ],
+          "max_planner_projection_length": 42
+        },
+        "runtime_snapshot": {
+          "active_goal": null,
+          "active_workflow": null,
+          "workflow_count": 0,
+          "step_count": 0,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 0,
+          "recent_artifacts": [],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "length",
+          "last_answer_finish_reason": "",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1535,
+            "output_tokens": 1024,
+            "latency_ms": 10404.31,
+            "max_tokens": 1024,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 1535,
+              "completion_tokens": 1024,
+              "total_tokens": 2559
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "planner",
+            "input_tokens": 1834,
+            "output_tokens": 1024,
+            "latency_ms": 10280.93,
+            "max_tokens": 1024,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 1834,
+              "completion_tokens": 1024,
+              "total_tokens": 2858
+            }
+          }
+        ],
+        "input_tokens": 3369,
+        "output_tokens": 2048,
+        "token_usage": {
+          "input_tokens": 3369,
+          "output_tokens": 2048,
+          "total_tokens": 5417
+        },
+        "latency_ms": 20691.86,
+        "peak_gpu_memory_mb": 17614,
+        "execution_latency_ms": 20690.89,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": []
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\af89e4ce-f8d5-48a0-8457-61bc4a65dde5.jsonl"
+    }
+  ]
+}

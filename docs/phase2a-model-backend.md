@@ -100,3 +100,51 @@ python -m unittest discover -s tests -t . -v
 
 The equivalence contract and validation scope are documented in
 `docs/phase2a-backend-equivalence.md`.
+
+## 7. Inference Runtime Interface Evolution
+
+Current assessment:
+
+```text
+Current ModelBackend contract is adequate as a transport abstraction.
+It is not yet adequate as a traceable inference runtime abstraction.
+```
+
+It can support future adapters for vLLM, TensorRT-LLM, SGLang, OpenAI API, and
+local transformers as long as each adapter can map requests into:
+
+```text
+InferenceRequest -> InferenceResponse
+```
+
+However, backend equivalence requires richer diagnostics than the Runtime needs.
+Phase-2 should evolve the interface additively:
+
+```text
+InferenceRequest
+  -> messages
+  -> generation_config
+  -> context_metadata
+  -> trace_context
+  -> request_id
+
+InferenceResponse
+  -> text
+  -> token_usage
+  -> finish_reason
+  -> latency_ms
+  -> backend_metadata
+  -> error
+  -> trace_id
+```
+
+Trace-level fields such as rendered prompt, tokenizer metadata, input token ids,
+stop/eos detail, and backend kernel metadata should live in the inference trace
+layer, not in the frozen Agent Runtime.
+
+See:
+
+```text
+docs/inference-trace-layer-design.md
+docs/phase2a-equivalence-matrix.md
+```

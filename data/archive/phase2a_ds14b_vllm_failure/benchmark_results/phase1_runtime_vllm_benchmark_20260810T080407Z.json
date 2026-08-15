@@ -1,0 +1,262 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "ds14b-awq",
+    "timeout_seconds": 300
+  },
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "L0-02",
+      "description": "Simple file read should use document capability without persistent workflow or artifact.",
+      "level": "L0",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "工具调用成功: Read section Phase-1 Runtime Baseline from D:\\UAEA\\README.md\n\n## Phase-1 Runtime Baseline\n\nPhase-1 goal:\n\nBuild a reliable Runtime Control Plane.\n\nFrozen components:\n\n- Workflow lifecycle\n- Goal / Intent relation\n- Cursor execution model\n- Capability execution\n- Observation model\n- Artifact model\n- Failure handling\n- L0-L6 benchmark logic\n\nCore architecture:\n\n```text\nSession / Project\n  -> Goal Hypothesis\n  -> Task\n  -> Workflow\n  -> Step\n  -> Capability Action\n  -> Capability Execution\n  -> Execution Observation\n  -> Semantic Observation\n  -> Answer / Artifact\n  -> Trajectory Event\n  -> Future SQLite Ledger\n```\n"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README section 1."
+          ]
+        },
+        "goal": {
+          "hypothesis": "",
+          "active_goal_id": "",
+          "active_goal_count": 0,
+          "active_goals": []
+        },
+        "workflow": {
+          "active_workflow_id": "",
+          "workflow_count": 0,
+          "workflows": []
+        },
+        "steps": {
+          "planned": [],
+          "executed": [],
+          "planned_count": 0,
+          "executed_count": 0,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_only",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime capability contract narrowed full-file read to requested section",
+            "capability": "document.read_section"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_only",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime capability contract narrowed full-file read to requested section",
+            "capability": "document.read_section"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 0,
+          "items": [],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [],
+          "statuses": [],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Phase-1 Runtime Baseline from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "ad7c7bcc-8d2f-479a-8a90-6e15b8a484aa",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Phase-1 Runtime Baseline from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "803bf48862e31ff2d85f142e209e67dbf063e9c5e9be7b920c1ad50d75a98b4b",
+                "source_hash": "f12ab6691389407acfd05f3dfa13cc26fb2156ce8ac674a2482b3206e82ae7c6",
+                "size_chars": 558,
+                "section": "Phase-1 Runtime Baseline",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 92,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Phase-1 Runtime Baseline",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 115
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Phase-1 Runtime Baseline\n\nPhase-1 goal:\n\nBuild a reliable Runtime Control Plane.\n\nFrozen components:\n\n- Workflow lifecycle\n- Goal / Intent relation\n- Cursor execution model\n- Capability execution\n- Observation model\n- Artifact model\n- Failure handling\n- L0-L6 benchmark logic\n\nCore architecture:\n\n```text\nSession / Project\n  -> Goal Hypothesis\n  -> Task\n  -> Workflow\n  -> Step\n  -> Capability Action\n  -> Capability Execution\n  -> Execution Observation\n  -> Semantic Observation\n  -> Answer / Artifact\n  -> Trajectory Event\n  -> Future SQLite Ledger\n```\n",
+                "content_length": 558
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [],
+          "finish_reasons": []
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            42
+          ],
+          "planner_projection_lengths": [
+            42
+          ],
+          "max_planner_projection_length": 42
+        },
+        "runtime_snapshot": {
+          "active_goal": null,
+          "active_workflow": null,
+          "workflow_count": 0,
+          "step_count": 0,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 0,
+          "recent_artifacts": [],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "length",
+          "last_answer_finish_reason": "",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1535,
+            "output_tokens": 1024,
+            "latency_ms": 10112.56,
+            "max_tokens": 1024,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 1535,
+              "completion_tokens": 1024,
+              "total_tokens": 2559
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "planner",
+            "input_tokens": 1834,
+            "output_tokens": 1024,
+            "latency_ms": 9892.69,
+            "max_tokens": 1024,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 1834,
+              "completion_tokens": 1024,
+              "total_tokens": 2858
+            }
+          }
+        ],
+        "input_tokens": 3369,
+        "output_tokens": 2048,
+        "token_usage": {
+          "input_tokens": 3369,
+          "output_tokens": 2048,
+          "total_tokens": 5417
+        },
+        "latency_ms": 20028.22,
+        "peak_gpu_memory_mb": 17614,
+        "execution_latency_ms": 20027.23,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": []
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\c78bfeda-2840-40ee-ae67-d4f13c6e689e.jsonl"
+    }
+  ]
+}

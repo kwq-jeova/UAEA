@@ -1,0 +1,52 @@
+{
+  "backend": "lmf",
+  "model": "DeepSeek-R1-Distill-Qwen-14B",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "samples": [
+    {
+      "case_id": "planner_request",
+      "category": "planner",
+      "backend": "lmf",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "finish_reason": "stop",
+      "prompt_tokens": 20,
+      "completion_tokens": 844,
+      "latency_ms": 152424.4668000001,
+      "ttft_ms": null,
+      "tokens_per_second": 5.5371687873931235,
+      "sm_utilization_percent": 12.0,
+      "vram_used_mb": 14314.0,
+      "kv_cache_used_mb": null
+    },
+    {
+      "case_id": "semantic_observation",
+      "category": "semantic_observation",
+      "backend": "lmf",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "finish_reason": "stop",
+      "prompt_tokens": 16,
+      "completion_tokens": 166,
+      "latency_ms": 35300.04250000002,
+      "ttft_ms": null,
+      "tokens_per_second": 4.7025439133678075,
+      "sm_utilization_percent": 15.0,
+      "vram_used_mb": 14314.0,
+      "kv_cache_used_mb": null
+    },
+    {
+      "case_id": "artifact_extraction",
+      "category": "artifact",
+      "backend": "lmf",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "finish_reason": "stop",
+      "prompt_tokens": 18,
+      "completion_tokens": 1549,
+      "latency_ms": 254516.83000000002,
+      "ttft_ms": null,
+      "tokens_per_second": 6.086041539964174,
+      "sm_utilization_percent": 19.0,
+      "vram_used_mb": 14314.0,
+      "kv_cache_used_mb": null
+    }
+  ]
+}

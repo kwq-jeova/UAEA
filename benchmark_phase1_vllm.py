@@ -16,16 +16,44 @@ if str(PHASE1_BENCHMARK_ROOT) not in sys.path:
 from backend.config import BackendSettings, DEFAULT_BACKEND_URLS  # noqa: E402
 from backend.factory import create_backend  # noqa: E402
 from backend.model_client import ModelClient as BackendModelClient  # noqa: E402
+from backend.trace import JsonlTraceSink, TracingBackend  # noqa: E402
 import phase1_runtime_benchmark as phase1_benchmark  # noqa: E402
 
 
 class VLLMBenchmarkRunner(phase1_benchmark.BenchmarkRunner):
-    def __init__(self, project_root: Path, backend_settings: BackendSettings) -> None:
+    def __init__(
+        self,
+        project_root: Path,
+        backend_settings: BackendSettings,
+        trace_sink: JsonlTraceSink | None = None,
+        trace_defaults: dict[str, object] | None = None,
+    ) -> None:
         super().__init__(project_root, mode="real-vllm")
         self.backend_settings = backend_settings
+        self.trace_sink = trace_sink
+        self.trace_defaults = dict(trace_defaults or {})
+        self._active_case: phase1_benchmark.BenchmarkCase | None = None
+
+    def run_case(self, case: phase1_benchmark.BenchmarkCase) -> phase1_benchmark.CaseResult:
+        self._active_case = case
+        try:
+            return super().run_case(case)
+        finally:
+            self._active_case = None
 
     def _build_model(self, fault_injection: phase1_benchmark.FaultInjectionSpec | None = None):
         backend = create_backend(self.backend_settings)
+        if self.trace_sink is not None:
+            trace_defaults = dict(self.trace_defaults)
+            if self._active_case is not None:
+                trace_defaults.update(
+                    {
+                        "case_id": self._active_case.case_id,
+                        "benchmark_level": self._active_case.level,
+                        "benchmark_description": self._active_case.description,
+                    }
+                )
+            backend = TracingBackend(backend, self.trace_sink, trace_defaults)
         model = BackendModelClient(backend)
         return phase1_benchmark.FaultInjectedBenchmarkModel(
             model,
@@ -47,6 +75,12 @@ def main() -> int:
     parser.add_argument("--api-key", default="uaea-local")
     parser.add_argument("--json", action="store_true", help="Write JSON report under data/benchmark_results.")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--trace-output", type=Path)
+    parser.add_argument("--trace-model-artifact", default="")
+    parser.add_argument("--trace-model-version", default="")
+    parser.add_argument("--trace-tokenizer-name", default="")
+    parser.add_argument("--trace-tokenizer-path", default="")
+    parser.add_argument("--trace-tokenizer-revision", default="")
     args = parser.parse_args()
 
     backend_settings = BackendSettings(
@@ -56,7 +90,16 @@ def main() -> int:
         timeout_seconds=args.timeout,
         api_key=args.api_key,
     )
-    runner = VLLMBenchmarkRunner(PROJECT_ROOT, backend_settings)
+    trace_sink = JsonlTraceSink(args.trace_output) if args.trace_output is not None else None
+    trace_defaults = {
+        "backend": "vllm",
+        "model_artifact": args.trace_model_artifact or backend_settings.model_name,
+        "model_version": args.trace_model_version,
+        "tokenizer_name": args.trace_tokenizer_name,
+        "tokenizer_path": args.trace_tokenizer_path,
+        "tokenizer_revision": args.trace_tokenizer_revision,
+    }
+    runner = VLLMBenchmarkRunner(PROJECT_ROOT, backend_settings, trace_sink=trace_sink, trace_defaults=trace_defaults)
     results = runner.run(phase1_benchmark.select_cases(args.case, args.level))
     for result in results:
         phase1_benchmark.print_result(result)
@@ -70,6 +113,7 @@ def main() -> int:
             "model": backend_settings.model_name,
             "timeout_seconds": backend_settings.timeout_seconds,
         },
+        "trace_output": str(args.trace_output) if args.trace_output is not None else "",
         "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
         "summary": {
             "total": len(results),

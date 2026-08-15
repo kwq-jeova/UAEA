@@ -1,0 +1,835 @@
+{
+  "diagnostic": "vllm_chat_template_endpoint_matrix",
+  "source_trace": "data\\inference_traces\\vllm\\phase1\\vllm_phase1_l0_l1_selected.jsonl",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "model": "ds14b-awq",
+  "max_tokens": 64,
+  "temperature": 0.0,
+  "summary": {
+    "total": 20,
+    "ok": 20,
+    "failed": 0,
+    "bang_pathology_count": 15,
+    "finish_reason_counts": {
+      "length": 20
+    },
+    "by_variant": {
+      "chat_messages_enable_false": {
+        "total": 3,
+        "bang": 3,
+        "finish_reason_counts": {
+          "length": 3
+        }
+      },
+      "chat_messages_no_kwargs": {
+        "total": 3,
+        "bang": 3,
+        "finish_reason_counts": {
+          "length": 3
+        }
+      },
+      "completion_canonical_prompt": {
+        "total": 3,
+        "bang": 0,
+        "finish_reason_counts": {
+          "length": 3
+        }
+      },
+      "completion_deepseek_template_prompt": {
+        "total": 3,
+        "bang": 3,
+        "finish_reason_counts": {
+          "length": 3
+        }
+      },
+      "completion_deepseek_template_no_generation_prompt": {
+        "total": 3,
+        "bang": 3,
+        "finish_reason_counts": {
+          "length": 3
+        }
+      },
+      "l0_simple_system": {
+        "total": 1,
+        "bang": 0,
+        "finish_reason_counts": {
+          "length": 1
+        }
+      },
+      "l0_phase1_system_full": {
+        "total": 1,
+        "bang": 1,
+        "finish_reason_counts": {
+          "length": 1
+        }
+      },
+      "l0_phase1_without_think_instruction": {
+        "total": 1,
+        "bang": 1,
+        "finish_reason_counts": {
+          "length": 1
+        }
+      },
+      "l0_phase1_without_context_policy": {
+        "total": 1,
+        "bang": 1,
+        "finish_reason_counts": {
+          "length": 1
+        }
+      },
+      "l0_phase1_minimal_core": {
+        "total": 1,
+        "bang": 0,
+        "finish_reason_counts": {
+          "length": 1
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "variant": "chat_messages_enable_false",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 934.689,
+      "usage": {
+        "prompt_tokens": 136,
+        "total_tokens": 200,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "chat_messages_no_kwargs",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 638.329,
+      "usage": {
+        "prompt_tokens": 136,
+        "total_tokens": 200,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_canonical_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 638.965,
+      "usage": {
+        "prompt_tokens": 141,
+        "total_tokens": 205,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 260,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_32_bangs": false,
+        "excerpt": " I'm trying to understand it for my research.\n<|/user|>\nOkay, so I need to figure out what UAEA is. The user is asking for an explanation, probably for their research. Let me start by breaking down the acronym. UAEA could stand for a few things, but since it's"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 643.753,
+      "usage": {
+        "prompt_tokens": 136,
+        "total_tokens": 200,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_no_generation_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 626.091,
+      "usage": {
+        "prompt_tokens": 133,
+        "total_tokens": 197,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "l0_simple_system",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 631.451,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 83,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 250,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_32_bangs": false,
+        "excerpt": "Okay, so I need to figure out what UAEA is. I've heard the acronym before, but I'm not exactly sure what it stands for. Let me think about it. UAEA... Maybe it's a country or a region? I know the UAE is the United Arab Emirates, which is a country in"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "l0_phase1_system_full",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 624.374,
+      "usage": {
+        "prompt_tokens": 136,
+        "total_tokens": 200,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "l0_phase1_without_think_instruction",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 640.503,
+      "usage": {
+        "prompt_tokens": 123,
+        "total_tokens": 187,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "l0_phase1_without_context_policy",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 627.766,
+      "usage": {
+        "prompt_tokens": 95,
+        "total_tokens": 159,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "l0_phase1_minimal_core",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 632.539,
+      "usage": {
+        "prompt_tokens": 46,
+        "total_tokens": 110,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 260,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_32_bangs": false,
+        "excerpt": "Okay, so I need to figure out what UAEA stands for. The user asked me to explain it, so I should start by breaking down the acronym. UAEA... Hmm, maybe it's a country or an organization. I know the UAE is the United Arab Emirates, but that's four letters. UAEA"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-01",
+      "phase": "chat_answer",
+      "source_input_tokens": 136,
+      "canonical_prompt_chars": 711,
+      "deepseek_prompt_chars": 739,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "chat_messages_enable_false",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 645.789,
+      "usage": {
+        "prompt_tokens": 1535,
+        "total_tokens": 1599,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L0-02",
+      "phase": "planner",
+      "source_input_tokens": 1535,
+      "canonical_prompt_chars": 6872,
+      "deepseek_prompt_chars": 6900,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "chat_messages_no_kwargs",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 651.043,
+      "usage": {
+        "prompt_tokens": 1535,
+        "total_tokens": 1599,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-02",
+      "phase": "planner",
+      "source_input_tokens": 1535,
+      "canonical_prompt_chars": 6872,
+      "deepseek_prompt_chars": 6900,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_canonical_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 639.343,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1604,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 287,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_32_bangs": false,
+        "excerpt": " Then evaluate sections 2 and 3.\n\nPlanner Context:\nPrevious user input: README file\n\nPlanner Context:\nPrevious assistant answer: {\"type\": \"answer\", \"reason\": \"README.md is a common file for project documentation.\", \"goal_hypothesis\": \"read and evaluate the first three chapters of README"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-02",
+      "phase": "planner",
+      "source_input_tokens": 1535,
+      "canonical_prompt_chars": 6872,
+      "deepseek_prompt_chars": 6900,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 624.577,
+      "usage": {
+        "prompt_tokens": 1535,
+        "total_tokens": 1599,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-02",
+      "phase": "planner",
+      "source_input_tokens": 1535,
+      "canonical_prompt_chars": 6872,
+      "deepseek_prompt_chars": 6900,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_no_generation_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 624.644,
+      "usage": {
+        "prompt_tokens": 1532,
+        "total_tokens": 1596,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L0-02",
+      "phase": "planner",
+      "source_input_tokens": 1535,
+      "canonical_prompt_chars": 6872,
+      "deepseek_prompt_chars": 6900,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "chat_messages_enable_false",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 638.966,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1607,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "chat_template_kwargs",
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "source_input_tokens": 1543,
+      "canonical_prompt_chars": 6912,
+      "deepseek_prompt_chars": 6940,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "chat_messages_no_kwargs",
+      "endpoint": "chat",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 640.552,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1607,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "messages",
+        "model",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "source_input_tokens": 1543,
+      "canonical_prompt_chars": 6912,
+      "deepseek_prompt_chars": 6940,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_canonical_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 635.799,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1612,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 262,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_32_bangs": false,
+        "excerpt": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  \"intent_context\": {\n    \"previous_intent\": \"read and evaluate the first three chapters\",\n    \"current_input\": \"README file\"\n  },\n  \"workflow_context\": {\n    \"active_workflow_id\": \"W-"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "source_input_tokens": 1543,
+      "canonical_prompt_chars": 6912,
+      "deepseek_prompt_chars": 6940,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 629.995,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1607,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "source_input_tokens": 1543,
+      "canonical_prompt_chars": 6912,
+      "deepseek_prompt_chars": 6940,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    },
+    {
+      "variant": "completion_deepseek_template_no_generation_prompt",
+      "endpoint": "completion",
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 626.05,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1604,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 64,
+        "bang_count": 64,
+        "bang_ratio": 1.0,
+        "starts_with_32_bangs": true,
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "payload_keys": [
+        "max_tokens",
+        "model",
+        "prompt",
+        "temperature"
+      ],
+      "temperature": 0.0,
+      "max_tokens": 64,
+      "chat_template_kwargs": null,
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "source_input_tokens": 1543,
+      "canonical_prompt_chars": 6912,
+      "deepseek_prompt_chars": 6940,
+      "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B"
+    }
+  ]
+}

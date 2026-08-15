@@ -1,0 +1,139 @@
+{
+  "diagnostic": "minimal_backend_compare",
+  "summary": {
+    "total": 6,
+    "ok": 3,
+    "failed": 3,
+    "by_backend": {
+      "lmf": {
+        "total": 3,
+        "ok": 0,
+        "bang": 0
+      },
+      "vllm": {
+        "total": 3,
+        "ok": 3,
+        "bang": 1
+      }
+    }
+  },
+  "results": [
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "upper_you_are",
+      "system": "You are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!!!!!!!!!!!!!!!!",
+      "text_repr": "'!!!!!!!!!!!!!!!!'",
+      "starts_with_bang": true,
+      "bang_ratio": 1.0,
+      "latency_ms": 502.925,
+      "usage": {
+        "prompt_tokens": 25,
+        "total_tokens": 41,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "case_id": "upper_you_are",
+      "system": "You are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "lower_you_are",
+      "system": "you are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "Okay, so I need to figure out how to extract the goals, risks,",
+      "text_repr": "'Okay, so I need to figure out how to extract the goals, risks,'",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 232.549,
+      "usage": {
+        "prompt_tokens": 25,
+        "total_tokens": 41,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "case_id": "lower_you_are",
+      "system": "you are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "json_only",
+      "system": "Return one JSON object only. Do not explain.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "Alright, so the user is asking me to return one JSON object containing the goals",
+      "text_repr": "'Alright, so the user is asking me to return one JSON object containing the goals'",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 290.691,
+      "usage": {
+        "prompt_tokens": 29,
+        "total_tokens": 45,
+        "completion_tokens": 16,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "case_id": "json_only",
+      "system": "Return one JSON object only. Do not explain.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    }
+  ]
+}

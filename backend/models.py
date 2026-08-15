@@ -31,6 +31,8 @@ class InferenceRequest:
     messages: Sequence[Mapping[str, Any]]
     task_type: str = "semantic_inference"
     context_metadata: Mapping[str, Any] = field(default_factory=dict)
+    generation_config: Mapping[str, Any] = field(default_factory=dict)
+    trace_context: Mapping[str, Any] = field(default_factory=dict)
     max_tokens: int = 256
     temperature: float = 0.1
     request_id: str = ""
@@ -59,6 +61,8 @@ class InferenceMetadata:
     latency_ms: float = 0.0
     ttft_ms: float | None = None
     tokens_per_second: float | None = None
+    backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+    trace_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,8 @@ class InferenceResponse:
     latency_ms: float = 0.0
     ttft_ms: float | None = None
     tokens_per_second: float | None = None
+    backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+    trace_id: str = ""
     error: InferenceError | None = None
 
     @property
@@ -91,6 +97,8 @@ class InferenceResponse:
             latency_ms=self.latency_ms,
             ttft_ms=self.ttft_ms,
             tokens_per_second=self.tokens_per_second,
+            backend_metadata=self.backend_metadata,
+            trace_id=self.trace_id,
         )
 
 

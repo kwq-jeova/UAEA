@@ -1,0 +1,132 @@
+{
+  "diagnostic": "vllm_chat_minimal",
+  "model": "qwen25-14b-awq",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "summary": {
+    "total": 4,
+    "ok": 4,
+    "bang": 0
+  },
+  "results": [
+    {
+      "case_id": "chat_system_upper",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a local assistant."
+        },
+        {
+          "role": "user",
+          "content": "Read README section 1 and extract: goals, risks, architecture."
+        }
+      ],
+      "request": {
+        "temperature": 0.0,
+        "max_tokens": 32
+      },
+      "response": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 351.226,
+        "text": "To help you with that, I'll need the content of the README file's Section 1. Could you please provide it?",
+        "text_repr": "\"To help you with that, I'll need the content of the README file's Section 1. Could you please provide it?\"",
+        "starts_with_bang": false,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 33,
+          "total_tokens": 60,
+          "completion_tokens": 27,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    {
+      "case_id": "chat_system_lower",
+      "messages": [
+        {
+          "role": "system",
+          "content": "you are a local assistant."
+        },
+        {
+          "role": "user",
+          "content": "Read README section 1 and extract: goals, risks, architecture."
+        }
+      ],
+      "request": {
+        "temperature": 0.0,
+        "max_tokens": 32
+      },
+      "response": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 263.135,
+        "text": "To help you with that, I'll need the content of the README file, specifically section 1. Could you please provide that information?",
+        "text_repr": "\"To help you with that, I'll need the content of the README file, specifically section 1. Could you please provide that information?\"",
+        "starts_with_bang": false,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 33,
+          "total_tokens": 62,
+          "completion_tokens": 29,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    {
+      "case_id": "chat_user_upper",
+      "messages": [
+        {
+          "role": "user",
+          "content": "You are a local assistant. Read README section 1 and extract: goals, risks, architecture."
+        }
+      ],
+      "request": {
+        "temperature": 0.0,
+        "max_tokens": 32
+      },
+      "response": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 295.566,
+        "text": "To provide you with the requested information, I'll need to simulate the content of a typical \"README\" file for a project, since you haven't provided the",
+        "text_repr": "'To provide you with the requested information, I\\'ll need to simulate the content of a typical \"README\" file for a project, since you haven\\'t provided the'",
+        "starts_with_bang": false,
+        "finish_reason": "length",
+        "usage": {
+          "prompt_tokens": 49,
+          "total_tokens": 81,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    {
+      "case_id": "chat_plain_bootloader",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Explain bootloader design."
+        }
+      ],
+      "request": {
+        "temperature": 0.0,
+        "max_tokens": 32
+      },
+      "response": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 285.944,
+        "text": "The bootloader is an essential component of any computer system, responsible for loading and executing the operating system after a computer starts up. The design of a bootloader involves several",
+        "text_repr": "'The bootloader is an essential component of any computer system, responsible for loading and executing the operating system after a computer starts up. The design of a bootloader involves several'",
+        "starts_with_bang": false,
+        "finish_reason": "length",
+        "usage": {
+          "prompt_tokens": 34,
+          "total_tokens": 66,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        }
+      }
+    }
+  ]
+}

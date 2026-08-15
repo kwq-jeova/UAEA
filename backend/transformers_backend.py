@@ -49,4 +49,9 @@ class TransformersBackend:
             usage=usage,
             latency_ms=latency_ms,
             tokens_per_second=tokens_per_second,
+            backend_metadata={
+                "client_model_name": self.model_name,
+                "request_max_tokens": request.max_tokens,
+                "request_temperature": request.temperature,
+            },
         )

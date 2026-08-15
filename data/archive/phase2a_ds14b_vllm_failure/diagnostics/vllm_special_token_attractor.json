@@ -1,0 +1,2237 @@
+{
+  "diagnostic": "vllm_special_token_attractor",
+  "source_trace": "data\\inference_traces\\vllm\\phase1\\vllm_phase1_l0_l1_selected.jsonl",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "model": "ds14b-awq",
+  "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B",
+  "summary": {
+    "total": 72,
+    "ok": 72,
+    "failed": 0,
+    "bang_pathology_count": 36,
+    "starts_with_bang_count": 36,
+    "by_prompt": {
+      "canonical": {
+        "total": 18,
+        "bang_pathology": 0,
+        "starts_with_bang": 0,
+        "finish_reason_counts": {
+          "length": 18
+        }
+      },
+      "deepseek_template": {
+        "total": 18,
+        "bang_pathology": 12,
+        "starts_with_bang": 12,
+        "finish_reason_counts": {
+          "length": 12,
+          "stop": 6
+        }
+      },
+      "deepseek_template_no_generation_prompt": {
+        "total": 18,
+        "bang_pathology": 12,
+        "starts_with_bang": 12,
+        "finish_reason_counts": {
+          "length": 12,
+          "stop": 6
+        }
+      },
+      "deepseek_template_without_think_marker": {
+        "total": 18,
+        "bang_pathology": 12,
+        "starts_with_bang": 12,
+        "finish_reason_counts": {
+          "length": 12,
+          "stop": 6
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 262.673,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 4,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Sum",
+        "excerpt": " Sum"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 26.101,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 4,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Sum",
+        "excerpt": " Sum"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 23.028,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 4,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Sum",
+        "excerpt": " Sum"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 101.046,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 38,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user",
+        "excerpt": " Summarize and explain.\n\nPrevious user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 100.235,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 38,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user",
+        "excerpt": " Summarize and explain.\n\nPrevious user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 107.823,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 38,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user",
+        "excerpt": " Summarize and explain.\n\nPrevious user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 338.794,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 132,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  ",
+        "excerpt": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  \"intent_context\": {\n    \"previous_intent\": \"read and"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 331.664,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 132,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  ",
+        "excerpt": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  \"intent_context\": {\n    \"previous_intent\": \"read and"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 335.949,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 132,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  ",
+        "excerpt": " Summarize and explain.\n\nPrevious user input:\nREADME file\n\nPlanner Context:\n{\n  \"intent_context\": {\n    \"previous_intent\": \"read and"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 36.324,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 4,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Sum",
+        "excerpt": " Sum"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 39.706,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 4,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Sum",
+        "excerpt": " Sum"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 26.08,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1549,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 5,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Then",
+        "excerpt": " Then"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 108.624,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 38,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user",
+        "excerpt": " Summarize and explain.\n\nPrevious user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 116.163,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 38,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Summarize and explain.\n\nPrevious user",
+        "excerpt": " Summarize and explain.\n\nPrevious user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 112.383,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1556,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 34,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Then write a summary of section 1",
+        "excerpt": " Then write a summary of section 1"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 345.296,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 150,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Then write a summary of this section.\n\nPrevious user input:\nRead and evaluate t",
+        "excerpt": " Then write a summary of this section.\n\nPrevious user input:\nRead and evaluate the first three chapters.\n\nPlanner Context:\n{\n  \"intent_context\": {\n   "
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 334.151,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 146,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Then write a summary.\n\nPrevious user input:\nRead and evaluate the first three c",
+        "excerpt": " Then write a summary.\n\nPrevious user input:\nRead and evaluate the first three chapters.\n\nPlanner Context:\nCurrent user input: README file\n<|/user"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 345.826,
+      "usage": {
+        "prompt_tokens": 1548,
+        "total_tokens": 1580,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 167,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": false,
+        "first_80": " Then write a summary.\n\nPrevious user input:\nRead and evaluate the first three c",
+        "excerpt": " Then write a summary.\n\nPrevious user input:\nRead and evaluate the first three chapters.\n\nPlanner Context:\nPrevious intent: read and evaluate the first three chapters\n"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "canonical",
+      "prompt_chars": 6912,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 41.359,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 33.155,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 25.839,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 99.437,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1551,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 100.291,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1551,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 26.456,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 335.205,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1575,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 331.796,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1575,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 28.086,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 35.641,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 34.714,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 24.831,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 95.575,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1551,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 106.23,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1551,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 23.86,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 338.817,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1575,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 341.458,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1575,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 37.631,
+      "usage": {
+        "prompt_tokens": 1543,
+        "total_tokens": 1544,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template",
+      "prompt_chars": 6940,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 38.576,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 41.754,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 25.259,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 106.433,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1548,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 90.519,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1548,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 26.377,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 327.558,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1572,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 333.218,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1572,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 27.792,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 32.423,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 37.334,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 25.526,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 111.533,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1548,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 115.14,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1548,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 39.627,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 344.441,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1572,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 347.908,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1572,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 38.833,
+      "usage": {
+        "prompt_tokens": 1540,
+        "total_tokens": 1541,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_no_generation_prompt",
+      "prompt_chars": 6919,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 30.454,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 44.971,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 42.088,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 93.192,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1549,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 105.467,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1549,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 43.126,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 328.539,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1573,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 321.766,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1573,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 28.337,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.0,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 34.913,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 41.202,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 1,
+        "bang_count": 1,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!",
+        "excerpt": "!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 24.19,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 1,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 103.163,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1549,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 115.953,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1549,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 8,
+        "bang_count": 8,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!",
+        "excerpt": "!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 43.986,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 8,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 338.803,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1573,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "no_stop",
+      "stop": null
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "latency_ms": 346.545,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1573,
+        "completion_tokens": 32,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 32,
+        "bang_count": 32,
+        "bang_ratio": 1.0,
+        "starts_with_bang": true,
+        "starts_with_16_bangs": true,
+        "first_80": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "excerpt": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_eos_literal",
+      "stop": [
+        "<｜end▁of▁sentence｜>"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "stop",
+      "latency_ms": 35.892,
+      "usage": {
+        "prompt_tokens": 1541,
+        "total_tokens": 1542,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "repetition": {
+        "length_chars": 0,
+        "bang_count": 0,
+        "bang_ratio": 0.0,
+        "starts_with_bang": false,
+        "starts_with_16_bangs": true,
+        "first_80": "",
+        "excerpt": ""
+      },
+      "error": null,
+      "case_id": "L1-02",
+      "phase": "planner",
+      "prompt_name": "deepseek_template_without_think_marker",
+      "prompt_chars": 6932,
+      "temperature": 0.2,
+      "max_tokens": 32,
+      "stop_name": "stop_bang",
+      "stop": [
+        "!"
+      ]
+    }
+  ]
+}

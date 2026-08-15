@@ -1,149 +1,205 @@
-# UAEA Phase-2A
+# UAEA
 
-Phase-2A adds an inference backend abstraction without changing the frozen
-Phase-1 Runtime lifecycle.
+UAEA is the Unified Autonomous Evolution Architecture.
 
-Phase-1 is included as a Git submodule at:
+The project separates a stable cognitive runtime from replaceable inference
+platforms. Phase-1 freezes the agent control plane. Phase-2A introduces an
+inference runtime abstraction so model serving engines and model artifacts can
+change without redefining workflow, observation, artifact, or recovery
+semantics.
+
+## 1. Project Vision
+
+UAEA is designed around three long-running goals:
+
+- Cognitive runtime: preserve stable agent semantics for goals, workflows,
+  tools, semantic observations, artifacts, and failure handling.
+- Agent evolution pipeline: keep runtime traces and artifacts structured enough
+  to support future memory, reflection, evaluation, and improvement loops.
+- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible
+  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind
+  a common contract.
+
+The governing rule is:
+
+```text
+Cognitive Runtime stable
+  -> Inference contract stable
+  -> Backend implementation replaceable
+```
+
+## 2. Architecture Overview
+
+Phase-1 is included as a frozen Git submodule:
 
 ```text
 runtime/phase1-runtime
-```
-
-Pinned baseline:
-
-```text
 tag: v1.0.0-phase1-runtime
 commit: de0ecb0e8837c848f842a996fa2dad1c93666f2f
 ```
 
-Phase-2A source lives outside the submodule:
-
-```text
-backend/             model backend contracts and adapters
-benchmark/inference/ inference-only measurement framework
-tests/               Phase-2A contract tests
-docs/                initialization and migration records
-```
-
-The governing rule is: inference backends may change, while Goal, Workflow,
-Artifact, Context, and recovery semantics remain frozen.
-
-Run the Phase-2A Runtime through the replaceable backend layer:
-
-```text
-python main.py
-```
-
-Phase-2A progress:
-
-- Phase-2A-1 Model Backend API: DONE
-- Phase-2A-2 Backend Equivalence Validation: DONE
-- Phase-2A-3 vLLM Backend Adapter: DONE (DS14B vLLM API smoke passed)
-- Phase-2A-4 vLLM Compatibility Audit: DONE (installation pending)
-- Phase-2A-5 vLLM Small Model Smoke Validation: DONE (bounded engine/API/backend smoke passed)
-- Phase-2A-5 vLLM Backend Integration Closure: PASS (DS14B OpenAI-compatible API verified)
-- Production backend: `LMFBackend`
-- Validation backend: `MockBackend`
-- Available alternate adapter: `VLLMBackend`
-- Future adapter: external API backend
-
-See `docs/phase2a-model-backend.md` for the API boundary and
-`docs/phase2a-backend-equivalence.md` for equivalence validation.
-See `docs/phase2a-vllm-backend.md` for selection and smoke instructions.
-See `docs/phase2a-vllm-environment.md` for the isolated deployment checklist.
-See `docs/phase2a-vllm-compatibility-audit.md` for the selected vLLM, PyTorch,
-CUDA, Blackwell, and AWQ compatibility decisions.
-See `docs/phase2a-vllm-small-model-smoke.md` for the bounded engine and Runtime
-integration validation.
-
-## Phase-1 Runtime Baseline
-
-Phase-1 goal:
-
-Build a reliable Runtime Control Plane.
-
-Frozen components:
+Phase-1 freezes the Runtime Control Plane:
 
 - Workflow lifecycle
 - Goal / Intent relation
 - Cursor execution model
 - Capability execution
-- Observation model
-- Artifact model
+- Execution Observation
+- Semantic Observation
+- Artifact lifecycle
 - Failure handling
-- L0-L6 benchmark logic
+- L0-L6 benchmark semantics
 
-Core architecture:
-
-```text
-Session / Project
-  -> Goal Hypothesis
-  -> Task
-  -> Workflow
-  -> Step
-  -> Capability Action
-  -> Capability Execution
-  -> Execution Observation
-  -> Semantic Observation
-  -> Answer / Artifact
-  -> Trajectory Event
-  -> Future SQLite Ledger
-```
-
-## Phase-1 Runtime on vLLM Backend
+Phase-2A lives outside the frozen submodule:
 
 ```text
-Phase-1 Runtime
-  -> ModelBackend API
-  -> VLLMBackend
-  -> vLLM Server
+backend/             ModelBackend contract and adapters
+benchmark/inference/ inference-only measurement framework
+tests/               Phase-2A contract tests
+docs/                architecture and validation records
+data/                benchmark, trace, and diagnostic artifacts
 ```
 
-Run the Phase-1 benchmark against vLLM:
+Runtime path:
 
 ```text
-python benchmark_phase1_vllm.py
+User
+  -> Phase-1 Cognitive Runtime
+  -> ModelBackend Contract
+  -> Backend Adapter
+  -> Inference Platform
 ```
 
-Validation targets:
+Current backend adapters:
 
-- vLLM serving PASS
-- Backend contract PASS
-- Phase-1 benchmark PASS
-- Runtime behavior equivalent PASS
+- `LMFBackend`
+- `VLLMBackend`
+- `TransformersBackend`
+- `MockBackend`
 
-## WSL Model and Runtime Storage Layout
-
-Phase-2A keeps source, Python packages, model assets, and execution artifacts in
-separate locations:
+Trace layer:
 
 ```text
-Source repository:
-  /mnt/d/UAEA
-  Windows path: D:\UAEA
-
-Python environment:
-  /opt/uaea/vllm_env
-
-Model storage:
-  /opt/uaea-models/models/
-  /opt/uaea-models/models/qwen2.5-0.5b-instruct
-
-Model/cache storage:
-  /opt/uaea-models/cache/
-
-Runtime artifacts:
-  /opt/uaea-runtime/vllm/logs/
-  /opt/uaea-runtime/vllm/pid/
-  /opt/uaea-runtime/vllm/benchmark/
+InferenceRequest
+  -> TracingBackend
+  -> InferenceTraceRecord
+  -> JSONL trace sink
 ```
 
-Future DS14B/AWQ artifacts should be placed under `/opt/uaea-models/models/`.
-Generated logs, pid files, smoke outputs, and benchmark snapshots belong under
-`/opt/uaea-runtime/vllm/`.
+Trace records are emitted outside the frozen Phase-1 Runtime and may include
+backend, model artifact, tokenizer metadata, rendered prompt, token ids,
+generation config, finish reason, latency, and token usage.
 
-Run Phase-2A tests from the repository root:
+## 3. Current Progress
+
+| Area | Status |
+| --- | --- |
+| Phase-1 Cognitive Runtime Freeze | PASS |
+| LMF baseline | PASS |
+| ModelBackend contract | PASS |
+| Inference trace layer | PASS |
+| vLLM transport/API | PASS |
+| vLLM backend adapter | PASS |
+| vLLM semantic migration | in progress |
+
+Current production baseline:
+
+```text
+LMFBackend
+DeepSeek-R1-Distill-Qwen-14B
+HF/LLaMA-Factory 4-bit loading path
+Phase-1 L0/L1/L2: PASS
+```
+
+Current vLLM production candidate:
+
+```text
+VLLMBackend
+Qwen2.5-14B-Instruct-AWQ
+traditional AWQ / auto_awq
+Phase-1 L0/L1/L2: PASS
+```
+
+Rejected vLLM artifact:
+
+```text
+DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4
+compressed-tensors WNA16
+Rejected for current production use due to first-token `!` pathology and
+logprobs NaN under vLLM on the current RTX 5090 D environment.
+```
+
+## 4. Validation Status
+
+| Component | Status |
+| --- | --- |
+| Phase-1 Runtime | PASS |
+| LMF Backend | PASS |
+| ModelBackend Contract | PASS |
+| Trace Layer | PASS |
+| DS14B HF/LLaMA-Factory 4-bit | PASS |
+| DS14B AWQ compressed-tensors vLLM | Rejected |
+| Qwen2.5-14B-AWQ vLLM smoke | PASS |
+| Qwen2.5-14B-AWQ Phase-1 selected cases | PASS |
+| Qwen2.5-14B-AWQ Phase-1 L0/L1/L2 | PASS |
+
+Qwen2.5-14B-AWQ validation artifacts:
+
+```text
+data/benchmark_results/qwen25_awq_phase1/
+data/inference_traces/qwen25_awq_phase1/
+```
+
+Historical DS14B failure diagnostics are archived under:
+
+```text
+data/archive/phase2a_ds14b_vllm_failure/
+docs/archive/phase2a-vllm-diagnostics/
+```
+
+The active DS14B root-cause summary remains:
+
+```text
+docs/phase2a-vllm-root-cause-analysis.md
+```
+
+## 5. Running Validation
+
+Run Phase-2A unit tests from the repository root:
 
 ```text
 python -m unittest discover -s tests -t . -v
 ```
+
+Run the frozen Phase-1 benchmark through vLLM:
+
+```text
+python benchmark_phase1_vllm.py \
+  --base-url http://127.0.0.1:8001/v1 \
+  --model qwen25-14b-awq \
+  --level L0 \
+  --json \
+  --trace-output data/inference_traces/qwen25_awq_phase1/example.jsonl
+```
+
+vLLM model assets are stored outside the repository:
+
+```text
+/opt/uaea-models/models/
+/opt/uaea-models/cache/
+/opt/uaea/vllm_env
+```
+
+Generated vLLM runtime logs belong outside source control:
+
+```text
+/opt/uaea-runtime/vllm/
+```
+
+## 6. Engineering Principle
+
+Preserve evidence, isolate variables, validate abstraction.
+
+Failed experiments are retained and archived instead of hidden. Passing
+benchmarks are accepted only when Phase-1 Runtime semantics and benchmark
+expectations remain unchanged.

@@ -1,0 +1,163 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "qwen25-14b-awq",
+    "timeout_seconds": 300
+  },
+  "trace_output": "/mnt/d/UAEA/data/inference_traces/qwen25_awq_phase1/qwen25_awq_selected_20260815T065033Z.jsonl",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "L0-01",
+      "description": "Simple stateless question should bypass planner and workflow.",
+      "level": "L0",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "UAEA stands for United Arab Emirates Airline, but I think you might be referring to \"UAEA\" as the United Arab Emirates Atomic Energy Agency. This organization is responsible for regulating the country's nuclear energy program. If you meant something else by UAEA, could you provide more context?"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "agent_decision_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Explain what UAEA is."
+          ]
+        },
+        "goal": {
+          "hypothesis": "",
+          "active_goal_id": "",
+          "active_goal_count": 0,
+          "active_goals": []
+        },
+        "workflow": {
+          "active_workflow_id": "",
+          "workflow_count": 0,
+          "workflows": []
+        },
+        "steps": {
+          "planned": [],
+          "executed": [],
+          "planned_count": 0,
+          "executed_count": 0,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [],
+        "planner_actions": [],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [],
+          "read_section_indexes": [],
+          "read_file_count": 0,
+          "read_section_count": 0,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 0,
+          "items": [],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [],
+          "statuses": [],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "statuses": [],
+          "messages": [],
+          "items": []
+        },
+        "semantic_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [],
+          "finish_reasons": []
+        },
+        "context": {
+          "projection_count": 0,
+          "projection_lengths": [],
+          "planner_projection_lengths": [],
+          "max_planner_projection_length": 0
+        },
+        "runtime_snapshot": {
+          "active_goal": null,
+          "active_workflow": null,
+          "workflow_count": 0,
+          "step_count": 0,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 0,
+          "recent_artifacts": [],
+          "execution_coverage": {},
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 1,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "chat_answer",
+            "input_tokens": 145,
+            "output_tokens": 61,
+            "latency_ms": 5537.85,
+            "max_tokens": 1536,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 145,
+              "completion_tokens": 61,
+              "total_tokens": 206
+            }
+          }
+        ],
+        "input_tokens": 145,
+        "output_tokens": 61,
+        "token_usage": {
+          "input_tokens": 145,
+          "output_tokens": 61,
+          "total_tokens": 206
+        },
+        "latency_ms": 5598.61,
+        "peak_gpu_memory_mb": null,
+        "execution_latency_ms": null,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": []
+      },
+      "trajectory_path": "/mnt/d/UAEA/data/benchmark_trajectories/a41f6935-551f-4eb5-9c9a-f13c0272e79a.jsonl"
+    }
+  ]
+}

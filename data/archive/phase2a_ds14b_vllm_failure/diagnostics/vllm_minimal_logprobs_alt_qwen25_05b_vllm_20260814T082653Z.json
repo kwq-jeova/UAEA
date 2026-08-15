@@ -1,0 +1,233 @@
+{
+  "diagnostic": "vllm_minimal_logprobs",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "model": "qwen25-05b",
+  "summary": {
+    "total": 4,
+    "plain_bang": 0,
+    "logprobs_ok": 4,
+    "logprobs_failed": 0
+  },
+  "results": [
+    {
+      "prompt_name": "minimal_upper",
+      "prompt": "You are a local assistant.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 29388.796,
+        "response": {
+          "text": " You",
+          "text_repr": "' You'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 316.296,
+        "response": {
+          "text": " You",
+          "text_repr": "' You'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": " You",
+          "first_token_logprob": -1.566754698753357,
+          "first_top_logprobs": {
+            " You": -1.566754698753357,
+            " I": -1.582379698753357,
+            " Your": -2.6448798179626465,
+            " Write": -3.2542548179626465,
+            " Please": -3.3011298179626465,
+            " My": -3.8948798179626465,
+            " How": -4.0276923179626465,
+            " What": -4.1058173179626465,
+            " Can": -4.3323798179626465,
+            " The": -4.3558173179626465
+          }
+        }
+      }
+    },
+    {
+      "prompt_name": "minimal_lower",
+      "prompt": "you are a local assistant.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 23.293,
+        "response": {
+          "text": " you",
+          "text_repr": "' you'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 23.606,
+        "response": {
+          "text": " you",
+          "text_repr": "' you'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 6,
+            "total_tokens": 7,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": " you",
+          "first_token_logprob": -1.4924371242523193,
+          "first_top_logprobs": {
+            " you": -1.4924371242523193,
+            " I": -1.7424371242523193,
+            " your": -2.6955621242523193,
+            " please": -3.2893121242523193,
+            " You": -3.5393121242523193,
+            " my": -3.6486871242523193,
+            " write": -3.6955621242523193,
+            " i": -4.195562362670898,
+            " provide": -4.367437362670898,
+            " answer": -4.711187362670898
+          }
+        }
+      }
+    },
+    {
+      "prompt_name": "canonical_upper",
+      "prompt": "<|system|>\nYou are a local assistant.\n\n<|user|>\nRead README section 1 and extract: goals, risks, architecture.",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 22.384,
+        "response": {
+          "text": " |",
+          "text_repr": "' |'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 24.874,
+        "response": {
+          "text": " |",
+          "text_repr": "' |'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": " |",
+          "first_token_logprob": -2.6896045207977295,
+          "first_top_logprobs": {
+            " |": -2.6896045207977295,
+            " README": -2.4864795207977295,
+            " Next": -3.3692920207977295,
+            " ": -3.3927295207977295,
+            " What": -3.4474170207977295,
+            " Read": -3.4708545207977295,
+            " \n\n": -3.5333545207977295,
+            " Also": -3.6817920207977295,
+            " <": -3.7677295207977295,
+            " I": -3.8458545207977295
+          }
+        }
+      }
+    },
+    {
+      "prompt_name": "deepseek_upper",
+      "prompt": "You are a local assistant.<｜User｜>Read README section 1 and extract: goals, risks, architecture.<｜Assistant｜><think>\n",
+      "plain": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 22.744,
+        "response": {
+          "text": "The",
+          "text_repr": "'The'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": null,
+          "first_token_logprob": null,
+          "first_top_logprobs": null
+        }
+      },
+      "logprobs": {
+        "ok": true,
+        "error": null,
+        "latency_ms": 11.064,
+        "response": {
+          "text": "The",
+          "text_repr": "'The'",
+          "starts_with_bang": false,
+          "finish_reason": "length",
+          "usage": {
+            "prompt_tokens": 30,
+            "total_tokens": 31,
+            "completion_tokens": 1,
+            "prompt_tokens_details": null
+          },
+          "first_token": "The",
+          "first_token_logprob": -1.9316569566726685,
+          "first_top_logprobs": {
+            "The": -1.9316569566726685,
+            "goals": -2.056656837463379,
+            "Sure": -2.478531837463379,
+            "I": -2.791031837463379,
+            "Goals": -2.884781837463379,
+            "Certainly": -3.033219337463379,
+            "To": -3.056656837463379,
+            "Read": -3.369156837463379,
+            "User": -3.783219337463379,
+            "In": -4.384781837463379
+          }
+        }
+      }
+    }
+  ]
+}

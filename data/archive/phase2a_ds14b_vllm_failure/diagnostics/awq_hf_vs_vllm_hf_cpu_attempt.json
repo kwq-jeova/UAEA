@@ -1,0 +1,115 @@
+{
+  "diagnostic": "awq_hf_vs_vllm_isolation",
+  "model_path": "/opt/uaea-models/models/DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4",
+  "tokenizer": {
+    "class": "Qwen2Tokenizer",
+    "bos_token": "'<｜begin▁of▁sentence｜>'",
+    "bos_token_id": 151646,
+    "eos_token": "'<｜end▁of▁sentence｜>'",
+    "eos_token_id": 151643,
+    "pad_token": "'<｜end▁of▁sentence｜>'",
+    "pad_token_id": 151643
+  },
+  "prompts": {
+    "minimal_upper": {
+      "text": "You are a local assistant.",
+      "input_token_ids": [
+        2610,
+        525,
+        264,
+        2205,
+        17847,
+        13
+      ]
+    },
+    "minimal_lower": {
+      "text": "you are a local assistant.",
+      "input_token_ids": [
+        9330,
+        525,
+        264,
+        2205,
+        17847,
+        13
+      ]
+    },
+    "canonical_upper": {
+      "text": "<|system|>\nYou are a local assistant.\n\n<|user|>\nRead README section 1 and extract: goals, risks, architecture.",
+      "input_token_ids": [
+        27,
+        91,
+        8948,
+        91,
+        397,
+        2610,
+        525,
+        264,
+        2205,
+        17847,
+        382,
+        27,
+        91,
+        872,
+        91,
+        397,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ]
+    },
+    "deepseek_upper": {
+      "text": "You are a local assistant.<｜User｜>Read README section 1 and extract: goals, risks, architecture.<｜Assistant｜><think>\n",
+      "input_token_ids": [
+        2610,
+        525,
+        264,
+        2205,
+        17847,
+        13,
+        151644,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13,
+        151645,
+        151648,
+        198
+      ]
+    }
+  },
+  "hf": {
+    "ok": false,
+    "device": "cpu",
+    "load_latency_ms": 328.845,
+    "error": "ValueError: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`",
+    "results": []
+  },
+  "vllm": null,
+  "summary": {
+    "hf_ok": false,
+    "vllm_ok": false,
+    "hf_bang": 0,
+    "vllm_bang": 0
+  }
+}

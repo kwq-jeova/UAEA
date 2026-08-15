@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from backend.config import BackendSettings, DEFAULT_BACKEND_URLS  # noqa: E402
 from backend.factory import create_backend  # noqa: E402
+from backend.trace import JsonlTraceSink  # noqa: E402
 from benchmark.inference.metrics import NvidiaSmiMetricsCollector  # noqa: E402
 from benchmark.inference.runner import InferenceBenchmarkRunner  # noqa: E402
 from benchmark.inference.workloads import uaea_phase2a_workloads  # noqa: E402
@@ -25,6 +26,12 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--trace-output", type=Path)
+    parser.add_argument("--trace-model-artifact", default="")
+    parser.add_argument("--trace-model-version", default="")
+    parser.add_argument("--trace-tokenizer-name", default="")
+    parser.add_argument("--trace-tokenizer-path", default="")
+    parser.add_argument("--trace-tokenizer-revision", default="")
     args = parser.parse_args()
 
     backend = create_backend(
@@ -35,7 +42,20 @@ def main() -> None:
             timeout_seconds=args.timeout,
         )
     )
-    runner = InferenceBenchmarkRunner(NvidiaSmiMetricsCollector(args.device))
+    trace_sink = JsonlTraceSink(args.trace_output) if args.trace_output is not None else None
+    trace_defaults = {
+        "backend": backend.backend_name,
+        "model_artifact": args.trace_model_artifact or backend.model_name,
+        "model_version": args.trace_model_version,
+        "tokenizer_name": args.trace_tokenizer_name,
+        "tokenizer_path": args.trace_tokenizer_path,
+        "tokenizer_revision": args.trace_tokenizer_revision,
+    }
+    runner = InferenceBenchmarkRunner(
+        NvidiaSmiMetricsCollector(args.device),
+        trace_sink=trace_sink,
+        trace_defaults=trace_defaults,
+    )
     report = {
         "backend": backend.backend_name,
         "model": backend.model_name,

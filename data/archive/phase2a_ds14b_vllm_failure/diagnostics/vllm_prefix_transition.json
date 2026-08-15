@@ -1,0 +1,3899 @@
+{
+  "diagnostic": "vllm_prefix_transition",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "model": "ds14b-awq",
+  "tokenizer_path": "D:\\LM_Studio_Models\\deepseek-ai\\DeepSeek-R1-Distill-Qwen-14B",
+  "summary": {
+    "total": 100,
+    "ok": 100,
+    "failed": 0,
+    "by_prefix": {
+      "You": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "'<think>'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' Then'"
+        }
+      },
+      "You ": {
+        "total": 4,
+        "bang": 1,
+        "texts": {
+          "none": "'!'",
+          "period": "'NET'",
+          "task": "' Then'",
+          "short_task": "' I'"
+        }
+      },
+      " You": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "'<think>'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' Then'"
+        }
+      },
+      "you": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "'<think>'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' Then'"
+        }
+      },
+      "you ": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' are'",
+          "period": "' are'",
+          "task": "' Then'",
+          "short_task": "' I'"
+        }
+      },
+      "You are": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "You are ": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "You are a": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "You are the": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "You can": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' use'",
+          "period": "' So'",
+          "task": "' Then'",
+          "short_task": "' I'"
+        }
+      },
+      "You should": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' write'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' If'"
+        }
+      },
+      "You will": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' be'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' Then'"
+        }
+      },
+      "You must": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' have'",
+          "period": "' You'",
+          "task": "' Then'",
+          "short_task": "' If'"
+        }
+      },
+      "You need": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' to'",
+          "period": "' To'",
+          "task": "' Then'",
+          "short_task": "' \\n\\n'"
+        }
+      },
+      "You have": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' a'",
+          "period": "' So'",
+          "task": "' Then'",
+          "short_task": "' You'"
+        }
+      },
+      "I am": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' trying'",
+          "period": "' I'",
+          "task": "' Then'",
+          "short_task": "' I'"
+        }
+      },
+      "We are": {
+        "total": 4,
+        "bang": 2,
+        "texts": {
+          "none": "' trying'",
+          "period": "' We'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "The": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "'<think>'",
+          "period": "' The'",
+          "task": "' Then'",
+          "short_task": "' \\n\\n'"
+        }
+      },
+      "The model": {
+        "total": 4,
+        "bang": 1,
+        "texts": {
+          "none": "' is'",
+          "period": "' The'",
+          "task": "'!'",
+          "short_task": "' \\n\\n'"
+        }
+      },
+      "Return": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "'<think>'",
+          "period": "' So'",
+          "task": "' Then'",
+          "short_task": "' Okay'"
+        }
+      },
+      "System:": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' You'",
+          "period": "' You'",
+          "task": "' Then'",
+          "short_task": "' If'"
+        }
+      },
+      "System: You are": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' an'",
+          "period": "' .'",
+          "task": "' Then'",
+          "short_task": "' You'"
+        }
+      },
+      "<|system|>\nYou are": {
+        "total": 4,
+        "bang": 0,
+        "texts": {
+          "none": "' Deep'",
+          "period": "' a'",
+          "task": "' Then'",
+          "short_task": "' You'"
+        }
+      },
+      "<｜begin▁of▁sentence｜>You are": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      },
+      "<｜User｜>You are": {
+        "total": 4,
+        "bang": 4,
+        "texts": {
+          "none": "'!'",
+          "period": "'!'",
+          "task": "'!'",
+          "short_task": "'!'"
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>",
+      "text_repr": "'<think>'",
+      "starts_with_bang": false,
+      "latency_ms": 280.695,
+      "usage": {
+        "prompt_tokens": 1,
+        "total_tokens": 2,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You",
+      "suffix_name": "none",
+      "prompt": "You",
+      "prompt_token_ids": [
+        2610
+      ],
+      "prompt_tokens": [
+        "You"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 25.943,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You",
+      "suffix_name": "period",
+      "prompt": "You.",
+      "prompt_token_ids": [
+        2610,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 18.156,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You",
+      "suffix_name": "task",
+      "prompt": "You.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 31.34,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You",
+      "suffix_name": "short_task",
+      "prompt": "You. Read README.",
+      "prompt_token_ids": [
+        2610,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 23.596,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You ",
+      "suffix_name": "none",
+      "prompt": "You ",
+      "prompt_token_ids": [
+        2610,
+        220
+      ],
+      "prompt_tokens": [
+        "You",
+        " "
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "NET",
+      "text_repr": "'NET'",
+      "starts_with_bang": false,
+      "latency_ms": 34.607,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You ",
+      "suffix_name": "period",
+      "prompt": "You .",
+      "prompt_token_ids": [
+        2610,
+        659
+      ],
+      "prompt_tokens": [
+        "You",
+        " ."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 32.058,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You ",
+      "suffix_name": "task",
+      "prompt": "You .\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        6762,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " .\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 16.967,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You ",
+      "suffix_name": "short_task",
+      "prompt": "You . Read README.",
+      "prompt_token_ids": [
+        2610,
+        659,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " .",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>",
+      "text_repr": "'<think>'",
+      "starts_with_bang": false,
+      "latency_ms": 17.57,
+      "usage": {
+        "prompt_tokens": 1,
+        "total_tokens": 2,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": " You",
+      "suffix_name": "none",
+      "prompt": " You",
+      "prompt_token_ids": [
+        1446
+      ],
+      "prompt_tokens": [
+        " You"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 38.979,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": " You",
+      "suffix_name": "period",
+      "prompt": " You.",
+      "prompt_token_ids": [
+        1446,
+        13
+      ],
+      "prompt_tokens": [
+        " You",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 24.892,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": " You",
+      "suffix_name": "task",
+      "prompt": " You.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        1446,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        " You",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 24.564,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": " You",
+      "suffix_name": "short_task",
+      "prompt": " You. Read README.",
+      "prompt_token_ids": [
+        1446,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        " You",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>",
+      "text_repr": "'<think>'",
+      "starts_with_bang": false,
+      "latency_ms": 16.106,
+      "usage": {
+        "prompt_tokens": 1,
+        "total_tokens": 2,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you",
+      "suffix_name": "none",
+      "prompt": "you",
+      "prompt_token_ids": [
+        9330
+      ],
+      "prompt_tokens": [
+        "you"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 17.523,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you",
+      "suffix_name": "period",
+      "prompt": "you.",
+      "prompt_token_ids": [
+        9330,
+        13
+      ],
+      "prompt_tokens": [
+        "you",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 32.889,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you",
+      "suffix_name": "task",
+      "prompt": "you.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        9330,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "you",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 31.563,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you",
+      "suffix_name": "short_task",
+      "prompt": "you. Read README.",
+      "prompt_token_ids": [
+        9330,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "you",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " are",
+      "text_repr": "' are'",
+      "starts_with_bang": false,
+      "latency_ms": 31.688,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you ",
+      "suffix_name": "none",
+      "prompt": "you ",
+      "prompt_token_ids": [
+        9330,
+        220
+      ],
+      "prompt_tokens": [
+        "you",
+        " "
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " are",
+      "text_repr": "' are'",
+      "starts_with_bang": false,
+      "latency_ms": 17.73,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you ",
+      "suffix_name": "period",
+      "prompt": "you .",
+      "prompt_token_ids": [
+        9330,
+        659
+      ],
+      "prompt_tokens": [
+        "you",
+        " ."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 18.317,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you ",
+      "suffix_name": "task",
+      "prompt": "you .\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        9330,
+        6762,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "you",
+        " .\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 30.323,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "you ",
+      "suffix_name": "short_task",
+      "prompt": "you . Read README.",
+      "prompt_token_ids": [
+        9330,
+        659,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "you",
+        " .",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.152,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are",
+      "suffix_name": "none",
+      "prompt": "You are",
+      "prompt_token_ids": [
+        2610,
+        525
+      ],
+      "prompt_tokens": [
+        "You",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.006,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are",
+      "suffix_name": "period",
+      "prompt": "You are.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 32.58,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are",
+      "suffix_name": "task",
+      "prompt": "You are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 16.706,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are",
+      "suffix_name": "short_task",
+      "prompt": "You are. Read README.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 31.187,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are ",
+      "suffix_name": "none",
+      "prompt": "You are ",
+      "prompt_token_ids": [
+        2610,
+        525,
+        220
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " "
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 28.647,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are ",
+      "suffix_name": "period",
+      "prompt": "You are .",
+      "prompt_token_ids": [
+        2610,
+        525,
+        659
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " ."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 29.869,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are ",
+      "suffix_name": "task",
+      "prompt": "You are .\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        6762,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " .\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 34.369,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are ",
+      "suffix_name": "short_task",
+      "prompt": "You are . Read README.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        659,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " .",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 20.045,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are a",
+      "suffix_name": "none",
+      "prompt": "You are a",
+      "prompt_token_ids": [
+        2610,
+        525,
+        264
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " a"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 26.642,
+      "usage": {
+        "prompt_tokens": 4,
+        "total_tokens": 5,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are a",
+      "suffix_name": "period",
+      "prompt": "You are a.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        264,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " a",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 18.605,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 19,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are a",
+      "suffix_name": "task",
+      "prompt": "You are a.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        264,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " a",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 30.885,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 8,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are a",
+      "suffix_name": "short_task",
+      "prompt": "You are a. Read README.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        264,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " a",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 34.757,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are the",
+      "suffix_name": "none",
+      "prompt": "You are the",
+      "prompt_token_ids": [
+        2610,
+        525,
+        279
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " the"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.73,
+      "usage": {
+        "prompt_tokens": 4,
+        "total_tokens": 5,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are the",
+      "suffix_name": "period",
+      "prompt": "You are the.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        279,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " the",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 37.324,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 19,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are the",
+      "suffix_name": "task",
+      "prompt": "You are the.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        279,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " the",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 20.335,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 8,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You are the",
+      "suffix_name": "short_task",
+      "prompt": "You are the. Read README.",
+      "prompt_token_ids": [
+        2610,
+        525,
+        279,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " are",
+        " the",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " use",
+      "text_repr": "' use'",
+      "starts_with_bang": false,
+      "latency_ms": 18.831,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You can",
+      "suffix_name": "none",
+      "prompt": "You can",
+      "prompt_token_ids": [
+        2610,
+        646
+      ],
+      "prompt_tokens": [
+        "You",
+        " can"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " So",
+      "text_repr": "' So'",
+      "starts_with_bang": false,
+      "latency_ms": 25.633,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You can",
+      "suffix_name": "period",
+      "prompt": "You can.",
+      "prompt_token_ids": [
+        2610,
+        646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " can",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 18.72,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You can",
+      "suffix_name": "task",
+      "prompt": "You can.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        646,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " can",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 21.406,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You can",
+      "suffix_name": "short_task",
+      "prompt": "You can. Read README.",
+      "prompt_token_ids": [
+        2610,
+        646,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " can",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " write",
+      "text_repr": "' write'",
+      "starts_with_bang": false,
+      "latency_ms": 17.423,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You should",
+      "suffix_name": "none",
+      "prompt": "You should",
+      "prompt_token_ids": [
+        2610,
+        1265
+      ],
+      "prompt_tokens": [
+        "You",
+        " should"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 18.342,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You should",
+      "suffix_name": "period",
+      "prompt": "You should.",
+      "prompt_token_ids": [
+        2610,
+        1265,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " should",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 30.01,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You should",
+      "suffix_name": "task",
+      "prompt": "You should.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        1265,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " should",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " If",
+      "text_repr": "' If'",
+      "starts_with_bang": false,
+      "latency_ms": 41.514,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You should",
+      "suffix_name": "short_task",
+      "prompt": "You should. Read README.",
+      "prompt_token_ids": [
+        2610,
+        1265,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " should",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " be",
+      "text_repr": "' be'",
+      "starts_with_bang": false,
+      "latency_ms": 32.931,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You will",
+      "suffix_name": "none",
+      "prompt": "You will",
+      "prompt_token_ids": [
+        2610,
+        686
+      ],
+      "prompt_tokens": [
+        "You",
+        " will"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 17.829,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You will",
+      "suffix_name": "period",
+      "prompt": "You will.",
+      "prompt_token_ids": [
+        2610,
+        686,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " will",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 20.801,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You will",
+      "suffix_name": "task",
+      "prompt": "You will.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        686,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " will",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 18.143,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You will",
+      "suffix_name": "short_task",
+      "prompt": "You will. Read README.",
+      "prompt_token_ids": [
+        2610,
+        686,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " will",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " have",
+      "text_repr": "' have'",
+      "starts_with_bang": false,
+      "latency_ms": 41.655,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You must",
+      "suffix_name": "none",
+      "prompt": "You must",
+      "prompt_token_ids": [
+        2610,
+        1969
+      ],
+      "prompt_tokens": [
+        "You",
+        " must"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 33.813,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You must",
+      "suffix_name": "period",
+      "prompt": "You must.",
+      "prompt_token_ids": [
+        2610,
+        1969,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " must",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 32.146,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You must",
+      "suffix_name": "task",
+      "prompt": "You must.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        1969,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " must",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " If",
+      "text_repr": "' If'",
+      "starts_with_bang": false,
+      "latency_ms": 40.762,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You must",
+      "suffix_name": "short_task",
+      "prompt": "You must. Read README.",
+      "prompt_token_ids": [
+        2610,
+        1969,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " must",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " to",
+      "text_repr": "' to'",
+      "starts_with_bang": false,
+      "latency_ms": 32.732,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You need",
+      "suffix_name": "none",
+      "prompt": "You need",
+      "prompt_token_ids": [
+        2610,
+        1184
+      ],
+      "prompt_tokens": [
+        "You",
+        " need"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " To",
+      "text_repr": "' To'",
+      "starts_with_bang": false,
+      "latency_ms": 17.157,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You need",
+      "suffix_name": "period",
+      "prompt": "You need.",
+      "prompt_token_ids": [
+        2610,
+        1184,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " need",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 33.259,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You need",
+      "suffix_name": "task",
+      "prompt": "You need.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        1184,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " need",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " \n\n",
+      "text_repr": "' \\n\\n'",
+      "starts_with_bang": false,
+      "latency_ms": 33.425,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You need",
+      "suffix_name": "short_task",
+      "prompt": "You need. Read README.",
+      "prompt_token_ids": [
+        2610,
+        1184,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " need",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " a",
+      "text_repr": "' a'",
+      "starts_with_bang": false,
+      "latency_ms": 32.635,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You have",
+      "suffix_name": "none",
+      "prompt": "You have",
+      "prompt_token_ids": [
+        2610,
+        614
+      ],
+      "prompt_tokens": [
+        "You",
+        " have"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " So",
+      "text_repr": "' So'",
+      "starts_with_bang": false,
+      "latency_ms": 20.094,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You have",
+      "suffix_name": "period",
+      "prompt": "You have.",
+      "prompt_token_ids": [
+        2610,
+        614,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " have",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 36.758,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You have",
+      "suffix_name": "task",
+      "prompt": "You have.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2610,
+        614,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " have",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 33.005,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "You have",
+      "suffix_name": "short_task",
+      "prompt": "You have. Read README.",
+      "prompt_token_ids": [
+        2610,
+        614,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "You",
+        " have",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " trying",
+      "text_repr": "' trying'",
+      "starts_with_bang": false,
+      "latency_ms": 33.681,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "I am",
+      "suffix_name": "none",
+      "prompt": "I am",
+      "prompt_token_ids": [
+        40,
+        1079
+      ],
+      "prompt_tokens": [
+        "I",
+        " am"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 34.409,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "I am",
+      "suffix_name": "period",
+      "prompt": "I am.",
+      "prompt_token_ids": [
+        40,
+        1079,
+        13
+      ],
+      "prompt_tokens": [
+        "I",
+        " am",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 30.304,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "I am",
+      "suffix_name": "task",
+      "prompt": "I am.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        40,
+        1079,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "I",
+        " am",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " I",
+      "text_repr": "' I'",
+      "starts_with_bang": false,
+      "latency_ms": 31.511,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "I am",
+      "suffix_name": "short_task",
+      "prompt": "I am. Read README.",
+      "prompt_token_ids": [
+        40,
+        1079,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "I",
+        " am",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " trying",
+      "text_repr": "' trying'",
+      "starts_with_bang": false,
+      "latency_ms": 24.859,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "We are",
+      "suffix_name": "none",
+      "prompt": "We are",
+      "prompt_token_ids": [
+        1654,
+        525
+      ],
+      "prompt_tokens": [
+        "We",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " We",
+      "text_repr": "' We'",
+      "starts_with_bang": false,
+      "latency_ms": 19.064,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "We are",
+      "suffix_name": "period",
+      "prompt": "We are.",
+      "prompt_token_ids": [
+        1654,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "We",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.91,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "We are",
+      "suffix_name": "task",
+      "prompt": "We are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        1654,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "We",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 18.387,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "We are",
+      "suffix_name": "short_task",
+      "prompt": "We are. Read README.",
+      "prompt_token_ids": [
+        1654,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "We",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>",
+      "text_repr": "'<think>'",
+      "starts_with_bang": false,
+      "latency_ms": 25.843,
+      "usage": {
+        "prompt_tokens": 1,
+        "total_tokens": 2,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The",
+      "suffix_name": "none",
+      "prompt": "The",
+      "prompt_token_ids": [
+        785
+      ],
+      "prompt_tokens": [
+        "The"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " The",
+      "text_repr": "' The'",
+      "starts_with_bang": false,
+      "latency_ms": 17.694,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The",
+      "suffix_name": "period",
+      "prompt": "The.",
+      "prompt_token_ids": [
+        785,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 18.542,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The",
+      "suffix_name": "task",
+      "prompt": "The.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        785,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " \n\n",
+      "text_repr": "' \\n\\n'",
+      "starts_with_bang": false,
+      "latency_ms": 32.499,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The",
+      "suffix_name": "short_task",
+      "prompt": "The. Read README.",
+      "prompt_token_ids": [
+        785,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " is",
+      "text_repr": "' is'",
+      "starts_with_bang": false,
+      "latency_ms": 30.579,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The model",
+      "suffix_name": "none",
+      "prompt": "The model",
+      "prompt_token_ids": [
+        785,
+        1614
+      ],
+      "prompt_tokens": [
+        "The",
+        " model"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " The",
+      "text_repr": "' The'",
+      "starts_with_bang": false,
+      "latency_ms": 17.562,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The model",
+      "suffix_name": "period",
+      "prompt": "The model.",
+      "prompt_token_ids": [
+        785,
+        1614,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        " model",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 32.201,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The model",
+      "suffix_name": "task",
+      "prompt": "The model.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        785,
+        1614,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        " model",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " \n\n",
+      "text_repr": "' \\n\\n'",
+      "starts_with_bang": false,
+      "latency_ms": 32.285,
+      "usage": {
+        "prompt_tokens": 6,
+        "total_tokens": 7,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "The model",
+      "suffix_name": "short_task",
+      "prompt": "The model. Read README.",
+      "prompt_token_ids": [
+        785,
+        1614,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "The",
+        " model",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>",
+      "text_repr": "'<think>'",
+      "starts_with_bang": false,
+      "latency_ms": 32.019,
+      "usage": {
+        "prompt_tokens": 1,
+        "total_tokens": 2,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "Return",
+      "suffix_name": "none",
+      "prompt": "Return",
+      "prompt_token_ids": [
+        5598
+      ],
+      "prompt_tokens": [
+        "Return"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " So",
+      "text_repr": "' So'",
+      "starts_with_bang": false,
+      "latency_ms": 34.39,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "Return",
+      "suffix_name": "period",
+      "prompt": "Return.",
+      "prompt_token_ids": [
+        5598,
+        13
+      ],
+      "prompt_tokens": [
+        "Return",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 20.769,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 17,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "Return",
+      "suffix_name": "task",
+      "prompt": "Return.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        5598,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "Return",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Okay",
+      "text_repr": "' Okay'",
+      "starts_with_bang": false,
+      "latency_ms": 17.405,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "Return",
+      "suffix_name": "short_task",
+      "prompt": "Return. Read README.",
+      "prompt_token_ids": [
+        5598,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "Return",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 25.665,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System:",
+      "suffix_name": "none",
+      "prompt": "System:",
+      "prompt_token_ids": [
+        2320,
+        25
+      ],
+      "prompt_tokens": [
+        "System",
+        ":"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 21.466,
+      "usage": {
+        "prompt_tokens": 2,
+        "total_tokens": 3,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System:",
+      "suffix_name": "period",
+      "prompt": "System:.",
+      "prompt_token_ids": [
+        2320,
+        16976
+      ],
+      "prompt_tokens": [
+        "System",
+        ":."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 34.256,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 18,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System:",
+      "suffix_name": "task",
+      "prompt": "System:.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2320,
+        25,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "System",
+        ":",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " If",
+      "text_repr": "' If'",
+      "starts_with_bang": false,
+      "latency_ms": 17.174,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System:",
+      "suffix_name": "short_task",
+      "prompt": "System:. Read README.",
+      "prompt_token_ids": [
+        2320,
+        16976,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "System",
+        ":.",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " an",
+      "text_repr": "' an'",
+      "starts_with_bang": false,
+      "latency_ms": 16.864,
+      "usage": {
+        "prompt_tokens": 4,
+        "total_tokens": 5,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System: You are",
+      "suffix_name": "none",
+      "prompt": "System: You are",
+      "prompt_token_ids": [
+        2320,
+        25,
+        1446,
+        525
+      ],
+      "prompt_tokens": [
+        "System",
+        ":",
+        " You",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " .",
+      "text_repr": "' .'",
+      "starts_with_bang": false,
+      "latency_ms": 26.314,
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 6,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System: You are",
+      "suffix_name": "period",
+      "prompt": "System: You are.",
+      "prompt_token_ids": [
+        2320,
+        25,
+        1446,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "System",
+        ":",
+        " You",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 34.882,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 20,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System: You are",
+      "suffix_name": "task",
+      "prompt": "System: You are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        2320,
+        25,
+        1446,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "System",
+        ":",
+        " You",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 30.765,
+      "usage": {
+        "prompt_tokens": 8,
+        "total_tokens": 9,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "System: You are",
+      "suffix_name": "short_task",
+      "prompt": "System: You are. Read README.",
+      "prompt_token_ids": [
+        2320,
+        25,
+        1446,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "System",
+        ":",
+        " You",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Deep",
+      "text_repr": "' Deep'",
+      "starts_with_bang": false,
+      "latency_ms": 32.845,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 8,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<|system|>\nYou are",
+      "suffix_name": "none",
+      "prompt": "<|system|>\nYou are",
+      "prompt_token_ids": [
+        27,
+        91,
+        8948,
+        91,
+        397,
+        2610,
+        525
+      ],
+      "prompt_tokens": [
+        "<",
+        "|",
+        "system",
+        "|",
+        ">\n",
+        "You",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " a",
+      "text_repr": "' a'",
+      "starts_with_bang": false,
+      "latency_ms": 17.739,
+      "usage": {
+        "prompt_tokens": 8,
+        "total_tokens": 9,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<|system|>\nYou are",
+      "suffix_name": "period",
+      "prompt": "<|system|>\nYou are.",
+      "prompt_token_ids": [
+        27,
+        91,
+        8948,
+        91,
+        397,
+        2610,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "<",
+        "|",
+        "system",
+        "|",
+        ">\n",
+        "You",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " Then",
+      "text_repr": "' Then'",
+      "starts_with_bang": false,
+      "latency_ms": 19.907,
+      "usage": {
+        "prompt_tokens": 22,
+        "total_tokens": 23,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<|system|>\nYou are",
+      "suffix_name": "task",
+      "prompt": "<|system|>\nYou are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        27,
+        91,
+        8948,
+        91,
+        397,
+        2610,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "<",
+        "|",
+        "system",
+        "|",
+        ">\n",
+        "You",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": " You",
+      "text_repr": "' You'",
+      "starts_with_bang": false,
+      "latency_ms": 34.855,
+      "usage": {
+        "prompt_tokens": 11,
+        "total_tokens": 12,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<|system|>\nYou are",
+      "suffix_name": "short_task",
+      "prompt": "<|system|>\nYou are. Read README.",
+      "prompt_token_ids": [
+        27,
+        91,
+        8948,
+        91,
+        397,
+        2610,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "<",
+        "|",
+        "system",
+        "|",
+        ">\n",
+        "You",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 18.726,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜begin▁of▁sentence｜>You are",
+      "suffix_name": "none",
+      "prompt": "<｜begin▁of▁sentence｜>You are",
+      "prompt_token_ids": [
+        151646,
+        2610,
+        525
+      ],
+      "prompt_tokens": [
+        "<｜begin▁of▁sentence｜>",
+        "You",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 31.073,
+      "usage": {
+        "prompt_tokens": 4,
+        "total_tokens": 5,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜begin▁of▁sentence｜>You are",
+      "suffix_name": "period",
+      "prompt": "<｜begin▁of▁sentence｜>You are.",
+      "prompt_token_ids": [
+        151646,
+        2610,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜begin▁of▁sentence｜>",
+        "You",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 19.107,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 19,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜begin▁of▁sentence｜>You are",
+      "suffix_name": "task",
+      "prompt": "<｜begin▁of▁sentence｜>You are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        151646,
+        2610,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜begin▁of▁sentence｜>",
+        "You",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 16.834,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 8,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜begin▁of▁sentence｜>You are",
+      "suffix_name": "short_task",
+      "prompt": "<｜begin▁of▁sentence｜>You are. Read README.",
+      "prompt_token_ids": [
+        151646,
+        2610,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜begin▁of▁sentence｜>",
+        "You",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.62,
+      "usage": {
+        "prompt_tokens": 3,
+        "total_tokens": 4,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜User｜>You are",
+      "suffix_name": "none",
+      "prompt": "<｜User｜>You are",
+      "prompt_token_ids": [
+        151644,
+        2610,
+        525
+      ],
+      "prompt_tokens": [
+        "<｜User｜>",
+        "You",
+        " are"
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.809,
+      "usage": {
+        "prompt_tokens": 4,
+        "total_tokens": 5,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜User｜>You are",
+      "suffix_name": "period",
+      "prompt": "<｜User｜>You are.",
+      "prompt_token_ids": [
+        151644,
+        2610,
+        525,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜User｜>",
+        "You",
+        " are",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 26.638,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 19,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜User｜>You are",
+      "suffix_name": "task",
+      "prompt": "<｜User｜>You are.\n\nRead README section 1 and extract: goals, risks, architecture.",
+      "prompt_token_ids": [
+        151644,
+        2610,
+        525,
+        382,
+        4418,
+        61945,
+        3772,
+        220,
+        16,
+        323,
+        8649,
+        25,
+        8845,
+        11,
+        15276,
+        11,
+        17646,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜User｜>",
+        "You",
+        " are",
+        ".\n\n",
+        "Read",
+        " README",
+        " section",
+        " ",
+        "1",
+        " and",
+        " extract",
+        ":",
+        " goals",
+        ",",
+        " risks",
+        ",",
+        " architecture",
+        "."
+      ]
+    },
+    {
+      "ok": true,
+      "finish_reason": "length",
+      "text": "!",
+      "text_repr": "'!'",
+      "starts_with_bang": true,
+      "latency_ms": 17.246,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 8,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null
+      },
+      "error": null,
+      "prefix": "<｜User｜>You are",
+      "suffix_name": "short_task",
+      "prompt": "<｜User｜>You are. Read README.",
+      "prompt_token_ids": [
+        151644,
+        2610,
+        525,
+        13,
+        4457,
+        61945,
+        13
+      ],
+      "prompt_tokens": [
+        "<｜User｜>",
+        "You",
+        " are",
+        ".",
+        " Read",
+        " README",
+        "."
+      ]
+    }
+  ]
+}

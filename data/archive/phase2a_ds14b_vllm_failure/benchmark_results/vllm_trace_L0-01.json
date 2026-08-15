@@ -1,0 +1,179 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "ds14b-awq",
+    "timeout_seconds": 300
+  },
+  "trace_output": "data\\inference_traces\\vllm\\phase1\\vllm_phase1_l0_l1_selected.jsonl",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1
+  },
+  "results": [
+    {
+      "case_id": "L0-01",
+      "description": "Simple stateless question should bypass planner and workflow.",
+      "level": "L0",
+      "passed": false,
+      "failures": [
+        "simple question should use one model call"
+      ],
+      "responses": [
+        "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "agent_decision_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Explain what UAEA is."
+          ]
+        },
+        "goal": {
+          "hypothesis": "",
+          "active_goal_id": "",
+          "active_goal_count": 0,
+          "active_goals": []
+        },
+        "workflow": {
+          "active_workflow_id": "",
+          "workflow_count": 0,
+          "workflows": []
+        },
+        "steps": {
+          "planned": [],
+          "executed": [],
+          "planned_count": 0,
+          "executed_count": 0,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [],
+        "planner_actions": [],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [],
+          "read_section_indexes": [],
+          "read_file_count": 0,
+          "read_section_count": 0,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 0,
+          "items": [],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [],
+          "statuses": [],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "statuses": [],
+          "messages": [],
+          "items": []
+        },
+        "semantic_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [],
+          "finish_reasons": []
+        },
+        "context": {
+          "projection_count": 0,
+          "projection_lengths": [],
+          "planner_projection_lengths": [],
+          "max_planner_projection_length": 0
+        },
+        "runtime_snapshot": {
+          "active_goal": null,
+          "active_workflow": null,
+          "workflow_count": 0,
+          "step_count": 0,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 0,
+          "recent_artifacts": [],
+          "execution_coverage": {},
+          "last_finish_reason": "length",
+          "last_answer_finish_reason": "",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "chat_answer",
+            "input_tokens": 136,
+            "output_tokens": 1536,
+            "latency_ms": 15555.83,
+            "max_tokens": 1536,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 136,
+              "completion_tokens": 1536,
+              "total_tokens": 1672
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "chat_answer",
+            "input_tokens": 361,
+            "output_tokens": 1536,
+            "latency_ms": 14978.13,
+            "max_tokens": 1536,
+            "finish_reason": "length",
+            "usage": {
+              "prompt_tokens": 361,
+              "completion_tokens": 1536,
+              "total_tokens": 1897
+            }
+          }
+        ],
+        "input_tokens": 497,
+        "output_tokens": 3072,
+        "token_usage": {
+          "input_tokens": 497,
+          "output_tokens": 3072,
+          "total_tokens": 3569
+        },
+        "latency_ms": 30538.34,
+        "peak_gpu_memory_mb": 17614,
+        "execution_latency_ms": null,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": []
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\e7a70686-2cd8-4c21-b290-65bd87fe0329.jsonl"
+    }
+  ]
+}

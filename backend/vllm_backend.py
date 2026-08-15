@@ -37,13 +37,18 @@ class VLLMBackend:
         return self._model_name
 
     def generate(self, request: InferenceRequest) -> InferenceResponse:
+        generation_config = dict(request.generation_config or {})
+        effective_temperature = max(float(generation_config.get("temperature", request.temperature)), self.default_temperature)
         payload = {
             "model": self.model_name,
             "messages": [dict(message) for message in request.messages],
-            "temperature": max(float(request.temperature), self.default_temperature),
+            "temperature": effective_temperature,
             "max_tokens": request.max_tokens,
             "chat_template_kwargs": dict(self.default_chat_template_kwargs),
         }
+        payload.update(generation_config)
+        payload["temperature"] = max(float(payload.get("temperature", request.temperature)), self.default_temperature)
+        payload["chat_template_kwargs"] = dict(payload.get("chat_template_kwargs") or self.default_chat_template_kwargs)
         http_request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -55,7 +60,7 @@ class VLLMBackend:
             with urllib.request.urlopen(http_request, timeout=self.timeout_seconds) as response:
                 raw_body = response.read().decode("utf-8")
             data = json.loads(raw_body)
-            return self._success_response(data, started_at)
+            return self._success_response(data, started_at, payload, effective_temperature)
         except (TimeoutError, socket.timeout):
             elapsed = time.monotonic() - started_at
             return self._error_response(
@@ -97,7 +102,13 @@ class VLLMBackend:
                 retryable=True,
             )
 
-    def _success_response(self, data: dict[str, Any], started_at: float) -> InferenceResponse:
+    def _success_response(
+        self,
+        data: dict[str, Any],
+        started_at: float,
+        payload: dict[str, Any],
+        effective_temperature: float,
+    ) -> InferenceResponse:
         choice = data["choices"][0]
         text = choice["message"]["content"]
         if not isinstance(text, str):
@@ -116,6 +127,14 @@ class VLLMBackend:
             latency_ms=latency_ms,
             ttft_ms=None,
             tokens_per_second=tokens_per_second,
+            backend_metadata={
+                "endpoint": f"{self.base_url}/chat/completions",
+                "served_model": self.model_name,
+                "request_max_tokens": payload.get("max_tokens", 0),
+                "request_temperature": payload.get("temperature", 0.0),
+                "effective_temperature": effective_temperature,
+                "chat_template_kwargs": dict(payload.get("chat_template_kwargs") or {}),
+            },
         )
 
     def _error_response(

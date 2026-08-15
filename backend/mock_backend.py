@@ -48,6 +48,10 @@ class MockBackend:
                 total_tokens=prompt_tokens + completion_tokens,
             ),
             latency_ms=0.0,
+            backend_metadata={
+                "failure_mode": self.failure_mode or "",
+                "request_count": len(self.requests),
+            },
         )
 
     def _failure_response(self, mode: FailureMode) -> InferenceResponse:
@@ -61,6 +65,10 @@ class MockBackend:
             backend=self.backend_name,
             model=self.model_name,
             finish_reason="error",
+            backend_metadata={
+                "failure_mode": mode,
+                "request_count": len(self.requests),
+            },
             error=InferenceError(
                 code=mode,
                 message=messages[mode],

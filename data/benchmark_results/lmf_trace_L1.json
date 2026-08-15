@@ -1,0 +1,1912 @@
+{
+  "benchmark": "phase1_runtime_lmf_trace_benchmark",
+  "mode": "real-lmf-trace",
+  "backend": {
+    "name": "lmf",
+    "base_url": "http://127.0.0.1:8000/v1",
+    "model": "DeepSeek-R1-Distill-Qwen-14B",
+    "timeout_seconds": 300
+  },
+  "trace_output": "data\\inference_traces\\lmf_phase1_l0_l2.jsonl",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "L1-01",
+      "description": "Read plus evaluate should produce semantic observation and answer without persistent workflow.",
+      "level": "L1",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The Inference Runtime Abstraction section outlines a strategic shift towards a more generalized approach, focusing on flexibility and scalability. Strengths include a clear roadmap with phases, support for multiple backends, and a trace output feature for monitoring. Weaknesses involve potential performance overhead, compatibility concerns, and a lack of specific examples. Risks include performance impact and integration challenges, while decisions aim for flexibility but may increase complexity. Open questions remain about integration, performance, and compatibility."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README section 1 and evaluate strengths and weaknesses."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+          "active_goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+              "goal_summary": "Evaluate the strengths and weaknesses of the first section of the README file.",
+              "status": "active",
+              "workflow_ids": [
+                "8f73a068-27a0-40bd-be13-ccd5e6f5c528"
+              ],
+              "artifact_ids": [
+                "8dced31a-aba9-4207-81f7-942553623adc"
+              ],
+              "source_goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+              "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-11T08:31:03.541919+00:00",
+              "updated_at": "2026-08-11T08:33:52.775033+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+              "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+              "task_summary": "Evaluate the strengths and weaknesses of the first section of the README file.",
+              "status": "active",
+              "current_step_id": "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a",
+              "step_ids": [
+                "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a"
+              ],
+              "artifact_ids": [
+                "8dced31a-aba9-4207-81f7-942553623adc"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+              "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-11T08:31:03.541947+00:00",
+              "updated_at": "2026-08-11T08:33:52.774415+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a",
+              "workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Read the first section of the README file and evaluate it.",
+                "raw_type": "capability_action",
+                "goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef",
+              "semantic_observation_id": "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef",
+              "artifact_ids": [
+                "8dced31a-aba9-4207-81f7-942553623adc"
+              ],
+              "created_at": "2026-08-11T08:31:03.547015+00:00",
+              "updated_at": "2026-08-11T08:33:52.774420+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 1,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "Read the first section of the README file and evaluate it.",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "Read the first section of the README file and evaluate it.",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "8dced31a-aba9-4207-81f7-942553623adc",
+              "artifact_kind": "step_result",
+              "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+              "workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+              "step_id": "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "risks: Complexity, scalability issues.; **Principles**: Abstraction for flexibility, modular design.; **Boundaries**: Limited detail on integration and performance.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef"
+              },
+              "source_observation_ids": [
+                "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "266c1052b7bc004c54581ecdc21eb8be14c200781b2821b0fa65d2392e0ee11c",
+              "content_excerpt": "The Inference Runtime Abstraction section outlines a strategic shift towards a more generalized approach, focusing on flexibility and scalability. Strengths include a clear roadmap with phases, support for multiple backends, and a trace output feature for monitoring. Weaknesses involve potential performance overhead, compatibility concerns, and a lack of specific examples. Risks include performance impact and integration challenges, while decisions aim for flexibility but may increase complexity. Open questions remain about integration, performance, and compatibility.",
+              "content_length": 574,
+              "created_at": "2026-08-11T08:31:03.547779+00:00",
+              "updated_at": "2026-08-11T08:33:52.774404+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE"
+          ],
+          "complete_count": 1,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "8dced31a-aba9-4207-81f7-942553623adc"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "eaa9aced520cfa1bd454236b7a05268df0cd827c36595fe65624f78d80e4f916",
+                "source_hash": "1cab1f92489adb67f6ca9b79695ea8c06a37c63942c6a7af1c539478994bdaa7",
+                "size_chars": 724,
+                "section": "Inference Runtime Abstraction",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 84,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Inference Runtime Abstraction",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "Phase-1 Runtime Baseline",
+                    "line_start": 85
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 119
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 141
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Inference Runtime Abstraction\n\nPhase-2A is now framed as an inference runtime abstraction layer, not only an\nLMF-to-vLLM migration.\n\n```text\nCognitive Runtime Freeze\n  -> ModelBackend Contract\n  -> Inference Runtime Abstraction\n  -> Replaceable Backend\n```\n\nCurrent roadmap:\n\n- Phase-2A.1: Inference Trace Layer\n- Phase-2A.2: Backend / artifact equivalence experiments\n- Phase-2B: additional inference backends such as TensorRT-LLM, SGLang, or\n  external API adapters\n\nSee `docs/inference-trace-layer-design.md` and\n`docs/phase2a-equivalence-matrix.md`.\n\nTrace output can be enabled in the inference benchmark entry points with\n`--trace-output`, which writes append-only JSONL records outside the frozen\nPhase-1 Runtime.\n",
+                "content_length": 724
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            80
+          ],
+          "planner_projection_lengths": [
+            80
+          ],
+          "max_planner_projection_length": 80
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+            "goal_summary": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "status": "active",
+            "workflow_ids": [
+              "8f73a068-27a0-40bd-be13-ccd5e6f5c528"
+            ],
+            "artifact_ids": [
+              "8dced31a-aba9-4207-81f7-942553623adc"
+            ],
+            "source_goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-11T08:31:03.541919+00:00",
+            "updated_at": "2026-08-11T08:33:52.775033+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+            "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+            "task_summary": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "status": "active",
+            "current_step_id": "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a",
+            "step_ids": [
+              "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a"
+            ],
+            "artifact_ids": [
+              "8dced31a-aba9-4207-81f7-942553623adc"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "Evaluate the strengths and weaknesses of the first section of the README file.",
+            "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-11T08:31:03.541947+00:00",
+            "updated_at": "2026-08-11T08:33:52.774415+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "8dced31a-aba9-4207-81f7-942553623adc",
+              "artifact_kind": "step_result",
+              "goal_id": "86c8c3f0-b7d2-4281-967d-6e2a41cc8e1e",
+              "workflow_id": "8f73a068-27a0-40bd-be13-ccd5e6f5c528",
+              "step_id": "0a2f76e9-dc86-4e28-b41d-9ec770f60a1a",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "risks: Complexity, scalability issues.; **Principles**: Abstraction for flexibility, modular design.; **Boundaries**: Limited detail on integration and performance.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef"
+              },
+              "source_observation_ids": [
+                "8e40c5a6-da91-4884-8bf2-2ac1b7dfbfef"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "266c1052b7bc004c54581ecdc21eb8be14c200781b2821b0fa65d2392e0ee11c",
+              "content_excerpt": "The Inference Runtime Abstraction section outlines a strategic shift towards a more generalized approach, focusing on flexibility and scalability. Strengths include a clear roadmap with phases, support for multiple backends, and a trace output feature for monitoring. Weaknesses involve potential performance overhead, compatibility concerns, and a lack of specific examples. Risks include performance impact and integration challenges, while decisions aim for flexibility but may increase complexity. Open questions remain about integration, performance, and compatibility.",
+              "content_length": 574,
+              "created_at": "2026-08-11T08:31:03.547779+00:00",
+              "updated_at": "2026-08-11T08:33:52.774404+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1538,
+            "output_tokens": 496,
+            "latency_ms": 81310.36,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1538,
+              "completion_tokens": 496,
+              "total_tokens": 2034
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 895,
+            "output_tokens": 1178,
+            "latency_ms": 169224.98,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 895,
+              "completion_tokens": 1178,
+              "total_tokens": 2073
+            }
+          }
+        ],
+        "input_tokens": 2433,
+        "output_tokens": 1674,
+        "token_usage": {
+          "input_tokens": 2433,
+          "output_tokens": 1674,
+          "total_tokens": 4107
+        },
+        "latency_ms": 250566.49,
+        "peak_gpu_memory_mb": 14214,
+        "execution_latency_ms": 81336.41,
+        "semantic_latency_ms": 169227.45,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\299dbcee-34bd-4f05-9550-c9c0444430a3.jsonl"
+    },
+    {
+      "case_id": "L1-02",
+      "description": "Read plus structured extraction should produce a reusable semantic artifact.",
+      "level": "L1",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The goals, risks, and architecture from the README section 1 are as follows:\n\n**Goals:**\n- Develop an inference runtime abstraction layer (Phase-2A) beyond just an LMF-to-vLLM migration.\n- Implement the Inference Trace Layer (Phase-2A.1).\n- Conduct experiments on backend/artifact equivalence (Phase-2A.2).\n- Introduce additional inference backends like TensorRT-LLM, SGLang, or external API adapters (Phase-2B)."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README section 1 and extract: goals, risks, architecture."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Extract specific information from README section 1.",
+          "active_goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+              "goal_summary": "Extract specific information from README section 1.",
+              "status": "active",
+              "workflow_ids": [
+                "0094db37-4f5b-4017-8473-77b7624c160d"
+              ],
+              "artifact_ids": [
+                "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+              ],
+              "source_goal_hypothesis": "Extract specific information from README section 1.",
+              "source_user_intent": "Read README section 1 and extract: goals, risks, architecture.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-11T08:35:01.614462+00:00",
+              "updated_at": "2026-08-11T08:36:40.888113+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+              "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+              "task_summary": "Extract specific information from README section 1.",
+              "status": "active",
+              "current_step_id": "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba",
+              "step_ids": [
+                "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba"
+              ],
+              "artifact_ids": [
+                "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "Extract specific information from README section 1.",
+              "source_user_intent": "Read README section 1 and extract: goals, risks, architecture.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-11T08:35:01.614491+00:00",
+              "updated_at": "2026-08-11T08:36:40.887497+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba",
+              "workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Read section 1 of README.md to extract goals, risks, and architecture.",
+                "raw_type": "capability_action",
+                "goal_hypothesis": "Extract specific information from README section 1.",
+                "goal_confidence": "medium",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "d03545f8-07eb-421b-8329-e7f506f8f121",
+              "semantic_observation_id": "d03545f8-07eb-421b-8329-e7f506f8f121",
+              "artifact_ids": [
+                "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+              ],
+              "created_at": "2026-08-11T08:35:01.619573+00:00",
+              "updated_at": "2026-08-11T08:36:40.887501+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 1,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "Read section 1 of README.md to extract goals, risks, and architecture.",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "Extract specific information from README section 1.",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "Read section 1 of README.md to extract goals, risks, and architecture.",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "Extract specific information from README section 1.",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e",
+              "artifact_kind": "step_result",
+              "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+              "workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+              "step_id": "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "risks: Compatibility challenges with various backends.; Potential performance overhead due to abstraction layer.; Complexity in integrating new backends.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "d03545f8-07eb-421b-8329-e7f506f8f121"
+              },
+              "source_observation_ids": [
+                "d03545f8-07eb-421b-8329-e7f506f8f121"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "ce20c0f725feed521c5cd16959e814a14e75cacfb888e6927c31dd3d0d34acce",
+              "content_excerpt": "The goals, risks, and architecture from the README section 1 are as follows:\n\n**Goals:**\n- Develop an inference runtime abstraction layer (Phase-2A) beyond just an LMF-to-vLLM migration.\n- Implement the Inference Trace Layer (Phase-2A.1).\n- Conduct experiments on backend/artifact equivalence (Phase-2A.2).\n- Introduce additional inference backends like TensorRT-LLM, SGLang, or external API adapters (Phase-2B).",
+              "content_length": 412,
+              "created_at": "2026-08-11T08:35:01.620254+00:00",
+              "updated_at": "2026-08-11T08:36:40.887486+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE"
+          ],
+          "complete_count": 1,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "d03545f8-07eb-421b-8329-e7f506f8f121",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "eaa9aced520cfa1bd454236b7a05268df0cd827c36595fe65624f78d80e4f916",
+                "source_hash": "1cab1f92489adb67f6ca9b79695ea8c06a37c63942c6a7af1c539478994bdaa7",
+                "size_chars": 724,
+                "section": "Inference Runtime Abstraction",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 84,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Inference Runtime Abstraction",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "Phase-1 Runtime Baseline",
+                    "line_start": 85
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 119
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 141
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Inference Runtime Abstraction\n\nPhase-2A is now framed as an inference runtime abstraction layer, not only an\nLMF-to-vLLM migration.\n\n```text\nCognitive Runtime Freeze\n  -> ModelBackend Contract\n  -> Inference Runtime Abstraction\n  -> Replaceable Backend\n```\n\nCurrent roadmap:\n\n- Phase-2A.1: Inference Trace Layer\n- Phase-2A.2: Backend / artifact equivalence experiments\n- Phase-2B: additional inference backends such as TensorRT-LLM, SGLang, or\n  external API adapters\n\nSee `docs/inference-trace-layer-design.md` and\n`docs/phase2a-equivalence-matrix.md`.\n\nTrace output can be enabled in the inference benchmark entry points with\n`--trace-output`, which writes append-only JSONL records outside the frozen\nPhase-1 Runtime.\n",
+                "content_length": 724
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            82
+          ],
+          "planner_projection_lengths": [
+            82
+          ],
+          "max_planner_projection_length": 82
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+            "goal_summary": "Extract specific information from README section 1.",
+            "status": "active",
+            "workflow_ids": [
+              "0094db37-4f5b-4017-8473-77b7624c160d"
+            ],
+            "artifact_ids": [
+              "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+            ],
+            "source_goal_hypothesis": "Extract specific information from README section 1.",
+            "source_user_intent": "Read README section 1 and extract: goals, risks, architecture.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-11T08:35:01.614462+00:00",
+            "updated_at": "2026-08-11T08:36:40.888113+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+            "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+            "task_summary": "Extract specific information from README section 1.",
+            "status": "active",
+            "current_step_id": "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba",
+            "step_ids": [
+              "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba"
+            ],
+            "artifact_ids": [
+              "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "Extract specific information from README section 1.",
+            "source_user_intent": "Read README section 1 and extract: goals, risks, architecture.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-11T08:35:01.614491+00:00",
+            "updated_at": "2026-08-11T08:36:40.887497+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "32c08f4b-8159-4a9a-8f5c-38a88e36ee6e",
+              "artifact_kind": "step_result",
+              "goal_id": "b6333d6c-4caf-4957-8c2b-242cfc27dde6",
+              "workflow_id": "0094db37-4f5b-4017-8473-77b7624c160d",
+              "step_id": "db98ca2b-29aa-4ee3-a40c-ac6c421be5ba",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "risks: Compatibility challenges with various backends.; Potential performance overhead due to abstraction layer.; Complexity in integrating new backends.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "d03545f8-07eb-421b-8329-e7f506f8f121"
+              },
+              "source_observation_ids": [
+                "d03545f8-07eb-421b-8329-e7f506f8f121"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "ce20c0f725feed521c5cd16959e814a14e75cacfb888e6927c31dd3d0d34acce",
+              "content_excerpt": "The goals, risks, and architecture from the README section 1 are as follows:\n\n**Goals:**\n- Develop an inference runtime abstraction layer (Phase-2A) beyond just an LMF-to-vLLM migration.\n- Implement the Inference Trace Layer (Phase-2A.1).\n- Conduct experiments on backend/artifact equivalence (Phase-2A.2).\n- Introduce additional inference backends like TensorRT-LLM, SGLang, or external API adapters (Phase-2B).",
+              "content_length": 412,
+              "created_at": "2026-08-11T08:35:01.620254+00:00",
+              "updated_at": "2026-08-11T08:36:40.887486+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1541,
+            "output_tokens": 482,
+            "latency_ms": 68736.74,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1541,
+              "completion_tokens": 482,
+              "total_tokens": 2023
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 903,
+            "output_tokens": 685,
+            "latency_ms": 99265.53,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 903,
+              "completion_tokens": 685,
+              "total_tokens": 1588
+            }
+          }
+        ],
+        "input_tokens": 2444,
+        "output_tokens": 1167,
+        "token_usage": {
+          "input_tokens": 2444,
+          "output_tokens": 1167,
+          "total_tokens": 3611
+        },
+        "latency_ms": 168016.2,
+        "peak_gpu_memory_mb": 14214,
+        "execution_latency_ms": 68745.6,
+        "semantic_latency_ms": 99267.76,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\e089db3c-be56-4a39-a0d4-c74e6c64012d.jsonl"
+    },
+    {
+      "case_id": "L1-03",
+      "description": "Single-step workflow_plan packaging should downgrade to atomic capability execution.",
+      "level": "L1",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The README section describes Phase-2A as an inference runtime abstraction layer, expanding beyond LMF-to-vLLM migration. It outlines a structured approach with components like ModelBackend Contract and Replaceable Backend. The roadmap includes three phases: developing an Inference Trace Layer, conducting backend experiments, and integrating additional backends like TensorRT-LLM. References to supporting documents and trace output functionality are provided."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Simulate single-step workflow plan: Read README section 1 and evaluate it."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+          "active_goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+              "goal_summary": "Evaluate the first section of the README.md file for understanding and analysis.",
+              "status": "active",
+              "workflow_ids": [
+                "7be3f082-8ca8-4d20-83ca-7f4463b8040d"
+              ],
+              "artifact_ids": [
+                "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+              ],
+              "source_goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+              "source_user_intent": "Simulate single-step workflow plan: Read README section 1 and evaluate it.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-11T08:37:42.238609+00:00",
+              "updated_at": "2026-08-11T08:40:22.497152+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+              "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+              "task_summary": "Evaluate the first section of the README.md file for understanding and analysis.",
+              "status": "active",
+              "current_step_id": "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1",
+              "step_ids": [
+                "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1"
+              ],
+              "artifact_ids": [
+                "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+              "source_user_intent": "Simulate single-step workflow plan: Read README section 1 and evaluate it.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-11T08:37:42.238634+00:00",
+              "updated_at": "2026-08-11T08:40:22.496446+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1",
+              "workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "runtime guard selected immediate execution; no persistent Workflow lifecycle required",
+                "raw_type": "workflow_step",
+                "goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+                "goal_confidence": "medium",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "53031338-99cc-482a-88ce-5e325e275158",
+              "semantic_observation_id": "53031338-99cc-482a-88ce-5e325e275158",
+              "artifact_ids": [
+                "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+              ],
+              "created_at": "2026-08-11T08:37:42.243552+00:00",
+              "updated_at": "2026-08-11T08:40:22.496449+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 1,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime guard selected immediate execution; no persistent Workflow lifecycle required",
+            "raw_type": "workflow_step",
+            "goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "runtime guard selected immediate execution; no persistent Workflow lifecycle required",
+            "raw_type": "workflow_step",
+            "goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "838a1de7-0954-4a87-b0c1-0eddbd49bd06",
+              "artifact_kind": "step_result",
+              "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+              "workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+              "step_id": "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "No structured semantic observation was produced.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "53031338-99cc-482a-88ce-5e325e275158"
+              },
+              "source_observation_ids": [
+                "53031338-99cc-482a-88ce-5e325e275158"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "c5ed354197efcc3225e3ca039f178570ff8d6c5f322e01f61868eac79539e181",
+              "content_excerpt": "The README section describes Phase-2A as an inference runtime abstraction layer, expanding beyond LMF-to-vLLM migration. It outlines a structured approach with components like ModelBackend Contract and Replaceable Backend. The roadmap includes three phases: developing an Inference Trace Layer, conducting backend experiments, and integrating additional backends like TensorRT-LLM. References to supporting documents and trace output functionality are provided.",
+              "content_length": 461,
+              "created_at": "2026-08-11T08:37:42.244244+00:00",
+              "updated_at": "2026-08-11T08:40:22.496435+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE"
+          ],
+          "complete_count": 1,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "53031338-99cc-482a-88ce-5e325e275158",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "eaa9aced520cfa1bd454236b7a05268df0cd827c36595fe65624f78d80e4f916",
+                "source_hash": "1cab1f92489adb67f6ca9b79695ea8c06a37c63942c6a7af1c539478994bdaa7",
+                "size_chars": 724,
+                "section": "Inference Runtime Abstraction",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 84,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Inference Runtime Abstraction",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "Phase-1 Runtime Baseline",
+                    "line_start": 85
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 119
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 141
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Inference Runtime Abstraction\n\nPhase-2A is now framed as an inference runtime abstraction layer, not only an\nLMF-to-vLLM migration.\n\n```text\nCognitive Runtime Freeze\n  -> ModelBackend Contract\n  -> Inference Runtime Abstraction\n  -> Replaceable Backend\n```\n\nCurrent roadmap:\n\n- Phase-2A.1: Inference Trace Layer\n- Phase-2A.2: Backend / artifact equivalence experiments\n- Phase-2B: additional inference backends such as TensorRT-LLM, SGLang, or\n  external API adapters\n\nSee `docs/inference-trace-layer-design.md` and\n`docs/phase2a-equivalence-matrix.md`.\n\nTrace output can be enabled in the inference benchmark entry points with\n`--trace-output`, which writes append-only JSONL records outside the frozen\nPhase-1 Runtime.\n",
+                "content_length": 724
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            94
+          ],
+          "planner_projection_lengths": [
+            94
+          ],
+          "max_planner_projection_length": 94
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+            "goal_summary": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "status": "active",
+            "workflow_ids": [
+              "7be3f082-8ca8-4d20-83ca-7f4463b8040d"
+            ],
+            "artifact_ids": [
+              "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+            ],
+            "source_goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "source_user_intent": "Simulate single-step workflow plan: Read README section 1 and evaluate it.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-11T08:37:42.238609+00:00",
+            "updated_at": "2026-08-11T08:40:22.497152+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+            "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+            "task_summary": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "status": "active",
+            "current_step_id": "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1",
+            "step_ids": [
+              "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1"
+            ],
+            "artifact_ids": [
+              "838a1de7-0954-4a87-b0c1-0eddbd49bd06"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "Evaluate the first section of the README.md file for understanding and analysis.",
+            "source_user_intent": "Simulate single-step workflow plan: Read README section 1 and evaluate it.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-11T08:37:42.238634+00:00",
+            "updated_at": "2026-08-11T08:40:22.496446+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "838a1de7-0954-4a87-b0c1-0eddbd49bd06",
+              "artifact_kind": "step_result",
+              "goal_id": "39c8cbf3-e909-4c80-8664-211399a03781",
+              "workflow_id": "7be3f082-8ca8-4d20-83ca-7f4463b8040d",
+              "step_id": "02fc1ba8-4538-4353-b4f5-f5d21c9f60e1",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "No structured semantic observation was produced.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "53031338-99cc-482a-88ce-5e325e275158"
+              },
+              "source_observation_ids": [
+                "53031338-99cc-482a-88ce-5e325e275158"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "c5ed354197efcc3225e3ca039f178570ff8d6c5f322e01f61868eac79539e181",
+              "content_excerpt": "The README section describes Phase-2A as an inference runtime abstraction layer, expanding beyond LMF-to-vLLM migration. It outlines a structured approach with components like ModelBackend Contract and Replaceable Backend. The roadmap includes three phases: developing an Inference Trace Layer, conducting backend experiments, and integrating additional backends like TensorRT-LLM. References to supporting documents and trace output functionality are provided.",
+              "content_length": 461,
+              "created_at": "2026-08-11T08:37:42.244244+00:00",
+              "updated_at": "2026-08-11T08:40:22.496435+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1543,
+            "output_tokens": 418,
+            "latency_ms": 61229.52,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1543,
+              "completion_tokens": 418,
+              "total_tokens": 1961
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 905,
+            "output_tokens": 1127,
+            "latency_ms": 160250.75,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 905,
+              "completion_tokens": 1127,
+              "total_tokens": 2032
+            }
+          }
+        ],
+        "input_tokens": 2448,
+        "output_tokens": 1545,
+        "token_usage": {
+          "input_tokens": 2448,
+          "output_tokens": 1545,
+          "total_tokens": 3993
+        },
+        "latency_ms": 221514.08,
+        "peak_gpu_memory_mb": 14214,
+        "execution_latency_ms": 61258.4,
+        "semantic_latency_ms": 160252.71,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\bb825d1d-6f26-4f2d-8a45-b0b18476be13.jsonl"
+    },
+    {
+      "case_id": "L1-04",
+      "description": "Explicit section range must not silently downgrade to full-file read.",
+      "level": "L1",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "Based on the provided README section, here's the evaluation of the first section:\n\n**Section 1: Inference Runtime Abstraction**\n- The section describes Phase-2A as an inference runtime abstraction layer, which is a shift from the previous focus on LMF-to-vLLM migration.\n- The content outlines the components of the Cognitive Runtime Freeze, including the ModelBackend Contract, Inference Runtime Abstraction, and Replaceable Backend.\n- The roadmap for Phase-2A includes three main parts: the Inference Trace Layer, experiments with backend/artifact equivalence, and the addition of more inference backends like TensorRT-LLM or external API adapters.\n- The section also mentions the availability of design documents for further details and provides instructions for enabling trace output.\n\nPlanned Step progress: completed=1/3; pending=2; workflow_status=active; workflow_id=6fac5441-124d-4429-8193-7e36091c922e\nResource scope coverage: resource_type=document; covered_scopes=section:1; catalog_total=4; missing_scopes=section:2,3,4; status=partial"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "workflow_plan_step_event": 5,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Simulate full-file contract violation: Read README sections 1-3 and evaluate each."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+          "active_goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+              "goal_summary": "Evaluate the first three sections of README.md for potential contract violations",
+              "status": "active",
+              "workflow_ids": [
+                "6fac5441-124d-4429-8193-7e36091c922e"
+              ],
+              "artifact_ids": [
+                "d98e5429-dc6a-42f8-a037-91a2bd729943"
+              ],
+              "source_goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+              "source_user_intent": "Simulate full-file contract violation: Read README sections 1-3 and evaluate each.",
+              "completed_scope_count": 1,
+              "pending_scope_count": 2,
+              "created_at": "2026-08-11T08:41:45.507199+00:00",
+              "updated_at": "2026-08-11T08:43:51.206646+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+              "task_summary": "Read and evaluate the first three sections of README.md",
+              "status": "active",
+              "current_step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+              "step_ids": [
+                "9b08d054-48c3-4da9-ae9c-649e193b0f04"
+              ],
+              "artifact_ids": [
+                "d98e5429-dc6a-42f8-a037-91a2bd729943"
+              ],
+              "planned_step_ids": [
+                "4d378955-2394-497c-907a-1f743312e0ef",
+                "17e7d372-43bc-4885-b5e6-7a982d7738ff",
+                "92773655-f0c5-4aba-80af-05039fd13138"
+              ],
+              "current_plan_step_id": "17e7d372-43bc-4885-b5e6-7a982d7738ff",
+              "source_goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+              "source_user_intent": "Simulate full-file contract violation: Read README sections 1-3 and evaluate each.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-11T08:41:45.507215+00:00",
+              "updated_at": "2026-08-11T08:43:51.206005+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [
+            {
+              "plan_step_id": "4d378955-2394-497c-907a-1f743312e0ef",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "ordinal": 1,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Read section 1 for evaluation",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+              "created_at": "2026-08-11T08:41:45.507233+00:00",
+              "updated_at": "2026-08-11T08:43:51.205997+00:00"
+            },
+            {
+              "plan_step_id": "17e7d372-43bc-4885-b5e6-7a982d7738ff",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "ordinal": 2,
+              "status": "proposed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "reason": "Read section 2 for evaluation",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "",
+              "created_at": "2026-08-11T08:41:45.507241+00:00",
+              "updated_at": "2026-08-11T08:41:45.507243+00:00"
+            },
+            {
+              "plan_step_id": "92773655-f0c5-4aba-80af-05039fd13138",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "ordinal": 3,
+              "status": "proposed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 3
+                },
+                "reason": "Read section 3 for evaluation",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "",
+              "created_at": "2026-08-11T08:41:45.507248+00:00",
+              "updated_at": "2026-08-11T08:41:45.507249+00:00"
+            }
+          ],
+          "executed": [
+            {
+              "step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Read section 1 for evaluation",
+                "raw_type": "workflow_step",
+                "plan_step_id": "4d378955-2394-497c-907a-1f743312e0ef",
+                "goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+                "goal_confidence": "medium",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655",
+              "semantic_observation_id": "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655",
+              "artifact_ids": [
+                "d98e5429-dc6a-42f8-a037-91a2bd729943"
+              ],
+              "created_at": "2026-08-11T08:41:45.511160+00:00",
+              "updated_at": "2026-08-11T08:43:51.205241+00:00"
+            }
+          ],
+          "planned_count": 3,
+          "executed_count": 1,
+          "completed_planned_count": 1,
+          "pending_planned_count": 2,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Read and evaluate the first three sections of README.md",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Read section 1 for evaluation",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Read section 2 for evaluation",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Read section 3 for evaluation",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e"
+            },
+            "reason": "Multiple sections need to be read and evaluated sequentially",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Read and evaluate the first three sections of README.md",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Read section 1 for evaluation",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Read section 2 for evaluation",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Read section 3 for evaluation",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e"
+            },
+            "reason": "Multiple sections need to be read and evaluated sequentially",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+            "goal_confidence": "medium",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "d98e5429-dc6a-42f8-a037-91a2bd729943",
+              "artifact_kind": "step_result",
+              "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "No structured semantic observation was produced.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655"
+              },
+              "source_observation_ids": [
+                "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "9244c88a58be23c6e4cc6033671053ff2e9bea8af6288d78e3163594b57ed977",
+              "content_excerpt": "Based on the provided README section, here's the evaluation of the first section:\n\n**Section 1: Inference Runtime Abstraction**\n- The section describes Phase-2A as an inference runtime abstraction layer, which is a shift from the previous focus on LMF-to-vLLM migration.\n- The content outlines the components of the Cognitive Runtime Freeze, including the ModelBackend Contract, Inference Runtime Abstraction, and Replaceable Backend.\n- The roadmap for Phase-2A includes three main parts: the Inference Trace Layer, experiments with backend/artifact equivalence, and the addition of more inference backends like TensorRT-LLM or external API adapters.\n- The section also mentions the availability of design documents for further details and provides instructions for enabling trace output.",
+              "content_length": 788,
+              "created_at": "2026-08-11T08:41:45.511597+00:00",
+              "updated_at": "2026-08-11T08:43:51.205225+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE"
+          ],
+          "complete_count": 1,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "d98e5429-dc6a-42f8-a037-91a2bd729943"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section Inference Runtime Abstraction from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "eaa9aced520cfa1bd454236b7a05268df0cd827c36595fe65624f78d80e4f916",
+                "source_hash": "1cab1f92489adb67f6ca9b79695ea8c06a37c63942c6a7af1c539478994bdaa7",
+                "size_chars": 724,
+                "section": "Inference Runtime Abstraction",
+                "section_index": 1,
+                "line_start": 59,
+                "line_end": 84,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "Inference Runtime Abstraction",
+                    "line_start": 59
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "Phase-1 Runtime Baseline",
+                    "line_start": 85
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "Phase-1 Runtime on vLLM Backend",
+                    "line_start": 119
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "WSL Model and Runtime Storage Layout",
+                    "line_start": 141
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## Inference Runtime Abstraction\n\nPhase-2A is now framed as an inference runtime abstraction layer, not only an\nLMF-to-vLLM migration.\n\n```text\nCognitive Runtime Freeze\n  -> ModelBackend Contract\n  -> Inference Runtime Abstraction\n  -> Replaceable Backend\n```\n\nCurrent roadmap:\n\n- Phase-2A.1: Inference Trace Layer\n- Phase-2A.2: Backend / artifact equivalence experiments\n- Phase-2B: additional inference backends such as TensorRT-LLM, SGLang, or\n  external API adapters\n\nSee `docs/inference-trace-layer-design.md` and\n`docs/phase2a-equivalence-matrix.md`.\n\nTrace output can be enabled in the inference benchmark entry points with\n`--trace-output`, which writes append-only JSONL records outside the frozen\nPhase-1 Runtime.\n",
+                "content_length": 724
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            102
+          ],
+          "planner_projection_lengths": [
+            102
+          ],
+          "max_planner_projection_length": 102
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+            "goal_summary": "Evaluate the first three sections of README.md for potential contract violations",
+            "status": "active",
+            "workflow_ids": [
+              "6fac5441-124d-4429-8193-7e36091c922e"
+            ],
+            "artifact_ids": [
+              "d98e5429-dc6a-42f8-a037-91a2bd729943"
+            ],
+            "source_goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+            "source_user_intent": "Simulate full-file contract violation: Read README sections 1-3 and evaluate each.",
+            "completed_scope_count": 1,
+            "pending_scope_count": 2,
+            "created_at": "2026-08-11T08:41:45.507199+00:00",
+            "updated_at": "2026-08-11T08:43:51.206646+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+            "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+            "task_summary": "Read and evaluate the first three sections of README.md",
+            "status": "active",
+            "current_step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+            "step_ids": [
+              "9b08d054-48c3-4da9-ae9c-649e193b0f04"
+            ],
+            "artifact_ids": [
+              "d98e5429-dc6a-42f8-a037-91a2bd729943"
+            ],
+            "planned_step_ids": [
+              "4d378955-2394-497c-907a-1f743312e0ef",
+              "17e7d372-43bc-4885-b5e6-7a982d7738ff",
+              "92773655-f0c5-4aba-80af-05039fd13138"
+            ],
+            "current_plan_step_id": "17e7d372-43bc-4885-b5e6-7a982d7738ff",
+            "source_goal_hypothesis": "Evaluate the first three sections of README.md for potential contract violations",
+            "source_user_intent": "Simulate full-file contract violation: Read README sections 1-3 and evaluate each.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-11T08:41:45.507215+00:00",
+            "updated_at": "2026-08-11T08:43:51.206005+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 3,
+          "active_workflow_plan": {
+            "total": 3,
+            "completed": 1,
+            "pending": 2
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "d98e5429-dc6a-42f8-a037-91a2bd729943",
+              "artifact_kind": "step_result",
+              "goal_id": "165acf22-93c3-43a4-b016-16585ca4f6f3",
+              "workflow_id": "6fac5441-124d-4429-8193-7e36091c922e",
+              "step_id": "9b08d054-48c3-4da9-ae9c-649e193b0f04",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=Inference Runtime Abstraction",
+              "summary": "No structured semantic observation was produced.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655"
+              },
+              "source_observation_ids": [
+                "1d8e08e9-1c5c-4da1-9cb8-65c59a5d6655"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "9244c88a58be23c6e4cc6033671053ff2e9bea8af6288d78e3163594b57ed977",
+              "content_excerpt": "Based on the provided README section, here's the evaluation of the first section:\n\n**Section 1: Inference Runtime Abstraction**\n- The section describes Phase-2A as an inference runtime abstraction layer, which is a shift from the previous focus on LMF-to-vLLM migration.\n- The content outlines the components of the Cognitive Runtime Freeze, including the ModelBackend Contract, Inference Runtime Abstraction, and Replaceable Backend.\n- The roadmap for Phase-2A includes three main parts: the Inference Trace Layer, experiments with backend/artifact equivalence, and the addition of more inference backends like TensorRT-LLM or external API adapters.\n- The section also mentions the availability of design documents for further details and provides instructions for enabling trace output.",
+              "content_length": 788,
+              "created_at": "2026-08-11T08:41:45.511597+00:00",
+              "updated_at": "2026-08-11T08:43:51.205225+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1545,
+            "output_tokens": 583,
+            "latency_ms": 82901.77,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1545,
+              "completion_tokens": 583,
+              "total_tokens": 2128
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 907,
+            "output_tokens": 847,
+            "latency_ms": 125692.44,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 907,
+              "completion_tokens": 847,
+              "total_tokens": 1754
+            }
+          }
+        ],
+        "input_tokens": 2452,
+        "output_tokens": 1430,
+        "token_usage": {
+          "input_tokens": 2452,
+          "output_tokens": 1430,
+          "total_tokens": 3882
+        },
+        "latency_ms": 208621.04,
+        "peak_gpu_memory_mb": 14214,
+        "execution_latency_ms": 82923.51,
+        "semantic_latency_ms": 125693.68,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\909d53b6-1518-43ca-a9be-bed1d8ad5b54.jsonl"
+    }
+  ]
+}

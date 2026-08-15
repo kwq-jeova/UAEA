@@ -1,0 +1,136 @@
+{
+  "diagnostic": "minimal_backend_compare",
+  "summary": {
+    "total": 6,
+    "ok": 3,
+    "failed": 3,
+    "by_backend": {
+      "lmf": {
+        "total": 3,
+        "ok": 3,
+        "bang": 0
+      },
+      "vllm": {
+        "total": 3,
+        "ok": 0,
+        "bang": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>\nOkay, so I need to figure out how to extract the goals,",
+      "text_repr": "'<think>\\nOkay, so I need to figure out how to extract the goals,'",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 9659.04,
+      "usage": {
+        "prompt_tokens": 23,
+        "completion_tokens": 16,
+        "total_tokens": 39
+      },
+      "error": null,
+      "case_id": "upper_you_are",
+      "system": "You are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "upper_you_are",
+      "system": "You are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>\nOkay, so I need to figure out how to extract the goals,",
+      "text_repr": "'<think>\\nOkay, so I need to figure out how to extract the goals,'",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 1466.919,
+      "usage": {
+        "prompt_tokens": 23,
+        "completion_tokens": 16,
+        "total_tokens": 39
+      },
+      "error": null,
+      "case_id": "lower_you_are",
+      "system": "you are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "lower_you_are",
+      "system": "you are a local assistant.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "lmf",
+      "base_url": "http://127.0.0.1:8000/v1",
+      "model": "DeepSeek-R1-Distill-Qwen-14B",
+      "ok": true,
+      "finish_reason": "length",
+      "text": "<think>\nAlright, the user has asked me to return a JSON object containing the",
+      "text_repr": "'<think>\\nAlright, the user has asked me to return a JSON object containing the'",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 2603.473,
+      "usage": {
+        "prompt_tokens": 27,
+        "completion_tokens": 16,
+        "total_tokens": 43
+      },
+      "error": null,
+      "case_id": "json_only",
+      "system": "Return one JSON object only. Do not explain.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    },
+    {
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "model": "ds14b-awq",
+      "ok": false,
+      "finish_reason": "error",
+      "text": "",
+      "text_repr": "",
+      "starts_with_bang": false,
+      "bang_ratio": 0.0,
+      "latency_ms": 0.0,
+      "usage": null,
+      "error": "URLError: <urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "case_id": "json_only",
+      "system": "Return one JSON object only. Do not explain.",
+      "user": "Read README section 1 and extract: goals, risks, architecture."
+    }
+  ]
+}
