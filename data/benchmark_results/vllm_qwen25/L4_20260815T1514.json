@@ -1,0 +1,1683 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "qwen25-14b-awq",
+    "timeout_seconds": 300
+  },
+  "trace_output": "data\\inference_traces\\vllm_qwen25_phase1_l3_l6.jsonl",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "L4-01",
+      "description": "Summarize completed section Artifacts without rereading the full source document.",
+      "level": "L4",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The first section of the README file describes the project vision for UAEA. The project aims to maintain a cognitive runtime that preserves stable agent semantics, supports an agent evolution pipeline, and provides an inference abstraction layer. This allows different inference runtimes to be used interchangeably behind a common contract.\n\nPlanned Step progress: completed=1/3; pending=2; workflow_status=active; workflow_id=944ffe1f-8953-4815-9454-d734a8d39a91\nResource scope coverage: resource_type=document; covered_scopes=section:1; catalog_total=6; missing_scopes=section:2,3,4,5,6; status=partial",
+        "The second section of the README file provides an overview of the architecture. It describes how Phase-1 of the project is included as a frozen Git submodule, which includes the Runtime Control Plane with various components such as workflow lifecycle, goal/intent relations, cursor execution models, capability execution, failure handling, and benchmark semantics. Phase-2A exists outside this frozen submodule and includes components like the ModelBackend contract, adapters for different inference platforms, and a tracing backend for emitting trace records.\n\nPlanned Step progress: completed=2/3; pending=1; workflow_status=active; workflow_id=944ffe1f-8953-4815-9454-d734a8d39a91\nResource scope coverage: resource_type=document; covered_scopes=section:1,2; catalog_total=6; missing_scopes=section:3,4,5,6; status=partial",
+        "The third section of the README file details the current progress of the project. It lists several areas and their statuses, including the Phase-1 Cognitive Runtime Freeze, LMF baseline, ModelBackend contract, Inference trace layer, vLLM transport/API, vLLM backend adapter, and vLLM semantic migration. All these areas have passed their respective tests except for the vLLM semantic migration, which has passed for levels L0-L2 but is bounded.\n\nThe section also mentions the current production baselines and candidates, including the LMFBackend, DeepSeek-R1-Distill-Qwen-14B, HF/LLaMA-Factory 4-bit loading path, VLLMBackend, Qwen2.5-14B-Instruct-AWQ, and others. Additionally, it notes a rejected vLLM artifact due to specific issues related to the first-token pathology and logprobs NaN under certain conditions.\n\nPlanned Step progress: completed=3/3; pending=0; workflow_status=plan_exhausted; workflow_id=944ffe1f-8953-4815-9454-d734a8d39a91\nResource scope coverage: resource_type=document; covered_scopes=section:1,2,3; catalog_total=6; missing_scopes=section:4,5,6; status=partial\nNote: planned Step completion is not resource scope coverage or task completion.",
+        "The README file at D:\\UAEA\\README.md contains three sections that have been summarized:\n\n1. **Project Vision**: Describes the project's aim to maintain a stable cognitive runtime, support agent evolution, and provide flexible inference runtimes.\n2. **Architecture Overview**: Explains the project structure, including a frozen Git submodule for Phase-1 and components for interfacing with different inference platforms in Phase-2A.\n3. **Current Progress**: Lists the project's achievements, including passing tests for various components and providing details on current production baselines and candidates."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 8,
+          "projection_event": 2,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "workflow_plan_step_event": 9,
+          "agent_decision_event": 4,
+          "file_event": 3,
+          "tool_event": 3,
+          "execution_observation_event": 3,
+          "workflow_step_event": 4,
+          "workflow_artifact_event": 7,
+          "semantic_observation_event": 4,
+          "runtime_snapshot_event": 4
+        },
+        "intent": {
+          "recent_intents": [
+            "Continue.",
+            "Continue.",
+            "Summarize all previous section evaluations."
+          ]
+        },
+        "goal": {
+          "hypothesis": "summary previous workflow artifacts",
+          "active_goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "goal_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "status": "active",
+              "workflow_ids": [
+                "944ffe1f-8953-4815-9454-d734a8d39a91"
+              ],
+              "artifact_ids": [
+                "da70e043-fd48-4147-97fa-453aafb4cd74",
+                "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+                "b7cc071c-9efd-4765-886b-950dff808f8d",
+                "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+              ],
+              "source_goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "source_user_intent": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "completed_scope_count": 3,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-15T07:16:25.922168+00:00",
+              "updated_at": "2026-08-15T07:16:45.195662+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "task_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "status": "active",
+              "current_step_id": "d20e40f1-4069-4ae0-a201-8e87fe06a763",
+              "step_ids": [
+                "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+                "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+                "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+                "d20e40f1-4069-4ae0-a201-8e87fe06a763"
+              ],
+              "artifact_ids": [
+                "da70e043-fd48-4147-97fa-453aafb4cd74",
+                "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+                "b7cc071c-9efd-4765-886b-950dff808f8d",
+                "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+              ],
+              "planned_step_ids": [
+                "b30df432-5573-4bdd-943a-2420adeeae4b",
+                "ebf8d0b6-88e2-4a2d-9a62-982cd19cf32c",
+                "d8983609-a6fe-4dd0-a953-e2ef987eae41"
+              ],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "source_user_intent": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:16:25.922188+00:00",
+              "updated_at": "2026-08-15T07:16:45.194831+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [
+            {
+              "plan_step_id": "b30df432-5573-4bdd-943a-2420adeeae4b",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "ordinal": 1,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Evaluate section 1",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+              "created_at": "2026-08-15T07:16:25.922203+00:00",
+              "updated_at": "2026-08-15T07:16:29.802266+00:00"
+            },
+            {
+              "plan_step_id": "ebf8d0b6-88e2-4a2d-9a62-982cd19cf32c",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "ordinal": 2,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "reason": "Evaluate section 2",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+              "created_at": "2026-08-15T07:16:25.922212+00:00",
+              "updated_at": "2026-08-15T07:16:34.160555+00:00"
+            },
+            {
+              "plan_step_id": "d8983609-a6fe-4dd0-a953-e2ef987eae41",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "ordinal": 3,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 3
+                },
+                "reason": "Evaluate section 3",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+              "created_at": "2026-08-15T07:16:25.922219+00:00",
+              "updated_at": "2026-08-15T07:16:40.141164+00:00"
+            }
+          ],
+          "executed": [
+            {
+              "step_id": "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Evaluate section 1",
+                "raw_type": "workflow_step",
+                "plan_step_id": "b30df432-5573-4bdd-943a-2420adeeae4b",
+                "goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "10572755-5bfe-43ce-9757-9faec0830aaa",
+              "semantic_observation_id": "10572755-5bfe-43ce-9757-9faec0830aaa",
+              "artifact_ids": [
+                "da70e043-fd48-4147-97fa-453aafb4cd74"
+              ],
+              "created_at": "2026-08-15T07:16:25.927137+00:00",
+              "updated_at": "2026-08-15T07:16:29.801904+00:00"
+            },
+            {
+              "step_id": "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "reason": "Evaluate section 2",
+                "raw_type": "workflow_step",
+                "plan_step_id": "ebf8d0b6-88e2-4a2d-9a62-982cd19cf32c",
+                "goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "a101ee5c-194d-4e66-b102-2ccbea8e554b",
+              "semantic_observation_id": "a101ee5c-194d-4e66-b102-2ccbea8e554b",
+              "artifact_ids": [
+                "f4fe9d68-0b3c-43c3-9f65-2a21d073709f"
+              ],
+              "created_at": "2026-08-15T07:16:29.806461+00:00",
+              "updated_at": "2026-08-15T07:16:34.160214+00:00"
+            },
+            {
+              "step_id": "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 3
+                },
+                "reason": "Evaluate section 3",
+                "raw_type": "workflow_step",
+                "plan_step_id": "d8983609-a6fe-4dd0-a953-e2ef987eae41",
+                "goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "a7f5ead4-1f56-4590-a42f-e6e36bded0ff",
+              "semantic_observation_id": "a7f5ead4-1f56-4590-a42f-e6e36bded0ff",
+              "artifact_ids": [
+                "b7cc071c-9efd-4765-886b-950dff808f8d"
+              ],
+              "created_at": "2026-08-15T07:16:34.165722+00:00",
+              "updated_at": "2026-08-15T07:16:40.140843+00:00"
+            },
+            {
+              "step_id": "d20e40f1-4069-4ae0-a201-8e87fe06a763",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "status": "completed",
+              "capability": "",
+              "tool": "",
+              "action": {
+                "action": "workflow_artifact_answer",
+                "tool": null,
+                "arguments": {
+                  "artifact_ids": [
+                    "da70e043-fd48-4147-97fa-453aafb4cd74",
+                    "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+                    "b7cc071c-9efd-4765-886b-950dff808f8d"
+                  ],
+                  "artifact_kind": "summary"
+                },
+                "reason": "runtime reference resolved request to workflow artifacts",
+                "goal_hypothesis": "summary previous workflow artifacts",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "",
+              "semantic_observation_id": "",
+              "artifact_ids": [
+                "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+              ],
+              "created_at": "2026-08-15T07:16:45.194190+00:00",
+              "updated_at": "2026-08-15T07:16:45.194837+00:00"
+            }
+          ],
+          "planned_count": 3,
+          "executed_count": 4,
+          "completed_planned_count": 3,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Evaluate section 1",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Evaluate section 2",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Evaluate section 3",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91"
+            },
+            "reason": "Multiple ordered steps are required to read and evaluate each section before summarizing the overall architecture.",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          },
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          },
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          },
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Evaluate section 1",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Evaluate section 2",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Evaluate section 3",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91"
+            },
+            "reason": "Multiple ordered steps are required to read and evaluate each section before summarizing the overall architecture.",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          },
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          },
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section",
+            "read_section",
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1,
+            2,
+            3
+          ],
+          "read_file_count": 0,
+          "read_section_count": 3,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 4,
+          "items": [
+            {
+              "artifact_id": "da70e043-fd48-4147-97fa-453aafb4cd74",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README file is located at D:\\UAEA\\README.md.; Section 1 describes the project vision.; Section 2 is titled \"Architecture Overview\".\nkey_points: Section 1 outlines the goals of maintaining a stable cognitive runtime, supporting agent evolution, and enabling flexible inference runtimes.; Sections 2 and 3 have not been read yet but are part of the README file.\nboundaries: Only section 1 has been evaluated so far.\nrisks: Lack of information from sections 2 and 3 limits a comprehensive evaluation.\nopen_questions: What does section 2 (Architecture Overview) contain?; What progress has been made according to section 3?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "10572755-5bfe-43ce-9757-9faec0830aaa"
+              },
+              "source_observation_ids": [
+                "10572755-5bfe-43ce-9757-9faec0830aaa"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "26dce4bafb283e836dcc27ecf7f16293d16a4e6380020c3d59a99dde11861f4c",
+              "content_excerpt": "The first section of the README file describes the project vision for UAEA. The project aims to maintain a cognitive runtime that preserves stable agent semantics, supports an agent evolution pipeline, and provides an inference abstraction layer. This allows different inference runtimes to be used interchangeably behind a common contract.",
+              "content_length": 340,
+              "created_at": "2026-08-15T07:16:25.927514+00:00",
+              "updated_at": "2026-08-15T07:16:29.801894+00:00"
+            },
+            {
+              "artifact_id": "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=2. Architecture Overview",
+              "summary": "facts: Phase-1 is included as a frozen Git submodule.; Phase-1 includes the Runtime Control Plane with various components.; Phase-2A exists outside the frozen submodule.\nkey_points: Phase-1 is a frozen Git submodule containing the Runtime Control Plane.; Phase-2A is outside the frozen submodule and includes components for interfacing with different inference platforms.; The architecture includes a tracing backend for emitting trace records.\nboundaries: Only section 2 has been evaluated so far.; Information about section 3 is not available yet.\nrisks: Limited information from section 3 restricts a complete understanding of the project's current progress.\nopen_questions: What does section 3 (Current Progress) contain?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "a101ee5c-194d-4e66-b102-2ccbea8e554b"
+              },
+              "source_observation_ids": [
+                "a101ee5c-194d-4e66-b102-2ccbea8e554b"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "065cc8f03396eaf5ebe9eefe07c1364abd6facaefec1d4448930986a87b8ce8b",
+              "content_excerpt": "The second section of the README file provides an overview of the architecture. It describes how Phase-1 of the project is included as a frozen Git submodule, which includes the Runtime Control Plane with various components such as workflow lifecycle, goal/intent relations, cursor execution models, capability execution, failure handling, and benchmark semantics. Phase-2A exists outside this frozen submodule and includes components like the ModelBackend contract, adapters for different inference platforms, and a tracing backend for emitting trace records.",
+              "content_length": 560,
+              "created_at": "2026-08-15T07:16:29.806908+00:00",
+              "updated_at": "2026-08-15T07:16:34.160205+00:00"
+            },
+            {
+              "artifact_id": "b7cc071c-9efd-4765-886b-950dff808f8d",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=3. Current Progress",
+              "summary": "facts: The README file is located at D:\\UAEA\\README.md.; The third section is titled \"Current Progress\".; It contains a table listing various areas and their statuses.\nkey_points: The project has achieved several milestones, including passing tests for Phase-1 Cognitive Runtime Freeze, LMF baseline, ModelBackend contract, Inference trace layer, vLLM transport/API, and vLLM backend adapter.; The vLLM semantic migration has passed for levels L0-L2 but is bounded.; Details about current production baselines and candidates are provided.\nboundaries: The README file contains more sections beyond the third one.; Detailed explanations for some of the statuses are not provided in the given content.\nrisks: Limited information about the validation status and running validation processes.; Specific issues with the rejected vLLM artifact may impact future development.\nopen_questions: What does the fourth section (Validation Status) contain?; How does the validation process work?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              },
+              "source_observation_ids": [
+                "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "d0ffe8dd680b138748686c448d46d3bdb707f9b8f43db1dd389bb8d514f12536",
+              "content_excerpt": "The third section of the README file details the current progress of the project. It lists several areas and their statuses, including the Phase-1 Cognitive Runtime Freeze, LMF baseline, ModelBackend contract, Inference trace layer, vLLM transport/API, vLLM backend adapter, and vLLM semantic migration. All these areas have passed their respective tests except for the vLLM semantic migration, which has passed for levels L0-L2 but is bounded.\n\nThe section also mentions the current production baselines and candidates, including the LMFBackend, DeepSeek-R1-Distill-Qwen-14B, HF/LLaMA-Factory 4-bit loading path, VLLMBackend, Qwen2.5-14B-Instruct-AWQ, and others. Additionally, it notes a rejected vLLM artifact due to specific issues related to the first-token pathology and logprobs NaN under certain conditions.",
+              "content_length": 815,
+              "created_at": "2026-08-15T07:16:34.166086+00:00",
+              "updated_at": "2026-08-15T07:16:40.140834+00:00"
+            },
+            {
+              "artifact_id": "017ae5fe-80a1-4d66-8d68-0e0526be83b7",
+              "artifact_kind": "summary",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d20e40f1-4069-4ae0-a201-8e87fe06a763",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Summary of 3 workflow artifacts for: Summarize all previous section evaluations.",
+              "metadata": {},
+              "source_observation_ids": [
+                "10572755-5bfe-43ce-9757-9faec0830aaa",
+                "a101ee5c-194d-4e66-b102-2ccbea8e554b",
+                "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              ],
+              "source_artifact_ids": [
+                "da70e043-fd48-4147-97fa-453aafb4cd74",
+                "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+                "b7cc071c-9efd-4765-886b-950dff808f8d"
+              ],
+              "version": 1,
+              "content_hash": "14fa8a86403c0903ef76aee6128592bb57110a6076dd2d5d23e3b577627fe065",
+              "content_excerpt": "The README file at D:\\UAEA\\README.md contains three sections that have been summarized:\n\n1. **Project Vision**: Describes the project's aim to maintain a stable cognitive runtime, support agent evolution, and provide flexible inference runtimes.\n2. **Architecture Overview**: Explains the project structure, including a frozen Git submodule for Phase-1 and components for interfacing with different inference platforms in Phase-2A.\n3. **Current Progress**: Lists the project's achievements, including passing tests for various components and providing details on current production baselines and candidates.",
+              "content_length": 607,
+              "created_at": "2026-08-15T07:16:45.194820+00:00",
+              "updated_at": "2026-08-15T07:16:45.194827+00:00"
+            }
+          ],
+          "summary_count": 1,
+          "correction_count": 0,
+          "kinds": [
+            "step_result",
+            "step_result",
+            "step_result",
+            "summary"
+          ],
+          "statuses": [
+            "COMPLETE",
+            "COMPLETE",
+            "COMPLETE",
+            "COMPLETE"
+          ],
+          "complete_count": 4,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 1,
+          "complete_ids": [
+            "da70e043-fd48-4147-97fa-453aafb4cd74",
+            "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+            "b7cc071c-9efd-4765-886b-950dff808f8d",
+            "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 3,
+          "failure_count": 0,
+          "statuses": [
+            "success",
+            "success",
+            "success"
+          ],
+          "messages": [
+            "Read section 1. Project Vision from D:\\UAEA\\README.md",
+            "Read section 2. Architecture Overview from D:\\UAEA\\README.md",
+            "Read section 3. Current Progress from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "10572755-5bfe-43ce-9757-9faec0830aaa",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 1. Project Vision from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 682,
+                "section": "1. Project Vision",
+                "section_index": 1,
+                "line_start": 11,
+                "line_end": 30,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 1. Project Vision\n\nUAEA is designed around three long-running goals:\n\n- Cognitive runtime: preserve stable agent semantics for goals, workflows,\n  tools, semantic observations, artifacts, and failure handling.\n- Agent evolution pipeline: keep runtime traces and artifacts structured enough\n  to support future memory, reflection, evaluation, and improvement loops.\n- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible\n  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind\n  a common contract.\n\nThe governing rule is:\n\n```text\nCognitive Runtime stable\n  -> Inference contract stable\n  -> Backend implementation replaceable\n```\n",
+                "content_length": 682
+              }
+            },
+            {
+              "observation_id": "a101ee5c-194d-4e66-b102-2ccbea8e554b",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 2. Architecture Overview from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "9f642c6fe397b4c36adf22f5eac719321a69dfd86cd89af535113e6f819ee1d6",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 1339,
+                "section": "2. Architecture Overview",
+                "section_index": 2,
+                "line_start": 31,
+                "line_end": 92,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 2. Architecture Overview\n\nPhase-1 is included as a frozen Git submodule:\n\n```text\nruntime/phase1-runtime\ntag: v1.0.0-phase1-runtime\ncommit: de0ecb0e8837c848f842a996fa2dad1c93666f2f\n```\n\nPhase-1 freezes the Runtime Control Plane:\n\n- Workflow lifecycle\n- Goal / Intent relation\n- Cursor execution model\n- Capability execution\n- Execution Observation\n- Semantic Observation\n- Artifact lifecycle\n- Failure handling\n- L0-L6 benchmark semantics\n\nPhase-2A lives outside the frozen submodule:\n\n```text\nbackend/             ModelBackend contract and adapters\nbenchmark/inference/ inference-only measurement framework\ntests/               Phase-2A contract tests\ndocs/                architecture and validation records\ndata/                benchmark, trace, and diagnostic artifacts\n```\n\nRuntime path:\n\n```text\nUser\n  -> Phase-1 Cognitive Runtime\n  -> ModelBackend Contract\n  -> Backend Adapter\n  -> Inference Platform\n```\n\nCurrent backend adapters:\n\n- `LMFBackend`\n- `VLLMBackend`\n- `TransformersBackend`\n",
+                "content_length": 1339
+              }
+            },
+            {
+              "observation_id": "a7f5ead4-1f56-4590-a42f-e6e36bded0ff",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 3. Current Progress from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "db6d4389b03727860491e52cfc0434dad87413cbb21b18a521bac3f951656466",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 1088,
+                "section": "3. Current Progress",
+                "section_index": 3,
+                "line_start": 93,
+                "line_end": 136,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 3. Current Progress\n\n| Area | Status |\n| --- | --- |\n| Phase-1 Cognitive Runtime Freeze | PASS |\n| LMF baseline | PASS |\n| ModelBackend contract | PASS |\n| Inference trace layer | PASS |\n| vLLM transport/API | PASS |\n| vLLM backend adapter | PASS |\n| vLLM semantic migration | bounded L0-L2 PASS |\n\nCurrent production baseline:\n\n```text\nLMFBackend\nDeepSeek-R1-Distill-Qwen-14B\nHF/LLaMA-Factory 4-bit loading path\nPhase-1 L0/L1/L2: PASS\n```\n\nCurrent vLLM production candidate:\n\n```text\nVLLMBackend\nQwen2.5-14B-Instruct-AWQ\ntraditional AWQ / auto_awq / GEMM\nPhase-1 L0/L1/L2: PASS\n```\n\nRejected vLLM artifact:\n\n```text\nDeepSeek-R1-Distill-Qwen-14B-AWQ-INT4\ncompressed-tensors WNA16\nRejected for current production use due to first-token `!` pathology and\nlogprobs NaN under vLLM 0.26.0 on the current RTX 5090 D environment.\n```\n\nThe DS14B result does not mean the original checkpoint is damaged, and it does\nnot mean compressed-tensors is globally unusable. The compatibility boundary is\nthe specif",
+                "content_length": 1088
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 4,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success",
+            "success",
+            "success",
+            "success"
+          ],
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop",
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 2,
+          "projection_lengths": [
+            105,
+            4579
+          ],
+          "planner_projection_lengths": [
+            105
+          ],
+          "max_planner_projection_length": 105
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+            "goal_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "status": "active",
+            "workflow_ids": [
+              "944ffe1f-8953-4815-9454-d734a8d39a91"
+            ],
+            "artifact_ids": [
+              "da70e043-fd48-4147-97fa-453aafb4cd74",
+              "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+              "b7cc071c-9efd-4765-886b-950dff808f8d",
+              "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+            ],
+            "source_goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "source_user_intent": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "completed_scope_count": 3,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-15T07:16:25.922168+00:00",
+            "updated_at": "2026-08-15T07:16:45.195662+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+            "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+            "task_summary": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "status": "active",
+            "current_step_id": "d20e40f1-4069-4ae0-a201-8e87fe06a763",
+            "step_ids": [
+              "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+              "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+              "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+              "d20e40f1-4069-4ae0-a201-8e87fe06a763"
+            ],
+            "artifact_ids": [
+              "da70e043-fd48-4147-97fa-453aafb4cd74",
+              "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+              "b7cc071c-9efd-4765-886b-950dff808f8d",
+              "017ae5fe-80a1-4d66-8d68-0e0526be83b7"
+            ],
+            "planned_step_ids": [
+              "b30df432-5573-4bdd-943a-2420adeeae4b",
+              "ebf8d0b6-88e2-4a2d-9a62-982cd19cf32c",
+              "d8983609-a6fe-4dd0-a953-e2ef987eae41"
+            ],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "source_user_intent": "Read README sections 1-3, evaluate each section, then summarize overall architecture.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:16:25.922188+00:00",
+            "updated_at": "2026-08-15T07:16:45.194831+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 4,
+          "planned_step_count": 3,
+          "active_workflow_plan": {
+            "total": 3,
+            "completed": 3,
+            "pending": 0
+          },
+          "artifact_count": 4,
+          "recent_artifacts": [
+            {
+              "artifact_id": "da70e043-fd48-4147-97fa-453aafb4cd74",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d6bdee34-b2b0-4cb7-b633-74cbfc9ed579",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README file is located at D:\\UAEA\\README.md.; Section 1 describes the project vision.; Section 2 is titled \"Architecture Overview\".\nkey_points: Section 1 outlines the goals of maintaining a stable cognitive runtime, supporting agent evolution, and enabling flexible inference runtimes.; Sections 2 and 3 have not been read yet but are part of the README file.\nboundaries: Only section 1 has been evaluated so far.\nrisks: Lack of information from sections 2 and 3 limits a comprehensive evaluation.\nopen_questions: What does section 2 (Architecture Overview) contain?; What progress has been made according to section 3?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "10572755-5bfe-43ce-9757-9faec0830aaa"
+              },
+              "source_observation_ids": [
+                "10572755-5bfe-43ce-9757-9faec0830aaa"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "26dce4bafb283e836dcc27ecf7f16293d16a4e6380020c3d59a99dde11861f4c",
+              "content_excerpt": "The first section of the README file describes the project vision for UAEA. The project aims to maintain a cognitive runtime that preserves stable agent semantics, supports an agent evolution pipeline, and provides an inference abstraction layer. This allows different inference runtimes to be used interchangeably behind a common contract.",
+              "content_length": 340,
+              "created_at": "2026-08-15T07:16:25.927514+00:00",
+              "updated_at": "2026-08-15T07:16:29.801894+00:00"
+            },
+            {
+              "artifact_id": "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d3f1d42c-dea2-4ef5-8b11-9cfdae835689",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=2. Architecture Overview",
+              "summary": "facts: Phase-1 is included as a frozen Git submodule.; Phase-1 includes the Runtime Control Plane with various components.; Phase-2A exists outside the frozen submodule.\nkey_points: Phase-1 is a frozen Git submodule containing the Runtime Control Plane.; Phase-2A is outside the frozen submodule and includes components for interfacing with different inference platforms.; The architecture includes a tracing backend for emitting trace records.\nboundaries: Only section 2 has been evaluated so far.; Information about section 3 is not available yet.\nrisks: Limited information from section 3 restricts a complete understanding of the project's current progress.\nopen_questions: What does section 3 (Current Progress) contain?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "a101ee5c-194d-4e66-b102-2ccbea8e554b"
+              },
+              "source_observation_ids": [
+                "a101ee5c-194d-4e66-b102-2ccbea8e554b"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "065cc8f03396eaf5ebe9eefe07c1364abd6facaefec1d4448930986a87b8ce8b",
+              "content_excerpt": "The second section of the README file provides an overview of the architecture. It describes how Phase-1 of the project is included as a frozen Git submodule, which includes the Runtime Control Plane with various components such as workflow lifecycle, goal/intent relations, cursor execution models, capability execution, failure handling, and benchmark semantics. Phase-2A exists outside this frozen submodule and includes components like the ModelBackend contract, adapters for different inference platforms, and a tracing backend for emitting trace records.",
+              "content_length": 560,
+              "created_at": "2026-08-15T07:16:29.806908+00:00",
+              "updated_at": "2026-08-15T07:16:34.160205+00:00"
+            },
+            {
+              "artifact_id": "b7cc071c-9efd-4765-886b-950dff808f8d",
+              "artifact_kind": "step_result",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "fca2e7ba-074c-4f89-867f-2c99860f7ff2",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=3. Current Progress",
+              "summary": "facts: The README file is located at D:\\UAEA\\README.md.; The third section is titled \"Current Progress\".; It contains a table listing various areas and their statuses.\nkey_points: The project has achieved several milestones, including passing tests for Phase-1 Cognitive Runtime Freeze, LMF baseline, ModelBackend contract, Inference trace layer, vLLM transport/API, and vLLM backend adapter.; The vLLM semantic migration has passed for levels L0-L2 but is bounded.; Details about current production baselines and candidates are provided.\nboundaries: The README file contains more sections beyond the third one.; Detailed explanations for some of the statuses are not provided in the given content.\nrisks: Limited information about the validation status and running validation processes.; Specific issues with the rejected vLLM artifact may impact future development.\nopen_questions: What does the fourth section (Validation Status) contain?; How does the validation process work?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              },
+              "source_observation_ids": [
+                "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "d0ffe8dd680b138748686c448d46d3bdb707f9b8f43db1dd389bb8d514f12536",
+              "content_excerpt": "The third section of the README file details the current progress of the project. It lists several areas and their statuses, including the Phase-1 Cognitive Runtime Freeze, LMF baseline, ModelBackend contract, Inference trace layer, vLLM transport/API, vLLM backend adapter, and vLLM semantic migration. All these areas have passed their respective tests except for the vLLM semantic migration, which has passed for levels L0-L2 but is bounded.\n\nThe section also mentions the current production baselines and candidates, including the LMFBackend, DeepSeek-R1-Distill-Qwen-14B, HF/LLaMA-Factory 4-bit loading path, VLLMBackend, Qwen2.5-14B-Instruct-AWQ, and others. Additionally, it notes a rejected vLLM artifact due to specific issues related to the first-token pathology and logprobs NaN under certain conditions.",
+              "content_length": 815,
+              "created_at": "2026-08-15T07:16:34.166086+00:00",
+              "updated_at": "2026-08-15T07:16:40.140834+00:00"
+            },
+            {
+              "artifact_id": "017ae5fe-80a1-4d66-8d68-0e0526be83b7",
+              "artifact_kind": "summary",
+              "goal_id": "7d7a49ed-00e9-43d1-a411-8fa4d54bd42f",
+              "workflow_id": "944ffe1f-8953-4815-9454-d734a8d39a91",
+              "step_id": "d20e40f1-4069-4ae0-a201-8e87fe06a763",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Summary of 3 workflow artifacts for: Summarize all previous section evaluations.",
+              "metadata": {},
+              "source_observation_ids": [
+                "10572755-5bfe-43ce-9757-9faec0830aaa",
+                "a101ee5c-194d-4e66-b102-2ccbea8e554b",
+                "a7f5ead4-1f56-4590-a42f-e6e36bded0ff"
+              ],
+              "source_artifact_ids": [
+                "da70e043-fd48-4147-97fa-453aafb4cd74",
+                "f4fe9d68-0b3c-43c3-9f65-2a21d073709f",
+                "b7cc071c-9efd-4765-886b-950dff808f8d"
+              ],
+              "version": 1,
+              "content_hash": "14fa8a86403c0903ef76aee6128592bb57110a6076dd2d5d23e3b577627fe065",
+              "content_excerpt": "The README file at D:\\UAEA\\README.md contains three sections that have been summarized:\n\n1. **Project Vision**: Describes the project's aim to maintain a stable cognitive runtime, support agent evolution, and provide flexible inference runtimes.\n2. **Architecture Overview**: Explains the project structure, including a frozen Git submodule for Phase-1 and components for interfacing with different inference platforms in Phase-2A.\n3. **Current Progress**: Lists the project's achievements, including passing tests for various components and providing details on current production baselines and candidates.",
+              "content_length": 607,
+              "created_at": "2026-08-15T07:16:45.194820+00:00",
+              "updated_at": "2026-08-15T07:16:45.194827+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1,
+              2,
+              3
+            ],
+            "readme.md": [
+              1,
+              2,
+              3
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 5,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1554,
+            "output_tokens": 269,
+            "latency_ms": 8393.18,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1554,
+              "completion_tokens": 269,
+              "total_tokens": 1823
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 933,
+            "output_tokens": 363,
+            "latency_ms": 3873.51,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 933,
+              "completion_tokens": 363,
+              "total_tokens": 1296
+            }
+          },
+          {
+            "call_index": 3,
+            "kind": "observation_answer",
+            "input_tokens": 1371,
+            "output_tokens": 411,
+            "latency_ms": 4352.41,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1371,
+              "completion_tokens": 411,
+              "total_tokens": 1782
+            }
+          },
+          {
+            "call_index": 4,
+            "kind": "observation_answer",
+            "input_tokens": 1639,
+            "output_tokens": 565,
+            "latency_ms": 5973.91,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1639,
+              "completion_tokens": 565,
+              "total_tokens": 2204
+            }
+          },
+          {
+            "call_index": 5,
+            "kind": "artifact_answer",
+            "input_tokens": 1201,
+            "output_tokens": 481,
+            "latency_ms": 5050.41,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1201,
+              "completion_tokens": 481,
+              "total_tokens": 1682
+            }
+          }
+        ],
+        "input_tokens": 6698,
+        "output_tokens": 2089,
+        "token_usage": {
+          "input_tokens": 6698,
+          "output_tokens": 2089,
+          "total_tokens": 8787
+        },
+        "latency_ms": 27687.54,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 8417.52,
+        "semantic_latency_ms": 3874.7,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop",
+          "stop",
+          "stop",
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\37ef8625-66ce-45d2-92b0-b108cf072f5c.jsonl"
+    },
+    {
+      "case_id": "L4-02",
+      "description": "Review and correct previous evaluation by creating a derived correction Artifact.",
+      "level": "L4",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The README section 1, titled \"Project Vision,\" outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. The cognitive runtime aims to ensure stable agent semantics across various components. The agent evolution pipeline focuses on structuring runtime traces and artifacts to support future improvements. Lastly, the inference abstraction layer allows for flexibility in choosing different inference runtimes while maintaining a consistent interface.",
+        "The previous evaluation of the \"Project Vision\" section in the README.md file identified several key points and boundaries. The section outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. Key points include ensuring stable agent semantics, structuring runtime traces and artifacts for future improvements, and allowing flexibility in choosing different inference runtimes. However, the evaluation noted potential risks such as a lack of detail on implementation and possible overlap between goals."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 4,
+          "projection_event": 2,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 2,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 2,
+          "workflow_artifact_event": 3,
+          "semantic_observation_event": 2,
+          "runtime_snapshot_event": 2
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README section 1 and evaluate strengths and weaknesses.",
+            "Review previous evaluation and correct mistakes."
+          ]
+        },
+        "goal": {
+          "hypothesis": "correction previous workflow artifacts",
+          "active_goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "goal_summary": "evaluate the strengths and weaknesses of README section 1",
+              "status": "active",
+              "workflow_ids": [
+                "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3"
+              ],
+              "artifact_ids": [
+                "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+                "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+              ],
+              "source_goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+              "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-15T07:16:46.418115+00:00",
+              "updated_at": "2026-08-15T07:16:54.448190+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "task_summary": "evaluate the strengths and weaknesses of README section 1",
+              "status": "active",
+              "current_step_id": "a195c5d6-838f-4dc7-a9ad-871edde33a60",
+              "step_ids": [
+                "0b6719ea-0cd3-4606-a54e-ebc100232c2f",
+                "a195c5d6-838f-4dc7-a9ad-871edde33a60"
+              ],
+              "artifact_ids": [
+                "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+                "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+              "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:16:46.418132+00:00",
+              "updated_at": "2026-08-15T07:16:54.447567+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "0b6719ea-0cd3-4606-a54e-ebc100232c2f",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "read section 1 and evaluate its strengths and weaknesses",
+                "raw_type": "capability_action",
+                "goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "ed7fdc67-c15d-4a9f-baad-c4655c24c70c",
+              "semantic_observation_id": "ed7fdc67-c15d-4a9f-baad-c4655c24c70c",
+              "artifact_ids": [
+                "7de5a548-1b4f-4310-bee4-1c366ce1682a"
+              ],
+              "created_at": "2026-08-15T07:16:46.420688+00:00",
+              "updated_at": "2026-08-15T07:16:50.714059+00:00"
+            },
+            {
+              "step_id": "a195c5d6-838f-4dc7-a9ad-871edde33a60",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "status": "completed",
+              "capability": "",
+              "tool": "",
+              "action": {
+                "action": "workflow_artifact_answer",
+                "tool": null,
+                "arguments": {
+                  "artifact_ids": [
+                    "7de5a548-1b4f-4310-bee4-1c366ce1682a"
+                  ],
+                  "artifact_kind": "correction"
+                },
+                "reason": "runtime reference resolved request to workflow artifacts",
+                "goal_hypothesis": "correction previous workflow artifacts",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "",
+              "semantic_observation_id": "",
+              "artifact_ids": [
+                "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+              ],
+              "created_at": "2026-08-15T07:16:54.447103+00:00",
+              "updated_at": "2026-08-15T07:16:54.447572+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 2,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate its strengths and weaknesses",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          },
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate its strengths and weaknesses",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 2,
+          "items": [
+            {
+              "artifact_id": "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+              "artifact_kind": "step_result",
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "step_id": "0b6719ea-0cd3-4606-a54e-ebc100232c2f",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README section 1 is titled \"Project Vision.\"; It outlines three main goals for the UAEA project.; The cognitive runtime goal ensures stable agent semantics.\nkey_points: Maintaining stable agent semantics across various components.; Structuring runtime traces and artifacts for future improvements.; Providing flexibility in choosing different inference runtimes.\nboundaries: The evaluation is based solely on the information provided in the README section 1.\nrisks: Potential lack of detail in the README regarding how these goals will be achieved.; Possible overlap or redundancy between the outlined goals.\nopen_questions: How will the outlined goals be implemented?; Are there any potential challenges in achieving these goals?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              },
+              "source_observation_ids": [
+                "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "8fd7532ea7871f6f90e08d38c58e0c51c6d1fbbb08260847854900a10accc469",
+              "content_excerpt": "The README section 1, titled \"Project Vision,\" outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. The cognitive runtime aims to ensure stable agent semantics across various components. The agent evolution pipeline focuses on structuring runtime traces and artifacts to support future improvements. Lastly, the inference abstraction layer allows for flexibility in choosing different inference runtimes while maintaining a consistent interface.",
+              "content_length": 561,
+              "created_at": "2026-08-15T07:16:46.421611+00:00",
+              "updated_at": "2026-08-15T07:16:50.714048+00:00"
+            },
+            {
+              "artifact_id": "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde",
+              "artifact_kind": "correction",
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "step_id": "a195c5d6-838f-4dc7-a9ad-871edde33a60",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Correction of 1 workflow artifacts for: Review previous evaluation and correct mistakes.",
+              "metadata": {},
+              "source_observation_ids": [
+                "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              ],
+              "source_artifact_ids": [
+                "7de5a548-1b4f-4310-bee4-1c366ce1682a"
+              ],
+              "version": 1,
+              "content_hash": "bda60eca43e2c647da68d673cd96de75966f5f9807db274a2d63f9c47b1a58b7",
+              "content_excerpt": "The previous evaluation of the \"Project Vision\" section in the README.md file identified several key points and boundaries. The section outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. Key points include ensuring stable agent semantics, structuring runtime traces and artifacts for future improvements, and allowing flexibility in choosing different inference runtimes. However, the evaluation noted potential risks such as a lack of detail on implementation and possible overlap between goals.",
+              "content_length": 614,
+              "created_at": "2026-08-15T07:16:54.447559+00:00",
+              "updated_at": "2026-08-15T07:16:54.447565+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 1,
+          "kinds": [
+            "step_result",
+            "correction"
+          ],
+          "statuses": [
+            "COMPLETE",
+            "COMPLETE"
+          ],
+          "complete_count": 2,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 1,
+          "complete_ids": [
+            "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+            "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section 1. Project Vision from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "ed7fdc67-c15d-4a9f-baad-c4655c24c70c",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 1. Project Vision from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 682,
+                "section": "1. Project Vision",
+                "section_index": 1,
+                "line_start": 11,
+                "line_end": 30,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 1. Project Vision\n\nUAEA is designed around three long-running goals:\n\n- Cognitive runtime: preserve stable agent semantics for goals, workflows,\n  tools, semantic observations, artifacts, and failure handling.\n- Agent evolution pipeline: keep runtime traces and artifacts structured enough\n  to support future memory, reflection, evaluation, and improvement loops.\n- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible\n  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind\n  a common contract.\n\nThe governing rule is:\n\n```text\nCognitive Runtime stable\n  -> Inference contract stable\n  -> Backend implementation replaceable\n```\n",
+                "content_length": 682
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 2,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success",
+            "success"
+          ],
+          "finish_reasons": [
+            "stop",
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 2,
+          "projection_lengths": [
+            80,
+            1535
+          ],
+          "planner_projection_lengths": [
+            80
+          ],
+          "max_planner_projection_length": 80
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+            "goal_summary": "evaluate the strengths and weaknesses of README section 1",
+            "status": "active",
+            "workflow_ids": [
+              "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3"
+            ],
+            "artifact_ids": [
+              "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+              "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+            ],
+            "source_goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+            "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-15T07:16:46.418115+00:00",
+            "updated_at": "2026-08-15T07:16:54.448190+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+            "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+            "task_summary": "evaluate the strengths and weaknesses of README section 1",
+            "status": "active",
+            "current_step_id": "a195c5d6-838f-4dc7-a9ad-871edde33a60",
+            "step_ids": [
+              "0b6719ea-0cd3-4606-a54e-ebc100232c2f",
+              "a195c5d6-838f-4dc7-a9ad-871edde33a60"
+            ],
+            "artifact_ids": [
+              "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+              "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "evaluate the strengths and weaknesses of README section 1",
+            "source_user_intent": "Read README section 1 and evaluate strengths and weaknesses.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:16:46.418132+00:00",
+            "updated_at": "2026-08-15T07:16:54.447567+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 2,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 2,
+          "recent_artifacts": [
+            {
+              "artifact_id": "7de5a548-1b4f-4310-bee4-1c366ce1682a",
+              "artifact_kind": "step_result",
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "step_id": "0b6719ea-0cd3-4606-a54e-ebc100232c2f",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README section 1 is titled \"Project Vision.\"; It outlines three main goals for the UAEA project.; The cognitive runtime goal ensures stable agent semantics.\nkey_points: Maintaining stable agent semantics across various components.; Structuring runtime traces and artifacts for future improvements.; Providing flexibility in choosing different inference runtimes.\nboundaries: The evaluation is based solely on the information provided in the README section 1.\nrisks: Potential lack of detail in the README regarding how these goals will be achieved.; Possible overlap or redundancy between the outlined goals.\nopen_questions: How will the outlined goals be implemented?; Are there any potential challenges in achieving these goals?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              },
+              "source_observation_ids": [
+                "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "8fd7532ea7871f6f90e08d38c58e0c51c6d1fbbb08260847854900a10accc469",
+              "content_excerpt": "The README section 1, titled \"Project Vision,\" outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. The cognitive runtime aims to ensure stable agent semantics across various components. The agent evolution pipeline focuses on structuring runtime traces and artifacts to support future improvements. Lastly, the inference abstraction layer allows for flexibility in choosing different inference runtimes while maintaining a consistent interface.",
+              "content_length": 561,
+              "created_at": "2026-08-15T07:16:46.421611+00:00",
+              "updated_at": "2026-08-15T07:16:50.714048+00:00"
+            },
+            {
+              "artifact_id": "b19ce9ef-bfb5-4b5e-8b0e-f1add2ff6dde",
+              "artifact_kind": "correction",
+              "goal_id": "90882eae-b02f-4245-8493-e12d99df3f70",
+              "workflow_id": "b60b9a6e-1006-4d3e-b81b-1ed4dad4ffb3",
+              "step_id": "a195c5d6-838f-4dc7-a9ad-871edde33a60",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Correction of 1 workflow artifacts for: Review previous evaluation and correct mistakes.",
+              "metadata": {},
+              "source_observation_ids": [
+                "ed7fdc67-c15d-4a9f-baad-c4655c24c70c"
+              ],
+              "source_artifact_ids": [
+                "7de5a548-1b4f-4310-bee4-1c366ce1682a"
+              ],
+              "version": 1,
+              "content_hash": "bda60eca43e2c647da68d673cd96de75966f5f9807db274a2d63f9c47b1a58b7",
+              "content_excerpt": "The previous evaluation of the \"Project Vision\" section in the README.md file identified several key points and boundaries. The section outlines three main goals for the UAEA project: maintaining a cognitive runtime, establishing an agent evolution pipeline, and providing an inference abstraction layer. Key points include ensuring stable agent semantics, structuring runtime traces and artifacts for future improvements, and allowing flexibility in choosing different inference runtimes. However, the evaluation noted potential risks such as a lack of detail on implementation and possible overlap between goals.",
+              "content_length": 614,
+              "created_at": "2026-08-15T07:16:54.447559+00:00",
+              "updated_at": "2026-08-15T07:16:54.447565+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 3,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1548,
+            "output_tokens": 109,
+            "latency_ms": 1124.47,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1548,
+              "completion_tokens": 109,
+              "total_tokens": 1657
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 925,
+            "output_tokens": 413,
+            "latency_ms": 4291.42,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 925,
+              "completion_tokens": 413,
+              "total_tokens": 1338
+            }
+          },
+          {
+            "call_index": 3,
+            "kind": "artifact_answer",
+            "input_tokens": 482,
+            "output_tokens": 366,
+            "latency_ms": 3729.15,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 482,
+              "completion_tokens": 366,
+              "total_tokens": 848
+            }
+          }
+        ],
+        "input_tokens": 2955,
+        "output_tokens": 888,
+        "token_usage": {
+          "input_tokens": 2955,
+          "output_tokens": 888,
+          "total_tokens": 3843
+        },
+        "latency_ms": 9173.94,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 1144.9,
+        "semantic_latency_ms": 4293.31,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop",
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\d36bfcc6-67de-427c-a823-b11eca8cb625.jsonl"
+    }
+  ]
+}

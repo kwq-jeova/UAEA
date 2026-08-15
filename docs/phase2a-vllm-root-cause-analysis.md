@@ -1810,11 +1810,33 @@ artifact on this machine.
 New candidate status:
 
 ```text
-Qwen2.5-14B-Instruct-AWQ is eligible for the next bounded Phase-2A semantic
-benchmark validation step, because it passes the minimal bang/logprobs smoke
-test under vLLM.
+Qwen2.5-14B-Instruct-AWQ completed bounded Phase-2A semantic benchmark
+validation through vLLM for L0/L1/L2/L3/L4/L5/L6.
 ```
 
-This is not yet a Phase-1 semantic equivalence PASS. The next step, if desired,
-is to run the existing selected Phase-1 vLLM benchmark/trace against
-`qwen25-14b-awq` without changing Phase-1 expectations.
+Evidence:
+
+```text
+Selected:
+  L0-01 PASS
+  L0-02 PASS
+  L1-02 PASS
+
+Full bounded validation:
+  L0 2/2 PASS
+  L1 4/4 PASS
+  L2 2/2 PASS
+  L3 2/2 PASS
+  L4 2/2 PASS
+  L5 2/2 PASS
+  L6 5/5 PASS
+
+Trace:
+  data/inference_traces/qwen25_awq_phase1/qwen25_awq_selected_20260815T065033Z.jsonl
+  data/inference_traces/qwen25_awq_phase1/qwen25_awq_l0_l2_20260815T065250Z.jsonl
+  data/inference_traces/vllm_qwen25_phase1_l3_l6.jsonl
+  data/inference_traces/vllm_qwen25_phase1_l3_l6.enriched.jsonl
+```
+
+This establishes Qwen2.5-14B-Instruct-AWQ as the current bounded Phase-2A vLLM
+production candidate.

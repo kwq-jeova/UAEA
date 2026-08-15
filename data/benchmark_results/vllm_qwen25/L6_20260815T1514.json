@@ -1,0 +1,2688 @@
+{
+  "benchmark": "phase1_runtime_vllm_benchmark",
+  "mode": "real-vllm",
+  "backend": {
+    "name": "vllm",
+    "base_url": "http://127.0.0.1:8001/v1",
+    "model": "qwen25-14b-awq",
+    "timeout_seconds": 300
+  },
+  "trace_output": "data\\inference_traces\\vllm_qwen25_phase1_l3_l6.jsonl",
+  "phase1_commit": "de0ecb0e8837c848f842a996fa2dad1c93666f2f",
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "L6-01",
+      "description": "Semantic generation timeout should preserve execution coverage as PARTIAL Artifact.",
+      "level": "L6",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s)."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": []
+        },
+        "goal": {
+          "hypothesis": "evaluate the first section of README.md",
+          "active_goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+              "goal_summary": "evaluate the first section of README.md",
+              "status": "active",
+              "workflow_ids": [
+                "c03a3de2-ceaf-49d5-82bc-694b242fd74d"
+              ],
+              "artifact_ids": [
+                "27449eac-7bd9-4697-bc43-77e86c27f82c"
+              ],
+              "source_goal_hypothesis": "evaluate the first section of README.md",
+              "source_user_intent": "Read README section 1 and evaluate it.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-15T07:18:40.045716+00:00",
+              "updated_at": "2026-08-15T07:18:40.050123+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+              "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+              "task_summary": "evaluate the first section of README.md",
+              "status": "active",
+              "current_step_id": "3203044a-1590-482f-9282-b4a287716118",
+              "step_ids": [
+                "3203044a-1590-482f-9282-b4a287716118"
+              ],
+              "artifact_ids": [
+                "27449eac-7bd9-4697-bc43-77e86c27f82c"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "evaluate the first section of README.md",
+              "source_user_intent": "Read README section 1 and evaluate it.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:18:40.045802+00:00",
+              "updated_at": "2026-08-15T07:18:40.049780+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "3203044a-1590-482f-9282-b4a287716118",
+              "workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "read section 1 and evaluate it",
+                "raw_type": "capability_action",
+                "goal_hypothesis": "evaluate the first section of README.md",
+                "goal_confidence": "high",
+                "goal_status": "revised"
+              },
+              "execution_observation_id": "0029c852-9570-458d-84bd-9401f301a761",
+              "semantic_observation_id": "0029c852-9570-458d-84bd-9401f301a761",
+              "artifact_ids": [
+                "27449eac-7bd9-4697-bc43-77e86c27f82c"
+              ],
+              "created_at": "2026-08-15T07:18:40.048690+00:00",
+              "updated_at": "2026-08-15T07:18:40.049782+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 1,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate it",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the first section of README.md",
+            "goal_confidence": "high",
+            "goal_status": "revised"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate it",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the first section of README.md",
+            "goal_confidence": "high",
+            "goal_status": "revised"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "27449eac-7bd9-4697-bc43-77e86c27f82c",
+              "artifact_kind": "step_result",
+              "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+              "workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+              "step_id": "3203044a-1590-482f-9282-b4a287716118",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s).\nopen_questions: Semantic observation JSON could not be parsed reliably.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "0029c852-9570-458d-84bd-9401f301a761",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "0029c852-9570-458d-84bd-9401f301a761"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "e2055c33fbba0643ece09e7dbb9c04086e0a1c577fa41aac0d07c117eacbbc85",
+              "content_excerpt": "{\n  \"observation_id\": \"0029c852-9570-458d-84bd-9401f301a761\",\n  \"capability\": \"document.read_section\",\n  \"tool_name\": \"read_section\",\n  \"status\": \"success\",\n  \"message\": \"Read section 1. Project Vision from D:\\\\UAEA\\\\README.md\",\n  \"data\": {\n    \"path\": \"D:\\\\UAEA\\\\README.md\",\n    \"resolved_path\": \"D:\\\\UAEA\\\\README.md\",\n    \"content_hash\": \"fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640\",\n    \"source_hash\": \"c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4\",\n    \"size_chars\": 682,\n    \"section\": \"1. Project Vision\",\n    \"section_index\": 1,\n    \"line_start\": 11,\n    \"line_end\": 30,\n    \"section_catalog\": [\n      {\n        \"section_index\": 1,\n        \"heading\": \"1. Project Vision\",\n        \"line_start\": 11\n      },\n      {\n        \"section_index\": 2,\n        \"heading\": \"2. Architecture Overview\",\n        \"line_start\": 31\n      },\n      {\n        \"section_index\": 3,\n        \"heading\": \"3. Current Progress\",\n        \"line_start\": 93\n      },\n      {\n        \"section_index\": 4,\n        \"heading\": \"4. Validation Status\",\n        \"line_start\": 137\n      },\n      {\n        \"section_index\": 5,\n        \"heading\": \"5. Running Validation\",\n        \"line_start\": ",
+              "content_length": 2167,
+              "created_at": "2026-08-15T07:18:40.049088+00:00",
+              "updated_at": "2026-08-15T07:18:40.049776+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "PARTIAL"
+          ],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 1,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": [
+            "27449eac-7bd9-4697-bc43-77e86c27f82c"
+          ]
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section 1. Project Vision from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "0029c852-9570-458d-84bd-9401f301a761",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 1. Project Vision from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 682,
+                "section": "1. Project Vision",
+                "section_index": 1,
+                "line_start": 11,
+                "line_end": 30,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 1. Project Vision\n\nUAEA is designed around three long-running goals:\n\n- Cognitive runtime: preserve stable agent semantics for goals, workflows,\n  tools, semantic observations, artifacts, and failure handling.\n- Agent evolution pipeline: keep runtime traces and artifacts structured enough\n  to support future memory, reflection, evaluation, and improvement loops.\n- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible\n  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind\n  a common contract.\n\nThe governing rule is:\n\n```text\nCognitive Runtime stable\n  -> Inference contract stable\n  -> Backend implementation replaceable\n```\n",
+                "content_length": 682
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 1,
+          "partial_count": 0,
+          "results": [
+            "failure"
+          ],
+          "finish_reasons": [
+            "error"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            58
+          ],
+          "planner_projection_lengths": [
+            58
+          ],
+          "max_planner_projection_length": 58
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+            "goal_summary": "evaluate the first section of README.md",
+            "status": "active",
+            "workflow_ids": [
+              "c03a3de2-ceaf-49d5-82bc-694b242fd74d"
+            ],
+            "artifact_ids": [
+              "27449eac-7bd9-4697-bc43-77e86c27f82c"
+            ],
+            "source_goal_hypothesis": "evaluate the first section of README.md",
+            "source_user_intent": "Read README section 1 and evaluate it.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-15T07:18:40.045716+00:00",
+            "updated_at": "2026-08-15T07:18:40.050123+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+            "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+            "task_summary": "evaluate the first section of README.md",
+            "status": "active",
+            "current_step_id": "3203044a-1590-482f-9282-b4a287716118",
+            "step_ids": [
+              "3203044a-1590-482f-9282-b4a287716118"
+            ],
+            "artifact_ids": [
+              "27449eac-7bd9-4697-bc43-77e86c27f82c"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "evaluate the first section of README.md",
+            "source_user_intent": "Read README section 1 and evaluate it.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:18:40.045802+00:00",
+            "updated_at": "2026-08-15T07:18:40.049780+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "27449eac-7bd9-4697-bc43-77e86c27f82c",
+              "artifact_kind": "step_result",
+              "goal_id": "51e8bb2c-207c-4d16-9b63-30c80c6e40fd",
+              "workflow_id": "c03a3de2-ceaf-49d5-82bc-694b242fd74d",
+              "step_id": "3203044a-1590-482f-9282-b4a287716118",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s).\nopen_questions: Semantic observation JSON could not be parsed reliably.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "0029c852-9570-458d-84bd-9401f301a761",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "0029c852-9570-458d-84bd-9401f301a761"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "e2055c33fbba0643ece09e7dbb9c04086e0a1c577fa41aac0d07c117eacbbc85",
+              "content_excerpt": "{\n  \"observation_id\": \"0029c852-9570-458d-84bd-9401f301a761\",\n  \"capability\": \"document.read_section\",\n  \"tool_name\": \"read_section\",\n  \"status\": \"success\",\n  \"message\": \"Read section 1. Project Vision from D:\\\\UAEA\\\\README.md\",\n  \"data\": {\n    \"path\": \"D:\\\\UAEA\\\\README.md\",\n    \"resolved_path\": \"D:\\\\UAEA\\\\README.md\",\n    \"content_hash\": \"fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640\",\n    \"source_hash\": \"c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4\",\n    \"size_chars\": 682,\n    \"section\": \"1. Project Vision\",\n    \"section_index\": 1,\n    \"line_start\": 11,\n    \"line_end\": 30,\n    \"section_catalog\": [\n      {\n        \"section_index\": 1,\n        \"heading\": \"1. Project Vision\",\n        \"line_start\": 11\n      },\n      {\n        \"section_index\": 2,\n        \"heading\": \"2. Architecture Overview\",\n        \"line_start\": 31\n      },\n      {\n        \"section_index\": 3,\n        \"heading\": \"3. Current Progress\",\n        \"line_start\": 93\n      },\n      {\n        \"section_index\": 4,\n        \"heading\": \"4. Validation Status\",\n        \"line_start\": 137\n      },\n      {\n        \"section_index\": 5,\n        \"heading\": \"5. Running Validation\",\n        \"line_start\": ",
+              "content_length": 2167,
+              "created_at": "2026-08-15T07:18:40.049088+00:00",
+              "updated_at": "2026-08-15T07:18:40.049776+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "error",
+          "last_answer_finish_reason": "error",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1546,
+            "output_tokens": 103,
+            "latency_ms": 7304.22,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1546,
+              "completion_tokens": 103,
+              "total_tokens": 1649
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 818,
+            "output_tokens": 0,
+            "latency_ms": 0.01,
+            "max_tokens": 2048,
+            "finish_reason": "error",
+            "usage": {
+              "prompt_tokens": 818,
+              "completion_tokens": 0,
+              "total_tokens": 818
+            }
+          }
+        ],
+        "input_tokens": 2364,
+        "output_tokens": 103,
+        "token_usage": {
+          "input_tokens": 2364,
+          "output_tokens": 103,
+          "total_tokens": 2467
+        },
+        "latency_ms": 7314.01,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 7310.77,
+        "semantic_latency_ms": 1.12,
+        "timeout_stage": "semantic",
+        "failure_stage": "semantic",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "error"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\c5ad7791-2e9f-4447-8360-f9d6a353fe10.jsonl"
+    },
+    {
+      "case_id": "L6-02",
+      "description": "Capability failure should produce failed Execution Observation and preserve Workflow cursor.",
+      "level": "L6",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The first section of the README, titled \"Project Vision,\" outlines the long-term goals of UAEA. These goals include maintaining a cognitive runtime that preserves stable agent semantics, establishing an agent evolution pipeline to support future improvements, and creating an inference abstraction layer that allows various inference runtimes to operate behind a common contract. The governing rule emphasizes the stability of the cognitive runtime, which ensures the stability of the inference contract, making backend implementations replaceable.\n\nPlanned Step progress: completed=1/3; pending=2; workflow_status=active; workflow_id=12e926db-acab-4aa7-9473-1507d9710941\nResource scope coverage: resource_type=document; covered_scopes=section:1; catalog_total=6; missing_scopes=section:2,3,4,5,6; status=partial",
+        "工具调用失败: Injected benchmark failure for read_section section 2.\n\nPlanned Step progress: completed=1/3; pending=1; workflow_status=active; workflow_id=12e926db-acab-4aa7-9473-1507d9710941\nResource scope coverage: resource_type=document; covered_scopes=section:1; catalog_total=6; missing_scopes=section:2,3,4,5,6; status=partial"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 4,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "workflow_plan_step_event": 7,
+          "agent_decision_event": 2,
+          "file_event": 1,
+          "tool_event": 2,
+          "execution_observation_event": 2,
+          "workflow_step_event": 2,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 2
+        },
+        "intent": {
+          "recent_intents": [
+            "Read README sections 1-3 and evaluate each.",
+            "Continue."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Evaluate README sections 1-3",
+          "active_goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+              "goal_summary": "Evaluate README sections 1-3",
+              "status": "active",
+              "workflow_ids": [
+                "12e926db-acab-4aa7-9473-1507d9710941"
+              ],
+              "artifact_ids": [
+                "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+              ],
+              "source_goal_hypothesis": "Evaluate README sections 1-3",
+              "source_user_intent": "Read README sections 1-3 and evaluate each.",
+              "completed_scope_count": 1,
+              "pending_scope_count": 1,
+              "created_at": "2026-08-15T07:18:42.910702+00:00",
+              "updated_at": "2026-08-15T07:18:47.692093+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+              "task_summary": "Evaluate README sections 1-3",
+              "status": "active",
+              "current_step_id": "83f7d608-8980-4c02-8627-9a16e8ab1881",
+              "step_ids": [
+                "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+                "83f7d608-8980-4c02-8627-9a16e8ab1881"
+              ],
+              "artifact_ids": [
+                "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+              ],
+              "planned_step_ids": [
+                "e0563d28-d672-4c1d-8ea7-33da629aca4f",
+                "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+                "4f66dea4-fdbf-4801-b8ef-21673065b6dd"
+              ],
+              "current_plan_step_id": "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+              "source_goal_hypothesis": "Evaluate README sections 1-3",
+              "source_user_intent": "Read README sections 1-3 and evaluate each.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:18:42.910718+00:00",
+              "updated_at": "2026-08-15T07:18:47.691831+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [
+            {
+              "plan_step_id": "e0563d28-d672-4c1d-8ea7-33da629aca4f",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "ordinal": 1,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Evaluate section 1",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+              "created_at": "2026-08-15T07:18:42.910733+00:00",
+              "updated_at": "2026-08-15T07:18:47.685952+00:00"
+            },
+            {
+              "plan_step_id": "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "ordinal": 2,
+              "status": "failed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "reason": "Evaluate section 2",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "83f7d608-8980-4c02-8627-9a16e8ab1881",
+              "created_at": "2026-08-15T07:18:42.910740+00:00",
+              "updated_at": "2026-08-15T07:18:47.691827+00:00"
+            },
+            {
+              "plan_step_id": "4f66dea4-fdbf-4801-b8ef-21673065b6dd",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "ordinal": 3,
+              "status": "proposed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 3
+                },
+                "reason": "Evaluate section 3",
+                "raw_type": "workflow_step"
+              },
+              "execution_step_id": "",
+              "created_at": "2026-08-15T07:18:42.910746+00:00",
+              "updated_at": "2026-08-15T07:18:42.910747+00:00"
+            }
+          ],
+          "executed": [
+            {
+              "step_id": "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "Evaluate section 1",
+                "raw_type": "workflow_step",
+                "plan_step_id": "e0563d28-d672-4c1d-8ea7-33da629aca4f",
+                "goal_hypothesis": "Evaluate README sections 1-3",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "3029abd8-3ea4-46f8-bc4d-44f0c527fc41",
+              "semantic_observation_id": "3029abd8-3ea4-46f8-bc4d-44f0c527fc41",
+              "artifact_ids": [
+                "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+              ],
+              "created_at": "2026-08-15T07:18:42.915925+00:00",
+              "updated_at": "2026-08-15T07:18:47.685060+00:00"
+            },
+            {
+              "step_id": "83f7d608-8980-4c02-8627-9a16e8ab1881",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "status": "failed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "reason": "Evaluate section 2",
+                "raw_type": "workflow_step",
+                "plan_step_id": "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+                "goal_hypothesis": "Evaluate README sections 1-3",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "85b857a5-04c4-4526-94c8-0e6b6c17cb83",
+              "semantic_observation_id": "",
+              "artifact_ids": [],
+              "created_at": "2026-08-15T07:18:47.691479+00:00",
+              "updated_at": "2026-08-15T07:18:47.691484+00:00"
+            }
+          ],
+          "planned_count": 3,
+          "executed_count": 2,
+          "completed_planned_count": 1,
+          "pending_planned_count": 1,
+          "failed_planned_count": 1,
+          "failed_executed_count": 1
+        },
+        "actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Evaluate README sections 1-3",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Evaluate section 1",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Evaluate section 2",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Evaluate section 3",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941"
+            },
+            "reason": "Multiple sections need to be read and evaluated sequentially",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Evaluate README sections 1-3",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          },
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "workflow_plan",
+            "capability": null,
+            "tool": null,
+            "arguments": {
+              "workflow_summary": "Evaluate README sections 1-3",
+              "steps": [
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 1
+                  },
+                  "reason": "Evaluate section 1",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 2
+                  },
+                  "reason": "Evaluate section 2",
+                  "raw_type": "workflow_step"
+                },
+                {
+                  "action": "tool_then_answer",
+                  "capability": "document.read_section",
+                  "tool": "read_section",
+                  "arguments": {
+                    "path": "README.md",
+                    "section_index": 3
+                  },
+                  "reason": "Evaluate section 3",
+                  "raw_type": "workflow_step"
+                }
+              ],
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941"
+            },
+            "reason": "Multiple sections need to be read and evaluated sequentially",
+            "raw_type": "workflow_plan",
+            "goal_hypothesis": "Evaluate README sections 1-3",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [
+          {
+            "action": "continue_workflow",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section",
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1,
+            2
+          ],
+          "read_file_count": 0,
+          "read_section_count": 2,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "c4268fe0-7e11-42c7-b29d-8bfabbe53e23",
+              "artifact_kind": "step_result",
+              "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "step_id": "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README file is located at \"D:\\\\UAEA\\\\README.md\".; Section 1 is titled \"Project Vision\" and discusses long-term goals.; Section 2 is titled \"Architecture Overview\".\nkey_points: Section 1 describes the project's vision focusing on cognitive runtime stability, agent evolution pipeline, and inference abstraction.; The governing rule in section 1 highlights the importance of stability in cognitive runtime, inference contract, and backend implementations.\nboundaries: Sections 2 and 3 have not been evaluated yet.; The README file may contain additional sections beyond the third one.\nrisks: Lack of detailed information about sections 2 and 3.; Potential misinterpretation of the governing rule without further context.\nopen_questions: What does section 2 cover?; How is the current progress described in section 3?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "3029abd8-3ea4-46f8-bc4d-44f0c527fc41"
+              },
+              "source_observation_ids": [
+                "3029abd8-3ea4-46f8-bc4d-44f0c527fc41"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "15e347baed9164297c4034cde4bb038351dda428acf40219d88ec87568c8144e",
+              "content_excerpt": "The first section of the README, titled \"Project Vision,\" outlines the long-term goals of UAEA. These goals include maintaining a cognitive runtime that preserves stable agent semantics, establishing an agent evolution pipeline to support future improvements, and creating an inference abstraction layer that allows various inference runtimes to operate behind a common contract. The governing rule emphasizes the stability of the cognitive runtime, which ensures the stability of the inference contract, making backend implementations replaceable.",
+              "content_length": 548,
+              "created_at": "2026-08-15T07:18:42.916276+00:00",
+              "updated_at": "2026-08-15T07:18:47.685046+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE"
+          ],
+          "complete_count": 1,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 2,
+          "failure_count": 1,
+          "statuses": [
+            "success",
+            "failure"
+          ],
+          "messages": [
+            "Read section 1. Project Vision from D:\\UAEA\\README.md",
+            "Injected benchmark failure for read_section section 2."
+          ],
+          "items": [
+            {
+              "observation_id": "3029abd8-3ea4-46f8-bc4d-44f0c527fc41",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 1. Project Vision from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 682,
+                "section": "1. Project Vision",
+                "section_index": 1,
+                "line_start": 11,
+                "line_end": 30,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 1. Project Vision\n\nUAEA is designed around three long-running goals:\n\n- Cognitive runtime: preserve stable agent semantics for goals, workflows,\n  tools, semantic observations, artifacts, and failure handling.\n- Agent evolution pipeline: keep runtime traces and artifacts structured enough\n  to support future memory, reflection, evaluation, and improvement loops.\n- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible\n  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind\n  a common contract.\n\nThe governing rule is:\n\n```text\nCognitive Runtime stable\n  -> Inference contract stable\n  -> Backend implementation replaceable\n```\n",
+                "content_length": 682
+              }
+            },
+            {
+              "observation_id": "85b857a5-04c4-4526-94c8-0e6b6c17cb83",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "failure",
+              "message": "Injected benchmark failure for read_section section 2.",
+              "data": {
+                "tool": "read_section",
+                "capability": "document.read_section",
+                "resource": "README.md",
+                "path": "README.md",
+                "section_index": 2,
+                "failure_reason": "Injected benchmark failure for read_section section 2.",
+                "error": "Injected benchmark failure for read_section section 2.",
+                "fault_injection": "capability_failure"
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            63
+          ],
+          "planner_projection_lengths": [
+            63
+          ],
+          "max_planner_projection_length": 63
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+            "goal_summary": "Evaluate README sections 1-3",
+            "status": "active",
+            "workflow_ids": [
+              "12e926db-acab-4aa7-9473-1507d9710941"
+            ],
+            "artifact_ids": [
+              "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+            ],
+            "source_goal_hypothesis": "Evaluate README sections 1-3",
+            "source_user_intent": "Read README sections 1-3 and evaluate each.",
+            "completed_scope_count": 1,
+            "pending_scope_count": 1,
+            "created_at": "2026-08-15T07:18:42.910702+00:00",
+            "updated_at": "2026-08-15T07:18:47.692093+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+            "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+            "task_summary": "Evaluate README sections 1-3",
+            "status": "active",
+            "current_step_id": "83f7d608-8980-4c02-8627-9a16e8ab1881",
+            "step_ids": [
+              "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+              "83f7d608-8980-4c02-8627-9a16e8ab1881"
+            ],
+            "artifact_ids": [
+              "c4268fe0-7e11-42c7-b29d-8bfabbe53e23"
+            ],
+            "planned_step_ids": [
+              "e0563d28-d672-4c1d-8ea7-33da629aca4f",
+              "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+              "4f66dea4-fdbf-4801-b8ef-21673065b6dd"
+            ],
+            "current_plan_step_id": "6cffa7be-fe26-417a-9436-5066e8dae3c7",
+            "source_goal_hypothesis": "Evaluate README sections 1-3",
+            "source_user_intent": "Read README sections 1-3 and evaluate each.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:18:42.910718+00:00",
+            "updated_at": "2026-08-15T07:18:47.691831+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 2,
+          "planned_step_count": 3,
+          "active_workflow_plan": {
+            "total": 3,
+            "completed": 1,
+            "pending": 1
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "c4268fe0-7e11-42c7-b29d-8bfabbe53e23",
+              "artifact_kind": "step_result",
+              "goal_id": "a2e3ac0d-e869-46c7-884b-b0f54c9dd23a",
+              "workflow_id": "12e926db-acab-4aa7-9473-1507d9710941",
+              "step_id": "c2e7699b-7229-47b5-ba09-dd752b2f09b9",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: The README file is located at \"D:\\\\UAEA\\\\README.md\".; Section 1 is titled \"Project Vision\" and discusses long-term goals.; Section 2 is titled \"Architecture Overview\".\nkey_points: Section 1 describes the project's vision focusing on cognitive runtime stability, agent evolution pipeline, and inference abstraction.; The governing rule in section 1 highlights the importance of stability in cognitive runtime, inference contract, and backend implementations.\nboundaries: Sections 2 and 3 have not been evaluated yet.; The README file may contain additional sections beyond the third one.\nrisks: Lack of detailed information about sections 2 and 3.; Potential misinterpretation of the governing rule without further context.\nopen_questions: What does section 2 cover?; How is the current progress described in section 3?",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "3029abd8-3ea4-46f8-bc4d-44f0c527fc41"
+              },
+              "source_observation_ids": [
+                "3029abd8-3ea4-46f8-bc4d-44f0c527fc41"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "15e347baed9164297c4034cde4bb038351dda428acf40219d88ec87568c8144e",
+              "content_excerpt": "The first section of the README, titled \"Project Vision,\" outlines the long-term goals of UAEA. These goals include maintaining a cognitive runtime that preserves stable agent semantics, establishing an agent evolution pipeline to support future improvements, and creating an inference abstraction layer that allows various inference runtimes to operate behind a common contract. The governing rule emphasizes the stability of the cognitive runtime, which ensures the stability of the inference contract, making backend implementations replaceable.",
+              "content_length": 548,
+              "created_at": "2026-08-15T07:18:42.916276+00:00",
+              "updated_at": "2026-08-15T07:18:47.685046+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1548,
+            "output_tokens": 243,
+            "latency_ms": 2778.21,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1548,
+              "completion_tokens": 243,
+              "total_tokens": 1791
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 928,
+            "output_tokens": 459,
+            "latency_ms": 4767.56,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 928,
+              "completion_tokens": 459,
+              "total_tokens": 1387
+            }
+          }
+        ],
+        "input_tokens": 2476,
+        "output_tokens": 702,
+        "token_usage": {
+          "input_tokens": 2476,
+          "output_tokens": 702,
+          "total_tokens": 3178
+        },
+        "latency_ms": 7562.8,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 2785.66,
+        "semantic_latency_ms": 4768.86,
+        "timeout_stage": "execution",
+        "failure_stage": "execution",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\e84e2dd1-d3ba-4228-a442-258438aaba54.jsonl"
+    },
+    {
+      "case_id": "L6-03",
+      "description": "Retry failed planned Step should use continue_workflow rather than new workflow_plan.",
+      "level": "L6",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The step has been successfully completed. The content of section 2, \"Architecture Overview,\" has been read from the file located at \"D:\\\\UAEA\\\\README.md\".\n\nPlanned Step progress: completed=2/3; pending=1; workflow_status=active; workflow_id=8199ddb4-88d4-49b7-84ef-2a14fdfab7de\nResource scope coverage: resource_type=document; covered_scopes=section:1,2; catalog_total=6; missing_scopes=section:3,4,5,6; status=partial"
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "agent_decision_event": 1,
+          "workflow_plan_step_event": 2,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Retry failed step."
+          ]
+        },
+        "goal": {
+          "hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+          "active_goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "goal_summary": "Evaluate README sections 1-3 with retry recovery.",
+              "status": "active",
+              "workflow_ids": [
+                "8199ddb4-88d4-49b7-84ef-2a14fdfab7de"
+              ],
+              "artifact_ids": [
+                "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+                "67605566-edb6-4f51-9f07-a4b5db87d91d"
+              ],
+              "source_goal_hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+              "source_user_intent": "Retry failed step.",
+              "completed_scope_count": 2,
+              "pending_scope_count": 1,
+              "created_at": "2026-08-15T07:18:47.775735+00:00",
+              "updated_at": "2026-08-15T07:18:50.641259+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "task_summary": "Benchmark fixture: evaluate README sections 1-3.",
+              "status": "active",
+              "current_step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+              "step_ids": [
+                "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+                "502d8e15-2713-4ea8-a8be-b8ab9ac745bb",
+                "f3fe7324-5a55-44c7-94b1-3c9463d74b92"
+              ],
+              "artifact_ids": [
+                "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+                "67605566-edb6-4f51-9f07-a4b5db87d91d"
+              ],
+              "planned_step_ids": [
+                "563ae17f-616c-43d8-b209-7aabce0ef578",
+                "1fb15ebc-d6b2-4bc4-a3f8-3e5009c79ecb",
+                "89b392c4-6932-4947-b831-2bddf6195fd6"
+              ],
+              "current_plan_step_id": "89b392c4-6932-4947-b831-2bddf6195fd6",
+              "source_goal_hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+              "source_user_intent": "Retry failed step.",
+              "target_resource": "README.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:18:47.775752+00:00",
+              "updated_at": "2026-08-15T07:18:50.640837+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [
+            {
+              "plan_step_id": "563ae17f-616c-43d8-b209-7aabce0ef578",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "ordinal": 1,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 1.",
+                "reason_summary": "Evaluate README section 1."
+              },
+              "execution_step_id": "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+              "created_at": "2026-08-15T07:18:47.775764+00:00",
+              "updated_at": "2026-08-15T07:18:47.775808+00:00"
+            },
+            {
+              "plan_step_id": "1fb15ebc-d6b2-4bc4-a3f8-3e5009c79ecb",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "ordinal": 2,
+              "status": "completed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 2.",
+                "reason_summary": "Evaluate README section 2."
+              },
+              "execution_step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+              "created_at": "2026-08-15T07:18:47.775770+00:00",
+              "updated_at": "2026-08-15T07:18:50.640832+00:00"
+            },
+            {
+              "plan_step_id": "89b392c4-6932-4947-b831-2bddf6195fd6",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "ordinal": 3,
+              "status": "proposed",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 3
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 3.",
+                "reason_summary": "Evaluate README section 3."
+              },
+              "execution_step_id": "",
+              "created_at": "2026-08-15T07:18:47.775775+00:00",
+              "updated_at": "2026-08-15T07:18:47.775777+00:00"
+            }
+          ],
+          "executed": [
+            {
+              "step_id": "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 1.",
+                "reason_summary": "Evaluate README section 1."
+              },
+              "execution_observation_id": "fixture-execution-section-1",
+              "semantic_observation_id": "fixture-semantic-section-1",
+              "artifact_ids": [
+                "d7c3c88c-b4b3-4e00-b454-901d89e38bd8"
+              ],
+              "created_at": "2026-08-15T07:18:47.775800+00:00",
+              "updated_at": "2026-08-15T07:18:47.775857+00:00"
+            },
+            {
+              "step_id": "502d8e15-2713-4ea8-a8be-b8ab9ac745bb",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "status": "failed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 2.",
+                "reason_summary": "Evaluate README section 2."
+              },
+              "execution_observation_id": "fixture-execution-section-2",
+              "semantic_observation_id": "",
+              "artifact_ids": [],
+              "created_at": "2026-08-15T07:18:47.775863+00:00",
+              "updated_at": "2026-08-15T07:18:47.775865+00:00"
+            },
+            {
+              "step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 2.",
+                "reason_summary": "Evaluate README section 2.",
+                "plan_step_id": "1fb15ebc-d6b2-4bc4-a3f8-3e5009c79ecb",
+                "goal_hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "dc1f206a-d52c-4662-9648-d8a9129962be",
+              "semantic_observation_id": "dc1f206a-d52c-4662-9648-d8a9129962be",
+              "artifact_ids": [
+                "67605566-edb6-4f51-9f07-a4b5db87d91d"
+              ],
+              "created_at": "2026-08-15T07:18:47.780697+00:00",
+              "updated_at": "2026-08-15T07:18:50.640430+00:00"
+            }
+          ],
+          "planned_count": 3,
+          "executed_count": 3,
+          "completed_planned_count": 2,
+          "pending_planned_count": 1,
+          "failed_planned_count": 0,
+          "failed_executed_count": 1
+        },
+        "actions": [
+          {
+            "action": "continue_workflow",
+            "arguments": {
+              "retry_failed_step": true
+            },
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "planner_actions": [],
+        "continuity_actions": [],
+        "reference_actions": [
+          {
+            "action": "continue_workflow",
+            "arguments": {
+              "retry_failed_step": true
+            },
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "retry_count": 1,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            2
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 2,
+          "items": [
+            {
+              "artifact_id": "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+              "artifact_kind": "step_result",
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "step_id": "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "README.md; section_index=1",
+              "summary": "Fixture section 1 evaluation is complete.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "de015cec52774ad754509f77a35aa4b6336c58b62089a58e55da1baf15259b58",
+              "content_excerpt": "Fixture section 1 evaluation artifact.",
+              "content_length": 38,
+              "created_at": "2026-08-15T07:18:47.775850+00:00",
+              "updated_at": "2026-08-15T07:18:47.775851+00:00"
+            },
+            {
+              "artifact_id": "67605566-edb6-4f51-9f07-a4b5db87d91d",
+              "artifact_kind": "step_result",
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=2. Architecture Overview",
+              "summary": "facts: The operation was successful.; The section read is titled \"Architecture Overview\".; The file path is \"D:\\\\UAEA\\\\README.md\".\nkey_points: The section starts on line 31 and ends on line 92.; The section describes the architecture overview of the project.\nboundaries: The operation is limited to reading sections from specified files.\nrisks: There are no risks mentioned in the observation.\nopen_questions: None.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "dc1f206a-d52c-4662-9648-d8a9129962be"
+              },
+              "source_observation_ids": [
+                "dc1f206a-d52c-4662-9648-d8a9129962be"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "19164bc587389cd03f6f2b9e99ad2225e90179d8df11bd1ae39b375514d6f777",
+              "content_excerpt": "The step has been successfully completed. The content of section 2, \"Architecture Overview,\" has been read from the file located at \"D:\\\\UAEA\\\\README.md\".",
+              "content_length": 154,
+              "created_at": "2026-08-15T07:18:47.781098+00:00",
+              "updated_at": "2026-08-15T07:18:50.640422+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result",
+            "step_result"
+          ],
+          "statuses": [
+            "COMPLETE",
+            "COMPLETE"
+          ],
+          "complete_count": 2,
+          "pending_count": 0,
+          "partial_count": 0,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [
+            "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+            "67605566-edb6-4f51-9f07-a4b5db87d91d"
+          ],
+          "partial_ids": []
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section 2. Architecture Overview from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "dc1f206a-d52c-4662-9648-d8a9129962be",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 2. Architecture Overview from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "9f642c6fe397b4c36adf22f5eac719321a69dfd86cd89af535113e6f819ee1d6",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 1339,
+                "section": "2. Architecture Overview",
+                "section_index": 2,
+                "line_start": 31,
+                "line_end": 92,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 2. Architecture Overview\n\nPhase-1 is included as a frozen Git submodule:\n\n```text\nruntime/phase1-runtime\ntag: v1.0.0-phase1-runtime\ncommit: de0ecb0e8837c848f842a996fa2dad1c93666f2f\n```\n\nPhase-1 freezes the Runtime Control Plane:\n\n- Workflow lifecycle\n- Goal / Intent relation\n- Cursor execution model\n- Capability execution\n- Execution Observation\n- Semantic Observation\n- Artifact lifecycle\n- Failure handling\n- L0-L6 benchmark semantics\n\nPhase-2A lives outside the frozen submodule:\n\n```text\nbackend/             ModelBackend contract and adapters\nbenchmark/inference/ inference-only measurement framework\ntests/               Phase-2A contract tests\ndocs/                architecture and validation records\ndata/                benchmark, trace, and diagnostic artifacts\n```\n\nRuntime path:\n\n```text\nUser\n  -> Phase-1 Cognitive Runtime\n  -> ModelBackend Contract\n  -> Backend Adapter\n  -> Inference Platform\n```\n\nCurrent backend adapters:\n\n- `LMFBackend`\n- `VLLMBackend`\n- `TransformersBackend`\n",
+                "content_length": 1339
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 0,
+          "projection_lengths": [],
+          "planner_projection_lengths": [],
+          "max_planner_projection_length": 0
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+            "goal_summary": "Evaluate README sections 1-3 with retry recovery.",
+            "status": "active",
+            "workflow_ids": [
+              "8199ddb4-88d4-49b7-84ef-2a14fdfab7de"
+            ],
+            "artifact_ids": [
+              "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+              "67605566-edb6-4f51-9f07-a4b5db87d91d"
+            ],
+            "source_goal_hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+            "source_user_intent": "Retry failed step.",
+            "completed_scope_count": 2,
+            "pending_scope_count": 1,
+            "created_at": "2026-08-15T07:18:47.775735+00:00",
+            "updated_at": "2026-08-15T07:18:50.641259+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+            "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+            "task_summary": "Benchmark fixture: evaluate README sections 1-3.",
+            "status": "active",
+            "current_step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+            "step_ids": [
+              "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+              "502d8e15-2713-4ea8-a8be-b8ab9ac745bb",
+              "f3fe7324-5a55-44c7-94b1-3c9463d74b92"
+            ],
+            "artifact_ids": [
+              "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+              "67605566-edb6-4f51-9f07-a4b5db87d91d"
+            ],
+            "planned_step_ids": [
+              "563ae17f-616c-43d8-b209-7aabce0ef578",
+              "1fb15ebc-d6b2-4bc4-a3f8-3e5009c79ecb",
+              "89b392c4-6932-4947-b831-2bddf6195fd6"
+            ],
+            "current_plan_step_id": "89b392c4-6932-4947-b831-2bddf6195fd6",
+            "source_goal_hypothesis": "Evaluate README sections 1-3 with retry recovery.",
+            "source_user_intent": "Retry failed step.",
+            "target_resource": "README.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:18:47.775752+00:00",
+            "updated_at": "2026-08-15T07:18:50.640837+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 3,
+          "planned_step_count": 3,
+          "active_workflow_plan": {
+            "total": 3,
+            "completed": 2,
+            "pending": 1
+          },
+          "artifact_count": 2,
+          "recent_artifacts": [
+            {
+              "artifact_id": "d7c3c88c-b4b3-4e00-b454-901d89e38bd8",
+              "artifact_kind": "step_result",
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "step_id": "2eb6350b-6b23-4b73-bc18-89299035dd8c",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "README.md; section_index=1",
+              "summary": "Fixture section 1 evaluation is complete.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "de015cec52774ad754509f77a35aa4b6336c58b62089a58e55da1baf15259b58",
+              "content_excerpt": "Fixture section 1 evaluation artifact.",
+              "content_length": 38,
+              "created_at": "2026-08-15T07:18:47.775850+00:00",
+              "updated_at": "2026-08-15T07:18:47.775851+00:00"
+            },
+            {
+              "artifact_id": "67605566-edb6-4f51-9f07-a4b5db87d91d",
+              "artifact_kind": "step_result",
+              "goal_id": "8420c0c5-4d44-4917-8128-d36432067d89",
+              "workflow_id": "8199ddb4-88d4-49b7-84ef-2a14fdfab7de",
+              "step_id": "f3fe7324-5a55-44c7-94b1-3c9463d74b92",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "D:\\UAEA\\README.md; section=2. Architecture Overview",
+              "summary": "facts: The operation was successful.; The section read is titled \"Architecture Overview\".; The file path is \"D:\\\\UAEA\\\\README.md\".\nkey_points: The section starts on line 31 and ends on line 92.; The section describes the architecture overview of the project.\nboundaries: The operation is limited to reading sections from specified files.\nrisks: There are no risks mentioned in the observation.\nopen_questions: None.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "dc1f206a-d52c-4662-9648-d8a9129962be"
+              },
+              "source_observation_ids": [
+                "dc1f206a-d52c-4662-9648-d8a9129962be"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "19164bc587389cd03f6f2b9e99ad2225e90179d8df11bd1ae39b375514d6f777",
+              "content_excerpt": "The step has been successfully completed. The content of section 2, \"Architecture Overview,\" has been read from the file located at \"D:\\\\UAEA\\\\README.md\".",
+              "content_length": 154,
+              "created_at": "2026-08-15T07:18:47.781098+00:00",
+              "updated_at": "2026-08-15T07:18:50.640422+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              2
+            ],
+            "readme.md": [
+              2
+            ]
+          },
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 1,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "observation_answer",
+            "input_tokens": 1123,
+            "output_tokens": 267,
+            "latency_ms": 2858.08,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1123,
+              "completion_tokens": 267,
+              "total_tokens": 1390
+            }
+          }
+        ],
+        "input_tokens": 1123,
+        "output_tokens": 267,
+        "token_usage": {
+          "input_tokens": 1123,
+          "output_tokens": 267,
+          "total_tokens": 1390
+        },
+        "latency_ms": 2866.02,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 4.45,
+        "semantic_latency_ms": 2859.72,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 1,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\4a4f918e-5d56-4ca8-9754-15c1ec4b5b6b.jsonl"
+    },
+    {
+      "case_id": "L6-04",
+      "description": "Partial Artifact consumption should not fabricate semantic conclusions.",
+      "level": "L6",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "The semantic evaluation for the first section of the README file has been completed."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "agent_decision_event": 1,
+          "projection_event": 1,
+          "semantic_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": [
+            "Summarize previous section evaluations."
+          ]
+        },
+        "goal": {
+          "hypothesis": "summary previous workflow artifacts",
+          "active_goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "goal_summary": "Summarize README section evaluations from artifact state.",
+              "status": "active",
+              "workflow_ids": [
+                "b22e332e-b546-4235-a841-648c12284924"
+              ],
+              "artifact_ids": [
+                "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+                "31975500-293f-402f-b152-806496a883f0",
+                "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+              ],
+              "source_goal_hypothesis": "Summarize README section evaluations from artifact state.",
+              "source_user_intent": "Summarize previous section evaluations.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-15T07:18:50.723940+00:00",
+              "updated_at": "2026-08-15T07:18:52.655724+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "task_summary": "Benchmark fixture: summarize mixed artifact lifecycle states.",
+              "status": "active",
+              "current_step_id": "07b04056-0d0c-4f8a-959e-bc4e4dae1da2",
+              "step_ids": [
+                "5a93f293-cd2b-42de-b7eb-8ada47a5f377",
+                "f52a036e-f869-4c29-b2bf-3e1057e4cf09",
+                "07b04056-0d0c-4f8a-959e-bc4e4dae1da2"
+              ],
+              "artifact_ids": [
+                "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+                "31975500-293f-402f-b152-806496a883f0",
+                "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "Summarize README section evaluations from artifact state.",
+              "source_user_intent": "Summarize previous section evaluations.",
+              "target_resource": "README.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:18:50.723959+00:00",
+              "updated_at": "2026-08-15T07:18:52.655426+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "5a93f293-cd2b-42de-b7eb-8ada47a5f377",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 1.",
+                "reason_summary": "Evaluate README section 1."
+              },
+              "execution_observation_id": "fixture-execution-section-1",
+              "semantic_observation_id": "fixture-semantic-section-1",
+              "artifact_ids": [
+                "4935f8b9-0d8d-4074-9c14-bab7374d564e"
+              ],
+              "created_at": "2026-08-15T07:18:50.723977+00:00",
+              "updated_at": "2026-08-15T07:18:50.724015+00:00"
+            },
+            {
+              "step_id": "f52a036e-f869-4c29-b2bf-3e1057e4cf09",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 2
+                },
+                "after_observation": "answer_with_observation",
+                "raw_type": "workflow_step",
+                "reason": "Evaluate README section 2.",
+                "reason_summary": "Evaluate README section 2."
+              },
+              "execution_observation_id": "fixture-execution-section-2",
+              "semantic_observation_id": "",
+              "artifact_ids": [
+                "31975500-293f-402f-b152-806496a883f0"
+              ],
+              "created_at": "2026-08-15T07:18:50.723990+00:00",
+              "updated_at": "2026-08-15T07:18:50.724030+00:00"
+            },
+            {
+              "step_id": "07b04056-0d0c-4f8a-959e-bc4e4dae1da2",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "status": "completed",
+              "capability": "",
+              "tool": "",
+              "action": {
+                "action": "workflow_artifact_answer",
+                "tool": null,
+                "arguments": {
+                  "artifact_ids": [
+                    "4935f8b9-0d8d-4074-9c14-bab7374d564e"
+                  ],
+                  "artifact_kind": "summary"
+                },
+                "reason": "runtime reference resolved request to workflow artifacts",
+                "goal_hypothesis": "summary previous workflow artifacts",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "",
+              "semantic_observation_id": "",
+              "artifact_ids": [
+                "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+              ],
+              "created_at": "2026-08-15T07:18:52.655106+00:00",
+              "updated_at": "2026-08-15T07:18:52.655430+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 3,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "planner_actions": [],
+        "continuity_actions": [],
+        "reference_actions": [
+          {
+            "action": "workflow_artifact_answer",
+            "arguments": {},
+            "source": "runtime_reference",
+            "reason": "resolved from Runtime object state before planner"
+          }
+        ],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [],
+          "read_section_indexes": [],
+          "read_file_count": 0,
+          "read_section_count": 0,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 3,
+          "items": [
+            {
+              "artifact_id": "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+              "artifact_kind": "step_result",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "5a93f293-cd2b-42de-b7eb-8ada47a5f377",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "README.md; section_index=1",
+              "summary": "Fixture section 1 semantic evaluation is complete.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "94d09e179f3403294b9198ae31c04642c76e4079aec43a11d64fb1609b8dd1b0",
+              "content_excerpt": "Fixture complete semantic evaluation for README section 1.",
+              "content_length": 58,
+              "created_at": "2026-08-15T07:18:50.724008+00:00",
+              "updated_at": "2026-08-15T07:18:50.724010+00:00"
+            },
+            {
+              "artifact_id": "31975500-293f-402f-b152-806496a883f0",
+              "artifact_kind": "step_result",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "f52a036e-f869-4c29-b2bf-3e1057e4cf09",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "README.md; section_index=2",
+              "summary": "Execution coverage exists for section 2, but semantic generation timed out.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "fixture-execution-section-2"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "e7032841ebf913cbd82c0fea1914b3834196a7de91ee9ec47b3fab26da1ef19e",
+              "content_excerpt": "Execution coverage fixture for README section 2; semantic content is incomplete.",
+              "content_length": 80,
+              "created_at": "2026-08-15T07:18:50.724024+00:00",
+              "updated_at": "2026-08-15T07:18:50.724025+00:00"
+            },
+            {
+              "artifact_id": "ba94223b-2b27-48d4-9e00-dc3695233b9e",
+              "artifact_kind": "summary",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "07b04056-0d0c-4f8a-959e-bc4e4dae1da2",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Summary of 1 workflow artifacts for: Summarize previous section evaluations.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [
+                "4935f8b9-0d8d-4074-9c14-bab7374d564e"
+              ],
+              "version": 1,
+              "content_hash": "c4779b211c4492d85431ef2af67894726c0e313c66007d4c9431f03cd651d492",
+              "content_excerpt": "The semantic evaluation for the first section of the README file has been completed.",
+              "content_length": 84,
+              "created_at": "2026-08-15T07:18:52.655420+00:00",
+              "updated_at": "2026-08-15T07:18:52.655423+00:00"
+            }
+          ],
+          "summary_count": 1,
+          "correction_count": 0,
+          "kinds": [
+            "step_result",
+            "step_result",
+            "summary"
+          ],
+          "statuses": [
+            "COMPLETE",
+            "PARTIAL",
+            "COMPLETE"
+          ],
+          "complete_count": 2,
+          "pending_count": 0,
+          "partial_count": 1,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 1,
+          "complete_ids": [
+            "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+            "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+          ],
+          "partial_ids": [
+            "31975500-293f-402f-b152-806496a883f0"
+          ]
+        },
+        "execution_observations": {
+          "count": 0,
+          "failure_count": 0,
+          "statuses": [],
+          "messages": [],
+          "items": []
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "partial_count": 0,
+          "results": [
+            "success"
+          ],
+          "finish_reasons": [
+            "stop"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            314
+          ],
+          "planner_projection_lengths": [],
+          "max_planner_projection_length": 0
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+            "goal_summary": "Summarize README section evaluations from artifact state.",
+            "status": "active",
+            "workflow_ids": [
+              "b22e332e-b546-4235-a841-648c12284924"
+            ],
+            "artifact_ids": [
+              "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+              "31975500-293f-402f-b152-806496a883f0",
+              "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+            ],
+            "source_goal_hypothesis": "Summarize README section evaluations from artifact state.",
+            "source_user_intent": "Summarize previous section evaluations.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-15T07:18:50.723940+00:00",
+            "updated_at": "2026-08-15T07:18:52.655724+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+            "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+            "task_summary": "Benchmark fixture: summarize mixed artifact lifecycle states.",
+            "status": "active",
+            "current_step_id": "07b04056-0d0c-4f8a-959e-bc4e4dae1da2",
+            "step_ids": [
+              "5a93f293-cd2b-42de-b7eb-8ada47a5f377",
+              "f52a036e-f869-4c29-b2bf-3e1057e4cf09",
+              "07b04056-0d0c-4f8a-959e-bc4e4dae1da2"
+            ],
+            "artifact_ids": [
+              "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+              "31975500-293f-402f-b152-806496a883f0",
+              "ba94223b-2b27-48d4-9e00-dc3695233b9e"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "Summarize README section evaluations from artifact state.",
+            "source_user_intent": "Summarize previous section evaluations.",
+            "target_resource": "README.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:18:50.723959+00:00",
+            "updated_at": "2026-08-15T07:18:52.655426+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 3,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 3,
+          "recent_artifacts": [
+            {
+              "artifact_id": "4935f8b9-0d8d-4074-9c14-bab7374d564e",
+              "artifact_kind": "step_result",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "5a93f293-cd2b-42de-b7eb-8ada47a5f377",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_complete",
+              "scope": "README.md; section_index=1",
+              "summary": "Fixture section 1 semantic evaluation is complete.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "94d09e179f3403294b9198ae31c04642c76e4079aec43a11d64fb1609b8dd1b0",
+              "content_excerpt": "Fixture complete semantic evaluation for README section 1.",
+              "content_length": 58,
+              "created_at": "2026-08-15T07:18:50.724008+00:00",
+              "updated_at": "2026-08-15T07:18:50.724010+00:00"
+            },
+            {
+              "artifact_id": "31975500-293f-402f-b152-806496a883f0",
+              "artifact_kind": "step_result",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "f52a036e-f869-4c29-b2bf-3e1057e4cf09",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "README.md; section_index=2",
+              "summary": "Execution coverage exists for section 2, but semantic generation timed out.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "fixture-execution-section-2"
+              ],
+              "source_artifact_ids": [],
+              "version": 1,
+              "content_hash": "e7032841ebf913cbd82c0fea1914b3834196a7de91ee9ec47b3fab26da1ef19e",
+              "content_excerpt": "Execution coverage fixture for README section 2; semantic content is incomplete.",
+              "content_length": 80,
+              "created_at": "2026-08-15T07:18:50.724024+00:00",
+              "updated_at": "2026-08-15T07:18:50.724025+00:00"
+            },
+            {
+              "artifact_id": "ba94223b-2b27-48d4-9e00-dc3695233b9e",
+              "artifact_kind": "summary",
+              "goal_id": "e019d099-3af5-4624-aca3-ffb42d938308",
+              "workflow_id": "b22e332e-b546-4235-a841-648c12284924",
+              "step_id": "07b04056-0d0c-4f8a-959e-bc4e4dae1da2",
+              "status": "COMPLETE",
+              "finish_reason": "stop",
+              "generation_incomplete": false,
+              "lifecycle_reason": "",
+              "scope": "",
+              "summary": "Summary of 1 workflow artifacts for: Summarize previous section evaluations.",
+              "metadata": {},
+              "source_observation_ids": [
+                "fixture-execution-section-1"
+              ],
+              "source_artifact_ids": [
+                "4935f8b9-0d8d-4074-9c14-bab7374d564e"
+              ],
+              "version": 1,
+              "content_hash": "c4779b211c4492d85431ef2af67894726c0e313c66007d4c9431f03cd651d492",
+              "content_excerpt": "The semantic evaluation for the first section of the README file has been completed.",
+              "content_length": 84,
+              "created_at": "2026-08-15T07:18:52.655420+00:00",
+              "updated_at": "2026-08-15T07:18:52.655423+00:00"
+            }
+          ],
+          "execution_coverage": {},
+          "last_finish_reason": "stop",
+          "last_answer_finish_reason": "stop",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 1,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "artifact_answer",
+            "input_tokens": 274,
+            "output_tokens": 188,
+            "latency_ms": 1928.05,
+            "max_tokens": 2048,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 274,
+              "completion_tokens": 188,
+              "total_tokens": 462
+            }
+          }
+        ],
+        "input_tokens": 274,
+        "output_tokens": 188,
+        "token_usage": {
+          "input_tokens": 274,
+          "output_tokens": 188,
+          "total_tokens": 462
+        },
+        "latency_ms": 1932.23,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": null,
+        "semantic_latency_ms": null,
+        "timeout_stage": "",
+        "failure_stage": "",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "stop"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\7f384afa-8807-4359-9084-4ee10a319cdb.jsonl"
+    },
+    {
+      "case_id": "L6-05",
+      "description": "Failure observability should expose latency, timeout stage, retry count, and token usage.",
+      "level": "L6",
+      "passed": true,
+      "failures": [],
+      "responses": [
+        "Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s)."
+      ],
+      "trace": {
+        "event_counts": {
+          "conversation_event": 2,
+          "projection_event": 1,
+          "planner_run_event": 1,
+          "workflow_run_event": 1,
+          "agent_decision_event": 1,
+          "file_event": 1,
+          "tool_event": 1,
+          "execution_observation_event": 1,
+          "workflow_step_event": 1,
+          "workflow_artifact_event": 2,
+          "semantic_observation_event": 1,
+          "runtime_snapshot_event": 1
+        },
+        "intent": {
+          "recent_intents": []
+        },
+        "goal": {
+          "hypothesis": "evaluate the first section of README.md",
+          "active_goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+          "active_goal_count": 1,
+          "active_goals": [
+            {
+              "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+              "goal_summary": "evaluate the first section of README.md",
+              "status": "active",
+              "workflow_ids": [
+                "ce0b0123-98f0-4bd1-98ce-caf5468542b7"
+              ],
+              "artifact_ids": [
+                "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+              ],
+              "source_goal_hypothesis": "evaluate the first section of README.md",
+              "source_user_intent": "Read README section 1 and evaluate it.",
+              "completed_scope_count": 0,
+              "pending_scope_count": 0,
+              "created_at": "2026-08-15T07:18:53.837344+00:00",
+              "updated_at": "2026-08-15T07:18:53.844378+00:00"
+            }
+          ]
+        },
+        "workflow": {
+          "active_workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+          "workflow_count": 1,
+          "workflows": [
+            {
+              "workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+              "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+              "task_summary": "evaluate the first section of README.md",
+              "status": "active",
+              "current_step_id": "ff85bf2e-9538-4190-87c0-4b38431fae46",
+              "step_ids": [
+                "ff85bf2e-9538-4190-87c0-4b38431fae46"
+              ],
+              "artifact_ids": [
+                "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+              ],
+              "planned_step_ids": [],
+              "current_plan_step_id": "",
+              "source_goal_hypothesis": "evaluate the first section of README.md",
+              "source_user_intent": "Read README section 1 and evaluate it.",
+              "target_resource": "readme.md",
+              "workflow_kind": "document_section_understanding",
+              "created_at": "2026-08-15T07:18:53.837424+00:00",
+              "updated_at": "2026-08-15T07:18:53.843976+00:00"
+            }
+          ]
+        },
+        "steps": {
+          "planned": [],
+          "executed": [
+            {
+              "step_id": "ff85bf2e-9538-4190-87c0-4b38431fae46",
+              "workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+              "status": "completed",
+              "capability": "document.read_section",
+              "tool": "read_section",
+              "action": {
+                "action": "tool_then_answer",
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "arguments": {
+                  "path": "README.md",
+                  "section_index": 1
+                },
+                "reason": "read section 1 and evaluate it",
+                "raw_type": "capability_action",
+                "goal_hypothesis": "evaluate the first section of README.md",
+                "goal_confidence": "high",
+                "goal_status": "inferred"
+              },
+              "execution_observation_id": "08e80f25-31cf-4829-9052-3c17110a0ef9",
+              "semantic_observation_id": "08e80f25-31cf-4829-9052-3c17110a0ef9",
+              "artifact_ids": [
+                "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+              ],
+              "created_at": "2026-08-15T07:18:53.841616+00:00",
+              "updated_at": "2026-08-15T07:18:53.843978+00:00"
+            }
+          ],
+          "planned_count": 0,
+          "executed_count": 1,
+          "completed_planned_count": 0,
+          "pending_planned_count": 0,
+          "failed_planned_count": 0,
+          "failed_executed_count": 0
+        },
+        "actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate it",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the first section of README.md",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "planner_actions": [
+          {
+            "action": "tool_then_answer",
+            "capability": "document.read_section",
+            "tool": "read_section",
+            "arguments": {
+              "path": "README.md",
+              "section_index": 1
+            },
+            "reason": "read section 1 and evaluate it",
+            "raw_type": "capability_action",
+            "goal_hypothesis": "evaluate the first section of README.md",
+            "goal_confidence": "high",
+            "goal_status": "inferred"
+          }
+        ],
+        "continuity_actions": [],
+        "reference_actions": [],
+        "retry_count": 0,
+        "tools": {
+          "tool_names": [
+            "read_section"
+          ],
+          "read_section_indexes": [
+            1
+          ],
+          "read_file_count": 0,
+          "read_section_count": 1,
+          "write_file_count": 0
+        },
+        "artifacts": {
+          "count": 1,
+          "items": [
+            {
+              "artifact_id": "8365c34c-5c76-4a33-82f8-8df67c0b00e2",
+              "artifact_kind": "step_result",
+              "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+              "workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+              "step_id": "ff85bf2e-9538-4190-87c0-4b38431fae46",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s).\nopen_questions: Semantic observation JSON could not be parsed reliably.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "08e80f25-31cf-4829-9052-3c17110a0ef9",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "08e80f25-31cf-4829-9052-3c17110a0ef9"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "41910f68a85bfde211fc6bdd3141605895efdaae5aa241cfbcbcb92135c22cab",
+              "content_excerpt": "{\n  \"observation_id\": \"08e80f25-31cf-4829-9052-3c17110a0ef9\",\n  \"capability\": \"document.read_section\",\n  \"tool_name\": \"read_section\",\n  \"status\": \"success\",\n  \"message\": \"Read section 1. Project Vision from D:\\\\UAEA\\\\README.md\",\n  \"data\": {\n    \"path\": \"D:\\\\UAEA\\\\README.md\",\n    \"resolved_path\": \"D:\\\\UAEA\\\\README.md\",\n    \"content_hash\": \"fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640\",\n    \"source_hash\": \"c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4\",\n    \"size_chars\": 682,\n    \"section\": \"1. Project Vision\",\n    \"section_index\": 1,\n    \"line_start\": 11,\n    \"line_end\": 30,\n    \"section_catalog\": [\n      {\n        \"section_index\": 1,\n        \"heading\": \"1. Project Vision\",\n        \"line_start\": 11\n      },\n      {\n        \"section_index\": 2,\n        \"heading\": \"2. Architecture Overview\",\n        \"line_start\": 31\n      },\n      {\n        \"section_index\": 3,\n        \"heading\": \"3. Current Progress\",\n        \"line_start\": 93\n      },\n      {\n        \"section_index\": 4,\n        \"heading\": \"4. Validation Status\",\n        \"line_start\": 137\n      },\n      {\n        \"section_index\": 5,\n        \"heading\": \"5. Running Validation\",\n        \"line_start\": ",
+              "content_length": 2167,
+              "created_at": "2026-08-15T07:18:53.842732+00:00",
+              "updated_at": "2026-08-15T07:18:53.843969+00:00"
+            }
+          ],
+          "summary_count": 0,
+          "correction_count": 0,
+          "kinds": [
+            "step_result"
+          ],
+          "statuses": [
+            "PARTIAL"
+          ],
+          "complete_count": 0,
+          "pending_count": 0,
+          "partial_count": 1,
+          "failed_count": 0,
+          "invalid_count": 0,
+          "derived_count": 0,
+          "complete_ids": [],
+          "partial_ids": [
+            "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+          ]
+        },
+        "execution_observations": {
+          "count": 1,
+          "failure_count": 0,
+          "statuses": [
+            "success"
+          ],
+          "messages": [
+            "Read section 1. Project Vision from D:\\UAEA\\README.md"
+          ],
+          "items": [
+            {
+              "observation_id": "08e80f25-31cf-4829-9052-3c17110a0ef9",
+              "capability": "document.read_section",
+              "tool_name": "read_section",
+              "status": "success",
+              "message": "Read section 1. Project Vision from D:\\UAEA\\README.md",
+              "data": {
+                "path": "D:\\UAEA\\README.md",
+                "resolved_path": "D:\\UAEA\\README.md",
+                "content_hash": "fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640",
+                "source_hash": "c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4",
+                "size_chars": 682,
+                "section": "1. Project Vision",
+                "section_index": 1,
+                "line_start": 11,
+                "line_end": 30,
+                "section_catalog": [
+                  {
+                    "section_index": 1,
+                    "heading": "1. Project Vision",
+                    "line_start": 11
+                  },
+                  {
+                    "section_index": 2,
+                    "heading": "2. Architecture Overview",
+                    "line_start": 31
+                  },
+                  {
+                    "section_index": 3,
+                    "heading": "3. Current Progress",
+                    "line_start": 93
+                  },
+                  {
+                    "section_index": 4,
+                    "heading": "4. Validation Status",
+                    "line_start": 137
+                  },
+                  {
+                    "section_index": 5,
+                    "heading": "5. Running Validation",
+                    "line_start": 177
+                  },
+                  {
+                    "section_index": 6,
+                    "heading": "6. Engineering Principle",
+                    "line_start": 217
+                  }
+                ],
+                "capability": "document.read_section",
+                "tool": "read_section",
+                "content_excerpt": "## 1. Project Vision\n\nUAEA is designed around three long-running goals:\n\n- Cognitive runtime: preserve stable agent semantics for goals, workflows,\n  tools, semantic observations, artifacts, and failure handling.\n- Agent evolution pipeline: keep runtime traces and artifacts structured enough\n  to support future memory, reflection, evaluation, and improvement loops.\n- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible\n  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind\n  a common contract.\n\nThe governing rule is:\n\n```text\nCognitive Runtime stable\n  -> Inference contract stable\n  -> Backend implementation replaceable\n```\n",
+                "content_length": 682
+              }
+            }
+          ]
+        },
+        "semantic_observations": {
+          "count": 1,
+          "failure_count": 1,
+          "partial_count": 0,
+          "results": [
+            "failure"
+          ],
+          "finish_reasons": [
+            "error"
+          ]
+        },
+        "context": {
+          "projection_count": 1,
+          "projection_lengths": [
+            58
+          ],
+          "planner_projection_lengths": [
+            58
+          ],
+          "max_planner_projection_length": 58
+        },
+        "runtime_snapshot": {
+          "active_goal": {
+            "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+            "goal_summary": "evaluate the first section of README.md",
+            "status": "active",
+            "workflow_ids": [
+              "ce0b0123-98f0-4bd1-98ce-caf5468542b7"
+            ],
+            "artifact_ids": [
+              "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+            ],
+            "source_goal_hypothesis": "evaluate the first section of README.md",
+            "source_user_intent": "Read README section 1 and evaluate it.",
+            "completed_scope_count": 0,
+            "pending_scope_count": 0,
+            "created_at": "2026-08-15T07:18:53.837344+00:00",
+            "updated_at": "2026-08-15T07:18:53.844378+00:00"
+          },
+          "active_workflow": {
+            "workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+            "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+            "task_summary": "evaluate the first section of README.md",
+            "status": "active",
+            "current_step_id": "ff85bf2e-9538-4190-87c0-4b38431fae46",
+            "step_ids": [
+              "ff85bf2e-9538-4190-87c0-4b38431fae46"
+            ],
+            "artifact_ids": [
+              "8365c34c-5c76-4a33-82f8-8df67c0b00e2"
+            ],
+            "planned_step_ids": [],
+            "current_plan_step_id": "",
+            "source_goal_hypothesis": "evaluate the first section of README.md",
+            "source_user_intent": "Read README section 1 and evaluate it.",
+            "target_resource": "readme.md",
+            "workflow_kind": "document_section_understanding",
+            "created_at": "2026-08-15T07:18:53.837424+00:00",
+            "updated_at": "2026-08-15T07:18:53.843976+00:00"
+          },
+          "workflow_count": 1,
+          "step_count": 1,
+          "planned_step_count": 0,
+          "active_workflow_plan": {
+            "total": 0,
+            "completed": 0,
+            "pending": 0
+          },
+          "artifact_count": 1,
+          "recent_artifacts": [
+            {
+              "artifact_id": "8365c34c-5c76-4a33-82f8-8df67c0b00e2",
+              "artifact_kind": "step_result",
+              "goal_id": "a8dc114a-b5be-4835-ae6b-0825f04e46ca",
+              "workflow_id": "ce0b0123-98f0-4bd1-98ce-caf5468542b7",
+              "step_id": "ff85bf2e-9538-4190-87c0-4b38431fae46",
+              "status": "PARTIAL",
+              "finish_reason": "error",
+              "generation_incomplete": false,
+              "lifecycle_reason": "semantic_generation_timeout",
+              "scope": "D:\\UAEA\\README.md; section=1. Project Vision",
+              "summary": "facts: Model API request failed after execution observation: Model API request timed out after 300.0s (client timeout=300s).\nopen_questions: Semantic observation JSON could not be parsed reliably.",
+              "metadata": {
+                "source_capability": "document.read_section",
+                "source_tool": "read_section",
+                "execution_status": "success",
+                "execution_observation_id": "08e80f25-31cf-4829-9052-3c17110a0ef9",
+                "semantic_generation_error": "semantic_generation_timeout"
+              },
+              "source_observation_ids": [
+                "08e80f25-31cf-4829-9052-3c17110a0ef9"
+              ],
+              "source_artifact_ids": [],
+              "version": 2,
+              "content_hash": "41910f68a85bfde211fc6bdd3141605895efdaae5aa241cfbcbcb92135c22cab",
+              "content_excerpt": "{\n  \"observation_id\": \"08e80f25-31cf-4829-9052-3c17110a0ef9\",\n  \"capability\": \"document.read_section\",\n  \"tool_name\": \"read_section\",\n  \"status\": \"success\",\n  \"message\": \"Read section 1. Project Vision from D:\\\\UAEA\\\\README.md\",\n  \"data\": {\n    \"path\": \"D:\\\\UAEA\\\\README.md\",\n    \"resolved_path\": \"D:\\\\UAEA\\\\README.md\",\n    \"content_hash\": \"fcd6d1dcb97b180713bfdb358826a501268c8f658f458b96080aadd737e26640\",\n    \"source_hash\": \"c226acb473618e916856b4df6b40ae5aa57b32d4e68f8b6ce02d27017265e8b4\",\n    \"size_chars\": 682,\n    \"section\": \"1. Project Vision\",\n    \"section_index\": 1,\n    \"line_start\": 11,\n    \"line_end\": 30,\n    \"section_catalog\": [\n      {\n        \"section_index\": 1,\n        \"heading\": \"1. Project Vision\",\n        \"line_start\": 11\n      },\n      {\n        \"section_index\": 2,\n        \"heading\": \"2. Architecture Overview\",\n        \"line_start\": 31\n      },\n      {\n        \"section_index\": 3,\n        \"heading\": \"3. Current Progress\",\n        \"line_start\": 93\n      },\n      {\n        \"section_index\": 4,\n        \"heading\": \"4. Validation Status\",\n        \"line_start\": 137\n      },\n      {\n        \"section_index\": 5,\n        \"heading\": \"5. Running Validation\",\n        \"line_start\": ",
+              "content_length": 2167,
+              "created_at": "2026-08-15T07:18:53.842732+00:00",
+              "updated_at": "2026-08-15T07:18:53.843969+00:00"
+            }
+          ],
+          "execution_coverage": {
+            "d:/uaea/readme.md": [
+              1
+            ],
+            "readme.md": [
+              1
+            ]
+          },
+          "last_finish_reason": "error",
+          "last_answer_finish_reason": "error",
+          "last_answer_incomplete": false
+        }
+      },
+      "performance": {
+        "model_calls": 2,
+        "calls": [
+          {
+            "call_index": 1,
+            "kind": "planner",
+            "input_tokens": 1546,
+            "output_tokens": 103,
+            "latency_ms": 1081.0,
+            "max_tokens": 1024,
+            "finish_reason": "stop",
+            "usage": {
+              "prompt_tokens": 1546,
+              "completion_tokens": 103,
+              "total_tokens": 1649
+            }
+          },
+          {
+            "call_index": 2,
+            "kind": "observation_answer",
+            "input_tokens": 818,
+            "output_tokens": 0,
+            "latency_ms": 0.01,
+            "max_tokens": 2048,
+            "finish_reason": "error",
+            "usage": {
+              "prompt_tokens": 818,
+              "completion_tokens": 0,
+              "total_tokens": 818
+            }
+          }
+        ],
+        "input_tokens": 2364,
+        "output_tokens": 103,
+        "token_usage": {
+          "input_tokens": 2364,
+          "output_tokens": 103,
+          "total_tokens": 2467
+        },
+        "latency_ms": 1090.83,
+        "peak_gpu_memory_mb": 17632,
+        "execution_latency_ms": 1086.45,
+        "semantic_latency_ms": 2.98,
+        "timeout_stage": "semantic",
+        "failure_stage": "semantic",
+        "retry_count": 0,
+        "semantic_event_finish_reasons": [
+          "error"
+        ]
+      },
+      "trajectory_path": "D:\\UAEA\\data\\benchmark_trajectories\\435a3d9d-a58f-4ea7-b0ce-3730201922d2.jsonl"
+    }
+  ]
+}

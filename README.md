@@ -100,7 +100,7 @@ generation config, finish reason, latency, and token usage.
 | Inference trace layer | PASS |
 | vLLM transport/API | PASS |
 | vLLM backend adapter | PASS |
-| vLLM semantic migration | in progress |
+| vLLM semantic migration | bounded L0-L6 PASS |
 
 Current production baseline:
 
@@ -116,8 +116,8 @@ Current vLLM production candidate:
 ```text
 VLLMBackend
 Qwen2.5-14B-Instruct-AWQ
-traditional AWQ / auto_awq
-Phase-1 L0/L1/L2: PASS
+traditional AWQ / auto_awq / GEMM
+Phase-1 L0/L1/L2/L3/L4/L5/L6: PASS
 ```
 
 Rejected vLLM artifact:
@@ -126,8 +126,13 @@ Rejected vLLM artifact:
 DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4
 compressed-tensors WNA16
 Rejected for current production use due to first-token `!` pathology and
-logprobs NaN under vLLM on the current RTX 5090 D environment.
+logprobs NaN under vLLM 0.26.0 on the current RTX 5090 D environment.
 ```
+
+The DS14B result does not mean the original checkpoint is damaged, and it does
+not mean compressed-tensors is globally unusable. The compatibility boundary is
+the specific artifact representation, vLLM execution path, engine version, and
+hardware envelope.
 
 ## 4. Validation Status
 
@@ -142,6 +147,7 @@ logprobs NaN under vLLM on the current RTX 5090 D environment.
 | Qwen2.5-14B-AWQ vLLM smoke | PASS |
 | Qwen2.5-14B-AWQ Phase-1 selected cases | PASS |
 | Qwen2.5-14B-AWQ Phase-1 L0/L1/L2 | PASS |
+| Qwen2.5-14B-AWQ Phase-1 L3/L4/L5/L6 | PASS |
 
 Qwen2.5-14B-AWQ validation artifacts:
 
@@ -163,6 +169,13 @@ The active DS14B root-cause summary remains:
 docs/phase2a-vllm-root-cause-analysis.md
 ```
 
+The current model/artifact selection baseline is:
+
+```text
+docs/phase2a-model-artifact-baseline.md
+docs/phase2a-vllm-qwen25-equivalence-report.md
+```
+
 ## 5. Running Validation
 
 Run Phase-2A unit tests from the repository root:
@@ -180,6 +193,16 @@ python benchmark_phase1_vllm.py \
   --level L0 \
   --json \
   --trace-output data/inference_traces/qwen25_awq_phase1/example.jsonl
+```
+
+The bounded Qwen2.5-AWQ L0-L6 baseline was generated with:
+
+```text
+data/inference_traces/qwen25_awq_phase1/qwen25_awq_l0_l2_20260815T065250Z.jsonl
+data/inference_traces/vllm_qwen25_phase1_l3_l6.jsonl
+data/inference_traces/vllm_qwen25_phase1_l3_l6.enriched.jsonl
+data/benchmark_results/qwen25_awq_phase1/
+data/benchmark_results/vllm_qwen25/
 ```
 
 vLLM model assets are stored outside the repository:
@@ -203,3 +226,11 @@ Preserve evidence, isolate variables, validate abstraction.
 Failed experiments are retained and archived instead of hidden. Passing
 benchmarks are accepted only when Phase-1 Runtime semantics and benchmark
 expectations remain unchanged.
+
+Next roadmap boundary:
+
+```text
+Phase-2A: bounded vLLM production validation complete for Phase-1 L0-L6
+Phase-2A next: harden production serving and monitoring without changing Phase-1
+Phase-2B: add more inference backends and model artifact classes
+```
