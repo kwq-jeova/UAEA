@@ -1,0 +1,84 @@
+{
+  "fixture_id": "web_source_w0_deterministic",
+  "description": "Deterministic Phase-2B web source fixture for source history and evidence trace tests.",
+  "web_access_events": [
+    {
+      "access_event_id": "WEB-E001",
+      "url": "https://example.test/uaea/ds14b-wna16-vllm",
+      "title": "DS14B WNA16 vLLM compatibility note",
+      "domain": "example.test",
+      "accessed_at": "2026-08-24T08:00:00Z",
+      "access_status": "fetched",
+      "source_type": "web_page",
+      "http_status": 200,
+      "content_ref": "web_sources/ds14b_wna16_vllm.html",
+      "excerpt": "The DS14B compressed-tensors WNA16 configuration showed a reproducible issue on the current vLLM stack and was excluded from production candidates.",
+      "metadata": {
+        "query": "DS14B compressed-tensors WNA16 vLLM compatibility",
+        "selection_reason": "deterministic compatibility fixture"
+      }
+    },
+    {
+      "access_event_id": "WEB-E002",
+      "url": "https://example.test/uaea/ds14b-wna16-vllm",
+      "title": "DS14B WNA16 vLLM compatibility note",
+      "domain": "example.test",
+      "accessed_at": "2026-08-24T08:20:00Z",
+      "access_status": "fetched",
+      "source_type": "web_page",
+      "http_status": 200,
+      "content_ref": "web_sources/ds14b_wna16_vllm.html",
+      "excerpt": "A repeated deterministic access to the same URL should create a second access event while sharing source identity.",
+      "metadata": {
+        "query": "repeat DS14B compressed-tensors WNA16 vLLM compatibility",
+        "selection_reason": "repeated access fixture"
+      }
+    },
+    {
+      "access_event_id": "WEB-E003",
+      "url": "https://example.test/uaea/large-context-source",
+      "title": "Large web source fixture",
+      "domain": "example.test",
+      "accessed_at": "2026-08-24T09:00:00Z",
+      "access_status": "fetched",
+      "source_type": "web_page",
+      "http_status": 200,
+      "content_ref": "web_sources/large_context_source.html",
+      "excerpt": "Large source fixture with bounded excerpt; raw body must remain in the snapshot file rather than being copied into SQLite.",
+      "metadata": {
+        "query": "large deterministic web source",
+        "selection_reason": "context pressure fixture"
+      }
+    },
+    {
+      "access_event_id": "WEB-E004",
+      "url": "https://example.test/uaea/unavailable-source",
+      "title": "Unavailable source fixture",
+      "domain": "example.test",
+      "accessed_at": "2026-08-24T09:30:00Z",
+      "access_status": "failed",
+      "source_type": "web_page",
+      "http_status": 503,
+      "content_ref": "",
+      "excerpt": "",
+      "metadata": {
+        "query": "unavailable deterministic web source",
+        "error": "fixture fetch failed"
+      }
+    },
+    {
+      "access_event_id": "WEB-E005",
+      "url": "https://metadata-missing.example.test/uaea/source",
+      "title": "",
+      "accessed_at": "2026-08-24T10:00:00Z",
+      "access_status": "fetched",
+      "source_type": "web_page",
+      "http_status": 200,
+      "content_ref": "",
+      "excerpt": "Metadata-incomplete source with domain derived from URL and no full body snapshot.",
+      "metadata": {
+        "query": "metadata incomplete deterministic web source"
+      }
+    }
+  ]
+}

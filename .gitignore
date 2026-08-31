@@ -1,8 +1,15 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv_memory/
 benchmark/inference/results/
 vllm-*-process.pid
+data/memory/*.db
+data/memory/*.db-*
+data/memory/*.sqlite
+data/memory/*.sqlite-*
+data/memory/web_snapshots/
+tests/test_resources/
 .idea/
 .vscode/
 Thumbs.db

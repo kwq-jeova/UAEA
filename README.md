@@ -232,5 +232,51 @@ Next roadmap boundary:
 ```text
 Phase-2A: bounded vLLM production validation complete for Phase-1 L0-L6
 Phase-2A next: harden production serving and monitoring without changing Phase-1
-Phase-2B: add more inference backends and model artifact classes
+Phase-2B: define Memory Boundary Architecture before SQLite implementation
+```
+
+Current Phase-2B Memory architecture baseline:
+
+```text
+docs/phase2b-memory-boundary-architecture.md
+docs/phase2b-memory/memory-architecture-boundary-v0.1.md
+docs/phase2b-memory/python-environment.md
+```
+
+Phase-2B review conclusion:
+
+```text
+Conversation Context != Memory
+
+Memory Element
+  + lifecycle_state
+  + representation_facets
+  + confidence
+  + validity_boundary
+  + evidence_references
+  + relationship_edges
+```
+
+Episodic, semantic, and procedural/habit forms are treated as representation
+facets, not mutually exclusive memory types. Consolidation is a state
+transition process. Dormant is a lifecycle state. SQLite remains a persistence
+adapter and does not define the Memory architecture.
+
+Phase-2B implementation slice:
+
+```text
+Memory Candidate domain model
+Structural validation
+Evidence references
+Scope hypothesis
+Candidate lifecycle
+```
+
+Phase-2B architecture test fixture:
+
+```text
+data/memory_test_fixtures/long_context_mixed_100.json
+docs/phase2b-memory/memory-architecture-test-fixtures.md
+python -m unittest tests.memory.test_architecture_fixtures -v
+python scripts/evaluate_memory_fixture.py data/memory_test_fixtures/long_context_mixed_100.json --json
 ```

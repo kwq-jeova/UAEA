@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 
 from .runtime_factory import build_agent
+from .terminal_input import read_user_input
 
 
 def main() -> None:
@@ -14,11 +15,12 @@ def main() -> None:
     print(f"Session    : {ledger.session_id}")
     print(f"Sandbox    : {config.sandbox_root}")
     print(f"Trajectory : {ledger.path}")
+    print("Web        : disabled in this REPL; use scripts/start_uaea_web_repl_vllm.sh")
     print("Type 'exit' or 'quit' to stop.")
     print("=" * 72)
     while True:
         try:
-            user_input = input(f"\n[Turn {turn_index} | USER]\n> ").strip()
+            user_input = read_user_input(f"\n[Turn {turn_index} | USER]\n> ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
