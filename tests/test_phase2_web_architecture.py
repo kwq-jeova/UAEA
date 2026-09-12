@@ -47,6 +47,7 @@ class Phase2WebArchitectureTests(unittest.TestCase):
         }
         checked_modules = [
             PHASE2_ROOT / "web_adapter.py",
+            PHASE2_ROOT / "web_capability.py",
             PHASE2_ROOT / "web_context.py",
             PHASE2_ROOT / "web_shell.py",
             PHASE2_ROOT / "web_intent.py",
@@ -62,6 +63,7 @@ class Phase2WebArchitectureTests(unittest.TestCase):
     def test_web_modules_do_not_call_chat_completion_directly(self):
         checked_modules = [
             PHASE2_ROOT / "web_adapter.py",
+            PHASE2_ROOT / "web_capability.py",
             PHASE2_ROOT / "web_context.py",
             PHASE2_ROOT / "web_shell.py",
             PHASE2_ROOT / "web_repl.py",

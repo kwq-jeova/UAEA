@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import http.server
+import json
 import sqlite3
+import sys
 import tempfile
 import threading
 import unittest
@@ -9,13 +11,114 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Iterator
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PHASE1_ROOT = PROJECT_ROOT / "runtime" / "phase1-runtime"
+if str(PHASE1_ROOT) not in sys.path:
+    sys.path.insert(0, str(PHASE1_ROOT))
+
 from memory.sqlite_store import connect, counts, get_web_access_event, initialize
 from phase2.web_adapter import WebAdapter
+from phase2.web_capability import WebFetchCapability, WebSearchCapability, web_fetch_metadata, web_search_metadata
 from phase2.web_context import ProjectionLimits, project_web_access_events
 from phase2.web_shell import Phase2WebShell, parse_web_command, parse_web_request
+from runtime.ledger import LedgerStub
+from runtime.sandbox import Sandbox
+from runtime.semantic_observation import ExecutionObservation
+from runtime.tools import ToolRegistry
 
 
 class WebAdapterAndShellTests(unittest.TestCase):
+    def test_web_fetch_capability_uses_registry_and_returns_bounded_observation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            db_path = root / "source.sqlite"
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            adapter = WebAdapter(snapshot_root=root / "snapshots", timeout_seconds=5)
+            registry.register_capability(
+                web_fetch_metadata(),
+                WebFetchCapability(
+                    db_path=db_path,
+                    adapter=adapter,
+                    projection_limits=ProjectionLimits(max_sources=1, per_source_chars=120, total_chars=120),
+                ),
+            )
+            with local_web_server() as server:
+                result = registry.execute_capability(
+                    "web.fetch",
+                    {"url": f"{server}/article.html"},
+                    "fetch local article",
+                )
+            observation = ExecutionObservation.from_tool_result("web_fetch", result)
+            with closing(connect(db_path)) as connection:
+                event = get_web_access_event(connection, result.data["access_event_id"])
+
+        assert event is not None
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["capability"], "web.fetch")
+        self.assertEqual(result.data["tool"], "web_fetch")
+        self.assertEqual(result.data["access_status"], "fetched")
+        self.assertEqual(result.data["evidence_reference"]["source_kind"], "web_access_event")
+        self.assertEqual(result.data["evidence_reference"]["source_id"], result.data["access_event_id"])
+        self.assertIn("[WEB EVIDENCE BLOCK]", result.data["bounded_evidence_block"])
+        self.assertIn("Main Web Article", result.data["bounded_evidence_block"])
+        self.assertNotIn("<html>", result.data["bounded_evidence_block"])
+        self.assertNotIn("content", result.data)
+        self.assertLessEqual(result.data["projection_metrics"]["projected_chars"], 120)
+        self.assertEqual(event["access_status"], "fetched")
+        self.assertTrue(event["content_ref"])
+        self.assertTrue(event["content_sha256"])
+        self.assertEqual(observation.capability, "web.fetch")
+        self.assertEqual(observation.tool_name, "web_fetch")
+        self.assertEqual(observation.status, "success")
+
+    def test_web_search_capability_uses_registry_and_returns_bounded_observation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            db_path = root / "source.sqlite"
+            sandbox_root = root / "sandbox"
+            sandbox_root.mkdir()
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            with local_web_server() as server:
+                registry.register_capability(
+                    web_search_metadata(),
+                    WebSearchCapability(
+                        db_path=db_path,
+                        adapter=WebAdapter(
+                            snapshot_root=root / "snapshots2",
+                            timeout_seconds=5,
+                            search_url_template=f"{server}/search.html?q={{query}}",
+                        ),
+                        projection_limits=ProjectionLimits(max_sources=1, per_source_chars=120, total_chars=120),
+                    ),
+                )
+                result = registry.execute_capability(
+                    "web.search",
+                    {"query": "vLLM Qwen2.5 AWQ"},
+                    "search local article",
+                )
+            observation = ExecutionObservation.from_tool_result("web_search", result)
+            with closing(connect(db_path)) as connection:
+                event = get_web_access_event(connection, result.data["access_event_id"])
+
+        assert event is not None
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["capability"], "web.search")
+        self.assertEqual(result.data["tool"], "web_search")
+        self.assertEqual(result.data["access_status"], "fetched")
+        self.assertEqual(result.data["evidence_reference"]["source_kind"], "web_access_event")
+        self.assertEqual(result.data["evidence_reference"]["source_id"], result.data["access_event_id"])
+        self.assertIn("[WEB EVIDENCE BLOCK]", result.data["bounded_evidence_block"])
+        self.assertIn("Qwen2.5 AWQ vLLM report", result.data["bounded_evidence_block"])
+        self.assertEqual(result.data["search_query"], "vLLM Qwen2.5 AWQ")
+        self.assertGreaterEqual(len(result.data["search_results"]), 1)
+        self.assertLessEqual(result.data["projection_metrics"]["projected_chars"], 120)
+        self.assertEqual(event["access_status"], "fetched")
+        self.assertTrue(event["content_ref"])
+        self.assertTrue(event["content_sha256"])
+        self.assertEqual(observation.capability, "web.search")
+        self.assertEqual(observation.tool_name, "web_search")
+        self.assertEqual(observation.status, "success")
+
     def test_live_fetch_records_source_history_and_projects_bounded_context(self):
         with self.fixture_connection() as connection, tempfile.TemporaryDirectory() as tmpdir:
             with local_web_server() as server:
@@ -130,47 +233,76 @@ class WebAdapterAndShellTests(unittest.TestCase):
     def test_web_shell_fetch_hands_bounded_evidence_to_runtime(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with local_web_server() as server:
+                root = Path(tmpdir)
                 agent = FakeAgent()
+                registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
                 shell = Phase2WebShell(
                     agent,
-                    db_path=Path(tmpdir) / "source.sqlite",
-                    snapshot_root=Path(tmpdir) / "snapshots",
+                    db_path=root / "source.sqlite",
+                    snapshot_root=root / "snapshots",
                     projection_limits=ProjectionLimits(max_sources=1, per_source_chars=220, total_chars=220),
+                    capability_registry=registry,
                 )
                 result = shell.handle(f"/web fetch {server}/article.html")
+                trace_events = [json.loads(line) for line in registry.ledger.path.read_text(encoding="utf-8").splitlines()]
 
         self.assertTrue(result.used_web)
+        self.assertIn("web.fetch", registry.capability_names)
         self.assertEqual(len(result.access_event_ids), 1)
-        self.assertIn("[WEB EVIDENCE BLOCK]", agent.last_input)
-        self.assertIn("User request:", agent.last_input)
-        self.assertIn("Main Web Article", agent.last_input)
-        self.assertNotIn("<html>", agent.last_input)
+        self.assertEqual(agent.last_input, f"/web fetch {server}/article.html")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.fetch")
+        self.assertIn("Main Web Article", result.evidence_block)
         self.assertEqual(result.response, "runtime response")
+        tool_events = [event for event in trace_events if event["event_type"] == "tool_event"]
+        observation_events = [event for event in trace_events if event["event_type"] == "execution_observation_event"]
+        self.assertEqual(tool_events[-1]["metadata"]["tool_name"], "web_fetch")
+        self.assertEqual(tool_events[-1]["metadata"]["output"]["capability"], "web.fetch")
+        self.assertEqual(observation_events[-1]["metadata"]["capability"], "web.fetch")
+        self.assertEqual(observation_events[-1]["metadata"]["tool_name"], "web_fetch")
 
     def test_web_shell_search_hands_search_results_to_runtime_without_candidates(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with local_web_server() as server:
                 agent = FakeAgent()
+                root = Path(tmpdir)
+                sandbox_root = root / "sandbox"
+                sandbox_root.mkdir()
+                registry = ToolRegistry(Sandbox(root, sandbox_root), LedgerStub(root / "traces"))
                 adapter = WebAdapter(
-                    snapshot_root=Path(tmpdir) / "snapshots",
+                    snapshot_root=root / "snapshots",
                     timeout_seconds=5,
                     search_url_template=f"{server}/search.html?q={{query}}",
                 )
                 shell = Phase2WebShell(
                     agent,
-                    db_path=Path(tmpdir) / "source.sqlite",
-                    snapshot_root=Path(tmpdir) / "snapshots",
+                    db_path=root / "source.sqlite",
+                    snapshot_root=root / "snapshots",
                     adapter=adapter,
+                    capability_registry=registry,
                 )
                 result = shell.handle("/web search vLLM Qwen2.5 AWQ")
-                with closing(connect(Path(tmpdir) / "source.sqlite")) as connection:
+                with closing(connect(root / "source.sqlite")) as connection:
                     actual_counts = counts(connection)
+                trace_events = [json.loads(line) for line in registry.ledger.path.read_text(encoding="utf-8").splitlines()]
 
         self.assertTrue(result.used_web)
+        self.assertIn("web.search", registry.capability_names)
         self.assertIn("web_search_results", result.evidence_block)
-        self.assertIn("Qwen2.5 AWQ vLLM report", agent.last_input)
+        self.assertEqual(agent.last_input, "/web search vLLM Qwen2.5 AWQ")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
+        self.assertIn("Qwen2.5 AWQ vLLM report", result.evidence_block)
         self.assertEqual(actual_counts["candidates"], 0)
         self.assertEqual(actual_counts["evidence_references"], 0)
+        tool_events = [event for event in trace_events if event["event_type"] == "tool_event"]
+        observation_events = [event for event in trace_events if event["event_type"] == "execution_observation_event"]
+        self.assertEqual(tool_events[-1]["metadata"]["tool_name"], "web_search")
+        self.assertEqual(tool_events[-1]["metadata"]["output"]["capability"], "web.search")
+        self.assertEqual(observation_events[-1]["metadata"]["capability"], "web.search")
+        self.assertEqual(observation_events[-1]["metadata"]["tool_name"], "web_search")
 
     def test_web_shell_natural_language_fetches_explicit_url_request(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -186,9 +318,11 @@ class WebAdapterAndShellTests(unittest.TestCase):
 
         self.assertTrue(result.used_web)
         self.assertEqual(len(result.access_event_ids), 1)
-        self.assertIn("[WEB EVIDENCE BLOCK]", agent.last_input)
-        self.assertIn("Main Web Article", agent.last_input)
-        self.assertIn("请访问", agent.last_input)
+        self.assertEqual(agent.last_input, f"请访问 {server}/article.html 并告诉我这个页面的重点")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.fetch")
+        self.assertIn("Main Web Article", result.evidence_block)
 
     def test_web_shell_natural_language_searches_explicit_search_request(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -208,8 +342,11 @@ class WebAdapterAndShellTests(unittest.TestCase):
                 result = shell.handle("请联网搜索 vLLM Qwen2.5 AWQ compatibility")
 
         self.assertTrue(result.used_web)
-        self.assertIn("Search query: vLLM Qwen2.5 AWQ compatibility", agent.last_input)
-        self.assertIn("Qwen2.5 AWQ vLLM report", agent.last_input)
+        self.assertEqual(agent.last_input, "请联网搜索 vLLM Qwen2.5 AWQ compatibility")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
+        self.assertIn("Qwen2.5 AWQ vLLM report", result.evidence_block)
 
     def test_web_shell_uses_semantic_intent_for_current_external_request(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -235,7 +372,10 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertTrue(result.used_web)
         self.assertEqual(result.intent_source, "semantic:search:high")
         self.assertEqual(len(intent_model.calls), 1)
-        self.assertIn("Search query: vLLM Qwen2.5 AWQ compatibility", agent.last_input)
+        self.assertEqual(agent.last_input, "当前 vLLM 对 Qwen2.5 AWQ 的兼容性怎么样")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
 
     def test_web_shell_uses_recent_context_to_expand_underspecified_search(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -263,7 +403,10 @@ class WebAdapterAndShellTests(unittest.TestCase):
 
         self.assertTrue(result.used_web)
         self.assertEqual(result.intent_source, "semantic:search:high")
-        self.assertIn("LoRA training related open source projects", agent.last_input)
+        self.assertEqual(agent.last_input, "你可以联网查询一下相关项目，并总结")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
         self.assertIn("LoRA训练", intent_model.calls[-1]["messages"][1]["content"])
 
     def test_web_shell_contextualizes_underspecified_search_when_semantic_intent_fails(self):
@@ -287,7 +430,10 @@ class WebAdapterAndShellTests(unittest.TestCase):
 
         self.assertTrue(result.used_web)
         self.assertEqual(result.intent_source, "deterministic:context")
-        self.assertIn("Search query: LoRA related open source projects", agent.last_input)
+        self.assertEqual(agent.last_input, "你可以联网查询一下相关项目")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
 
     def test_web_shell_semantic_intent_failure_falls_back_to_runtime(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -374,6 +520,10 @@ class WebAdapterAndShellTests(unittest.TestCase):
             {"kind": "search", "value": "vllm awq"},
         )
         self.assertEqual(
+            parse_web_request("那么请你联网查找一下Claude模型是否公布了runtime结构"),
+            {"kind": "search", "value": "Claude模型是否公布了runtime结构"},
+        )
+        self.assertEqual(
             parse_web_request("请访问 https://example.test/article。"),
             {"kind": "fetch", "value": "https://example.test/article"},
         )
@@ -422,7 +572,10 @@ class WebAdapterAndShellTests(unittest.TestCase):
 
         self.assertTrue(result.used_web)
         self.assertEqual(result.intent_source, "deterministic:refinement")
-        self.assertIn("Search query: LoRA related projects overseas English forums Reddit discussions", agent.last_input)
+        self.assertEqual(agent.last_input, "最好是海外论坛的，你搜索的都是中国论坛的内容")
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
 
     def test_web_shell_refines_previous_search_by_removing_paper_requirement_and_using_english(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -448,8 +601,13 @@ class WebAdapterAndShellTests(unittest.TestCase):
 
         self.assertTrue(result.used_web)
         self.assertEqual(result.intent_source, "deterministic:refinement")
-        self.assertIn("Search query: LoRA post-training related projects high relevance English", agent.last_input)
-        self.assertNotIn("paper-backed", agent.last_input)
+        self.assertEqual(
+            agent.last_input,
+            "那么去除一些关键词，不在要求一定是要论文支撑的，其次是你进行搜索的时候，可以把我的要求都换成英文",
+        )
+        self.assertIsNotNone(agent.last_execution_observation)
+        assert agent.last_execution_observation is not None
+        self.assertEqual(agent.last_execution_observation.capability, "web.search")
         self.assertEqual(len(intent_model.calls), 0)
 
     @contextmanager
@@ -463,9 +621,24 @@ class WebAdapterAndShellTests(unittest.TestCase):
 class FakeAgent:
     def __init__(self) -> None:
         self.last_input = ""
+        self.last_execution_observation: ExecutionObservation | None = None
+        self.last_tool_result = None
 
     def handle(self, user_input: str) -> str:
         self.last_input = user_input
+        self.last_execution_observation = None
+        self.last_tool_result = None
+        return "runtime response"
+
+    def handle_execution_observation(
+        self,
+        user_input: str,
+        execution_observation: ExecutionObservation,
+        tool_result=None,
+    ) -> str:
+        self.last_input = user_input
+        self.last_execution_observation = execution_observation
+        self.last_tool_result = tool_result
         return "runtime response"
 
 

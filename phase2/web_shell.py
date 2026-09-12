@@ -1,16 +1,24 @@
 from __future__ import annotations
 
-import sqlite3
 import re
-from contextlib import closing
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from memory.sqlite_store import connect, initialize
-from phase2.web_adapter import WebAccessResult, WebAdapter
-from phase2.web_context import ProjectionLimits, project_web_access_events
+from phase2.web_adapter import WebAdapter
+from phase2.web_capability import (
+    WEB_FETCH_CAPABILITY,
+    WEB_SEARCH_CAPABILITY,
+    WEB_FETCH_TOOL,
+    WebFetchCapability,
+    WebSearchCapability,
+    web_fetch_metadata,
+    web_search_metadata,
+)
+from phase2.web_context import ProjectionLimits
 from phase2.web_intent import ChatModel, parse_semantic_web_intent, should_consider_semantic_web_intent
+from runtime.action_request import ActionRequest
+from runtime.semantic_observation import ExecutionObservation
 
 
 @dataclass(frozen=True)
@@ -29,6 +37,18 @@ class RuntimeAgent(Protocol):
         ...
 
 
+class CapabilityRegistry(Protocol):
+    @property
+    def capability_names(self) -> list[str]:
+        ...
+
+    def register_capability(self, metadata: Any, handler: Any) -> None:
+        ...
+
+    def execute_capability(self, capability_name: str, arguments: dict, objective: str) -> Any:
+        ...
+
+
 class Phase2WebShell:
     def __init__(
         self,
@@ -41,6 +61,7 @@ class Phase2WebShell:
         intent_model: ChatModel | None = None,
         enable_semantic_intent: bool = True,
         context_turn_limit: int = 5,
+        capability_registry: CapabilityRegistry | None = None,
     ) -> None:
         self.agent = agent
         self.db_path = Path(db_path)
@@ -52,6 +73,18 @@ class Phase2WebShell:
         self.context_turn_limit = max(0, int(context_turn_limit))
         self._recent_user_inputs: list[str] = []
         self._last_search_query = ""
+        self.capability_registry = capability_registry or getattr(agent, "tools", None)
+        self.web_fetch_capability = WebFetchCapability(
+            db_path=self.db_path,
+            adapter=self.adapter,
+            projection_limits=self.projection_limits,
+        )
+        self.web_search_capability = WebSearchCapability(
+            db_path=self.db_path,
+            adapter=self.adapter,
+            projection_limits=self.projection_limits,
+        )
+        self._register_web_capabilities()
 
     def handle(self, user_input: str) -> WebShellResult:
         try:
@@ -61,26 +94,34 @@ class Phase2WebShell:
             if command["kind"] == "capability":
                 return WebShellResult(response=_web_capability_response(), intent_source=intent_source)
             try:
-                with closing(connect(self.db_path)) as connection:
-                    initialize(connection)
-                    access_result = self._execute_web_command(connection, command)
-                    projection = project_web_access_events(
-                        connection,
-                        [access_result.access_event_id],
-                        limits=self.projection_limits,
+                if command["kind"] in {"fetch", "search"}:
+                    result = self._execute_web_capability(command["kind"], command["value"], user_input)
+                    execution_observation = self._record_web_execution_observation(user_input, result)
+                    if not result.ok:
+                        return WebShellResult(
+                            response=f"Web capability failed before Runtime handoff: {result.message}",
+                            used_web=True,
+                            access_event_ids=_access_event_ids_from_tool_result(result),
+                            evidence_block=str(result.data.get("bounded_evidence_block") or ""),
+                            metrics=dict(result.data.get("projection_metrics") or {}),
+                            error=str(result.data.get("error") or result.message),
+                            intent_source=intent_source,
+                        )
+                    evidence_block = str(result.data.get("bounded_evidence_block") or "")
+                    if hasattr(self.agent, "handle_execution_observation"):
+                        response = self.agent.handle_execution_observation(user_input, execution_observation, result)
+                    else:
+                        runtime_input = self._runtime_input(user_input, evidence_block)
+                        response = self.agent.handle(runtime_input)
+                    return WebShellResult(
+                        response=response,
+                        used_web=True,
+                        access_event_ids=_access_event_ids_from_tool_result(result),
+                        evidence_block=evidence_block,
+                        metrics=dict(result.data.get("projection_metrics") or {}),
+                        error=str(result.data.get("error") or ""),
+                        intent_source=intent_source,
                     )
-                visible_event_ids = access_result.related_access_event_ids or (access_result.access_event_id,)
-                runtime_input = self._runtime_input(user_input, projection.evidence_block())
-                response = self.agent.handle(runtime_input)
-                return WebShellResult(
-                    response=response,
-                    used_web=True,
-                    access_event_ids=visible_event_ids,
-                    evidence_block=projection.evidence_block(),
-                    metrics=projection.metrics(),
-                    error=access_result.error,
-                    intent_source=intent_source,
-                )
             except Exception as exc:
                 return WebShellResult(
                     response=f"Web capability failed before Runtime handoff: {exc}",
@@ -91,14 +132,39 @@ class Phase2WebShell:
         finally:
             self._remember_user_input(user_input)
 
-    def _execute_web_command(self, connection: sqlite3.Connection, command: dict[str, str]) -> WebAccessResult:
-        if command["kind"] == "fetch":
-            return self.adapter.fetch_url(connection, command["value"])
-        if command["kind"] == "search":
-            result = self.adapter.search(connection, command["value"])
-            self._last_search_query = command["value"]
-            return result
-        raise ValueError(f"unsupported web command: {command['kind']}")
+    def _register_web_capabilities(self) -> None:
+        registry = self.capability_registry
+        if registry is None:
+            return
+        if WEB_FETCH_CAPABILITY not in registry.capability_names:
+            registry.register_capability(web_fetch_metadata(), self.web_fetch_capability)
+        if WEB_SEARCH_CAPABILITY not in registry.capability_names:
+            registry.register_capability(web_search_metadata(), self.web_search_capability)
+
+    def _execute_web_capability(self, kind: str, value: str, objective: str) -> Any:
+        registry = self.capability_registry
+        if kind == "fetch":
+            action_request = ActionRequest(capability=WEB_FETCH_CAPABILITY, parameters={"url": value})
+            if registry is None:
+                return self.web_fetch_capability(action_request.parameters, objective)
+            return registry.execute_capability(action_request.capability, action_request.parameters, objective)
+        if kind == "search":
+            self._last_search_query = value
+            action_request = ActionRequest(capability=WEB_SEARCH_CAPABILITY, parameters={"query": value})
+            if registry is None:
+                return self.web_search_capability(action_request.parameters, objective)
+            return registry.execute_capability(action_request.capability, action_request.parameters, objective)
+        raise ValueError(f"unsupported web capability kind: {kind}")
+
+    def _record_web_execution_observation(self, objective: str, result: Any) -> ExecutionObservation:
+        tool_name = str(result.data.get("tool") or WEB_FETCH_TOOL)
+        observation = ExecutionObservation.from_tool_result(tool_name, result)
+        result.data.setdefault("execution_observation", observation.to_event_metadata())
+        ledger = getattr(self.capability_registry, "ledger", None)
+        if ledger is None or not hasattr(ledger, "execution_observation"):
+            return observation
+        ledger.execution_observation(objective, observation.to_event_metadata(), observation.status)
+        return observation
 
     def _resolve_web_request(self, user_input: str) -> tuple[dict[str, str] | None, str]:
         explicit_command = parse_web_command(user_input)
@@ -337,6 +403,7 @@ def _search_query_from_text(text: str) -> str:
     start = lowered.find(keyword) + len(keyword)
     query = text[start:].strip(" ：:，,。.!！?？\t\r\n")
     query = _strip_polite_search_suffixes(query)
+    query = _strip_search_prefix_fillers(query)
     return " ".join(query.split())
 
 
@@ -511,6 +578,31 @@ def _strip_polite_search_suffixes(query: str) -> str:
     return clean
 
 
+def _strip_search_prefix_fillers(query: str) -> str:
+    clean = query.strip()
+    if not clean:
+        return ""
+    prefixes = (
+        "一下子",
+        "一下",
+        "请你",
+        "请",
+        "帮我",
+        "麻烦你",
+        "麻烦",
+        "先",
+    )
+    changed = True
+    while changed and clean:
+        changed = False
+        for prefix in prefixes:
+            if clean.startswith(prefix):
+                clean = clean[len(prefix) :].lstrip(" ：:，,。.!！?？\t\r\n")
+                changed = True
+                break
+    return clean
+
+
 def _search_query_needs_context(query: str) -> bool:
     clean = _safe_single_line_text(query)
     if not clean:
@@ -556,10 +648,20 @@ def _remove_unicode_surrogates(value: str) -> str:
     return "".join(" " if 0xD800 <= ord(char) <= 0xDFFF else char for char in value)
 
 
+def _access_event_ids_from_tool_result(result: Any) -> tuple[str, ...]:
+    related = result.data.get("related_access_event_ids")
+    if isinstance(related, (list, tuple)):
+        related_ids = tuple(str(value).strip() for value in related if str(value).strip())
+        if related_ids:
+            return related_ids
+    access_event_id = str(result.data.get("access_event_id") or "").strip()
+    return (access_event_id,) if access_event_id else ()
+
+
 def _web_capability_response() -> str:
     return (
         "当前 Phase-2 Web Shell 可以通过显式 Web 请求访问外部来源，并把访问事件写入 SQLite Source History。"
-        "可用方式包括：`/web fetch <url>`、`/web search <query>`，也支持明确的自然语言请求，例如"
+        "可用方式包括 capability-backed 的 `/web fetch <url>`、`/web search <query>`，也支持明确的自然语言请求，例如"
         "`请访问 https://docs.vllm.ai/ 并总结` 或 `请联网搜索 vLLM Qwen2.5 AWQ compatibility`。"
         "这不是 Memory，也不会自动生成 Candidate/Policy/Memory。"
     )
