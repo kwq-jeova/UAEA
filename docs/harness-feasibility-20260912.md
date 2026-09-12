@@ -999,3 +999,185 @@ path only. The next implementation step, if approved, should be a standalone
 thin adapter experiment with one existing UAEA capability and explicit
 event-to-`ExecutionObservation` normalization. It should remain isolated from
 the frozen `8001` serving profile.
+
+## H2.5 Isolated Source-owned Harness Runtime
+
+H2.5 repeated the dynamic-tool probe with a source-built Codex runtime rather
+than the Desktop-installed binary. The upstream source was kept outside the
+UAEA repository:
+
+```text
+source:
+  D:\UAEA-deps\codex\rust-v0.154.0
+tag:
+  rust-v0.154.0
+tag object:
+  36eab01061df3cde5f95ec20a526777b430091ba
+commit:
+  6b9826e3aa83b1a5947db50f4332cb9c65f1b340
+```
+
+The source was built with the pinned upstream Rust toolchain (`1.95.0`) in
+WSL. The staged artifact is:
+
+```text
+D:\UAEA-runtime\codex\source-rust-v0.154.0-wsl-x86_64\codex
+```
+
+It is an x86-64 Linux ELF with SHA-256:
+
+```text
+14cbd07db472b3a79aca95dfb4490a385c85be2116b3ca8631bc938b4e48e0fe
+```
+
+The source build succeeded in `10m 52s`. The upstream source tree was
+restored to clean after Cargo generated workspace package-version updates in
+`codex-rs/Cargo.lock`; those build side effects are not part of the upstream
+source revision.
+
+### Runtime Provenance
+
+The H2.5 probe was:
+
+```text
+/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex app-server --stdio
+```
+
+It was started as a local WSL child process by:
+
+```text
+D:\UAEA\scripts\h25_source_owned_app_server_probe.py
+```
+
+The probe used only:
+
+```text
+CODEX_HOME:
+  /mnt/d/UAEA-runtime/codex-home-h25
+workspace:
+  /mnt/d/UAEA-runtime/codex-workspace-h25
+app-server platform:
+  Ubuntu 24.04 / x86_64 / linux
+Codex version:
+  codex-cli 0.154.0
+```
+
+The app-server returned `remoteControl/status/changed` with
+`status = "disabled"`. The command did not use `--code-mode-host`, did not
+use the Desktop binary, and did not use the user's normal Codex home. No
+remote Harness service was observed.
+
+This closes the runtime-location question as:
+
+```text
+Harness runtime: LOCAL, WSL process
+Windows-native source artifact: NOT BUILT
+Remote Harness service dependency: NONE OBSERVED
+```
+
+The distinction matters: this is a local Linux runtime under WSL, not a
+Windows-native `codex.exe`.
+
+### Model Plane
+
+For the H2.5 run, the explicit model path was:
+
+```text
+source-built WSL codex
+  -> local WSL app-server
+  -> HTTP Responses request
+  -> http://127.0.0.1:8002/v1
+  -> diagnostic vLLM 0.26.0 in WSL2
+  -> qwen25-14b-awq
+  -> Qwen2.5-14B-Instruct-AWQ
+  -> local RTX 5090 D v2
+```
+
+The `8002` server used the same model, quantization, `dtype=half`,
+`max_model_len=8192`, `gpu_memory_utilization=0.7`, and single-GPU boundary
+as the frozen profile. It additionally used only the previously approved
+diagnostic flags:
+
+```text
+--enable-auto-tool-choice
+--tool-call-parser hermes
+```
+
+The vLLM server log recorded successful local `POST /v1/responses` requests
+for the H2.5 turn. The frozen `8001` server and its startup script were not
+changed and were not used by this diagnostic run.
+
+### Tool Plane
+
+The tool path remained separate from model transport:
+
+```text
+local source-built app-server
+  -> item/tool/call over local stdio
+  -> H2.5 Python probe
+  -> D:\UAEA harness adapter
+  -> UAEA ToolRegistry
+  -> mock.external_operation
+  -> ToolResult
+  -> ExecutionObservation
+  -> bounded app-server contentItems
+  -> local app-server continuation
+  -> agent message
+  -> turn/completed
+```
+
+The successful trace preserved the same `thread_id`, `turn_id`, `call_id`,
+capability, and observation identity fields as H2. The dynamic tool call
+received `{"text":"hello"}` and returned a bounded local
+`mock://external/h25` reference. No remote tool service was involved.
+
+### Context Provenance Closure
+
+The H2.5 run confirms the existing separation:
+
+```text
+Qwen model config max_position_embeddings: 32768
+Qwen tokenizer model_max_length: 131072
+vLLM max_model_len: 8192
+Codex config model_context_window: 8192
+Codex reported modelContextWindow: 7782
+```
+
+The exact `8192` in the Harness profile comes from the isolated
+`CODEX_HOME/config.toml` field:
+
+```text
+model_context_window = 8192
+```
+
+The diagnostic vLLM process independently enforced `max_model_len = 8192`.
+The app-server reported `7782`, which is consistent with
+`floor(8192 * 0.95)`. The binary exposes the effective-window metadata field,
+but the internal percentage is not separately exposed as a UAEA configuration
+value. Therefore:
+
+```text
+8192 source: CLOSED
+7782 effective-window formula: runtime-consistent, internal constant not independently configurable
+```
+
+The source-owned probe also confirmed that bundled system skill descriptions
+are still injected into the local app-server prompt even when host skill
+discovery is disabled. This caused roughly `7224` input tokens before the
+first tool call and triggered compaction before the final message. It is a
+local Harness context-budget issue, not evidence that the Qwen model has only
+an 8192-token native context.
+
+### H2.5 Closure
+
+```text
+Source-owned local Harness runtime: PASS (WSL-local form)
+UAEA local Capability Boundary: PASS
+Local vLLM Model Plane: PASS on diagnostic 8002
+Frozen 8001 profile modified: NO
+8192 provenance: CLOSED
+Windows-native source build: NOT PROVIDED
+```
+
+H2.5 does not authorize H3, context expansion, performance measurement,
+additional capability migration, or changes to the frozen `8001` profile.
