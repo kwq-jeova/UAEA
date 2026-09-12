@@ -695,22 +695,262 @@ The comparison must keep the existing UAEA path as the control group and
 measure context, latency, CPU/RAM, and GPU impact. Web, MCP, Goal Hypothesis,
 SQLite cognitive history, and any Skill framework remain out of scope.
 
+## H2 Runtime Provenance Closure
+
+This section closes the provenance questions for the H2 dynamic-tool probe.
+It describes the actual diagnostic run, which used port `8002`; it does not
+change or replace the frozen `8001` serving profile.
+
+### Harness Runtime
+
+The H2 probe resolved `codex` to:
+
+```text
+C:\Users\wqkan\AppData\Local\OpenAI\Codex\bin\bffc5354119c8421\codex.exe
+```
+
+The executable reported:
+
+```text
+codex-cli 0.154.0-alpha.6.2
+```
+
+The file has a valid Authenticode signature for `OpenAI OpCo, LLC`. The probe
+started it directly as a local child process:
+
+```text
+codex app-server --stdio
+```
+
+The H2 Python probe used `subprocess.Popen` with local stdin/stdout pipes. It
+did not pass Codex `--remote` and did not pass `--code-mode-host`. No remote
+Harness service was used for the app-server control plane or dynamic-tool
+dispatch.
+
+Therefore:
+
+```text
+Harness runtime location: LOCAL
+Harness execution process: local codex.exe / local app-server subprocess
+Remote Harness service dependency: NONE OBSERVED IN H2
+```
+
+This conclusion is about the Harness execution path. It does not claim that a
+local Codex installation can never perform optional product telemetry or
+updates; those are outside the H2 execution path and were not used as a
+runtime dependency.
+
+### Model Plane
+
+The H2 probe set:
+
+```text
+CODEX_HOME =
+  C:\Users\wqkan\AppData\Local\Temp\uaea-h1-codex-home-20260912
+
+model_provider = uaea_local_vllm
+model = qwen25-14b-awq
+wire_api = responses
+requires_openai_auth = false
+configured base_url = http://127.0.0.1:8001/v1
+```
+
+For the parser-enabled diagnostic run, the app-server command applied this
+CLI override:
+
+```text
+model_providers.uaea_local_vllm.base_url="http://127.0.0.1:8002/v1"
+```
+
+The effective H2 model path was therefore:
+
+```text
+local codex.exe
+  -> local app-server
+  -> local HTTP Responses request
+  -> http://127.0.0.1:8002/v1
+  -> diagnostic vLLM 0.26.0 in WSL2
+  -> Qwen2.5-14B-Instruct-AWQ
+  -> local RTX 5090 D v2
+```
+
+The H2 app-server output produced the expected Responses/tool events and token
+usage from the configured local provider. The probe did not use the normal
+remote provider in the user's Codex configuration, whose base URL is outside
+the local path. The current repository and H2 artifacts do not retain a
+packet capture or vLLM access-log line correlated to the exact H2 request, so
+the endpoint conclusion is based on the effective CLI/configuration path plus
+the successful local diagnostic serving process, not on a retained HTTP
+packet-level capture.
+
+### Tool Plane
+
+The tool path was independent of the model transport:
+
+```text
+local app-server item/tool/call
+  -> local H2 Python probe
+  -> local D:\UAEA harness adapter
+  -> local UAEA ToolRegistry
+  -> local mock.external_operation
+  -> local ToolResult
+  -> local ExecutionObservation
+  -> bounded app-server tool response
+```
+
+The H2 trace preserved:
+
+```text
+thread_id
+turn_id
+call_id
+action_request.capability = mock.external_operation
+action_request.request_id = call_id
+execution_observation.capability = mock.external_operation
+```
+
+The mock fixture used a temporary local sandbox and returned a local
+`mock://external/h2` reference. No remote tool service was involved.
+
+The resulting plane-level status is:
+
+```text
+Harness runtime: LOCAL
+Tool execution: UAEA local Capability Boundary
+Model inference: local diagnostic vLLM on 127.0.0.1:8002
+```
+
+### Context Provenance
+
+The three context values must remain separate:
+
+| Layer | Observed/configured value | Evidence |
+| --- | ---: | --- |
+| Qwen2 model architecture | `32768` positional embeddings | local model `config.json`, `max_position_embeddings` |
+| Qwen2 tokenizer metadata | `131072` model max length | local `tokenizer_config.json`, `model_max_length` |
+| Frozen vLLM profile | `8192` | `scripts/start_vllm_qwen25_14b_awq.sh`, `MAX_MODEL_LEN` default |
+| H2 Codex configured window | `8192` | isolated `CODEX_HOME/config.toml`, `model_context_window = 8192` |
+| H2 Codex reported effective window | `7782` | app-server `thread/tokenUsage/updated` event |
+
+The source of the H2 `8192` value is therefore closed: it was explicitly
+configured in the isolated Codex H2 profile and independently matched the
+vLLM serving cap. It did not originate from the Qwen2 model's native
+`max_position_embeddings`.
+
+The app-server reported `modelContextWindow = 7782`, not `8192`. The observed
+number exactly matches:
+
+```text
+floor(8192 * 0.95) = 7782
+```
+
+The installed Codex binary contains the `effective_context_window_percent`
+model-metadata field, and the runtime event exposes the resulting effective
+window. This supports the interpretation that Codex applies an internal 95%
+effective-budget factor to the configured 8192 window. The exact default
+constant is not exposed in the temporary TOML or in a retained structured
+diagnostic record, so the factor is recorded as a runtime-consistent
+inference, not as a separately configurable UAEA parameter.
+
+The practical distinction is:
+
+```text
+Qwen native capability: approximately 32K by model config
+vLLM serving limit: 8192
+Codex configured window: 8192
+Codex effective usable window in H2: 7782
+```
+
+The H2 context failure was therefore caused by the combined serving and
+Harness prompt budget. It was not evidence that the Qwen2 model natively has
+only an 8192-token context.
+
+### Localisation Decision
+
+For the exact H2 diagnostic path:
+
+```text
+local Harness
+  -> local UAEA Capability Boundary
+  -> local vLLM inference
+```
+
+is satisfied. The diagnostic model endpoint was `8002`, because parser-enabled
+tool calling was deliberately isolated from the frozen profile. The frozen
+production-like path remains:
+
+```text
+local Harness
+  -> local UAEA Capability Boundary
+  -> local vLLM on 127.0.0.1:8001
+```
+
+but it was not running at the time of this provenance audit, and no claim is
+made that the unmodified `8001` profile supports structured tool calls.
+
+At audit completion, both `8001` and `8002` were stopped/listening on neither
+port. The diagnostic `8002` process was cleaned up; the `8001` startup script
+was not modified.
+
+### Audit Evidence Commands
+
+The closure was based on these read-only checks and the retained H2 probe
+configuration/output:
+
+```text
+Get-Command codex -All
+where.exe codex
+codex --version
+Get-AuthenticodeSignature <resolved codex.exe>
+Get-Content <isolated CODEX_HOME>/config.toml
+codex app-server --help
+Get-NetTCPConnection -State Listen
+```
+
+For the WSL model/runtime:
+
+```text
+/opt/uaea/vllm_env/bin/vllm --version
+grep context-related fields in:
+  /opt/uaea-models/models/Qwen2.5-14B-Instruct-AWQ/config.json
+  /opt/uaea-models/models/Qwen2.5-14B-Instruct-AWQ/tokenizer_config.json
+```
+
+The H2 probe itself records the effective app-server command, provider,
+model, tool-call event, UAEA trace, token usage, and `turn/completed` result.
+
+### Closure Status
+
+```text
+Harness executable/runtime local: PASS
+Remote Harness service dependency in H2: NONE OBSERVED
+UAEA local Tool Plane: PASS
+H2 Model Plane local to diagnostic vLLM: PASS
+8192 source: CLOSED
+7782 effective-window formula: RUNTIME-CONSISTENT, exact internal constant not independently exposed
+```
+
+This closes H2 provenance only. H3 capability comparison, performance
+measurement, context expansion, default-profile changes, and broader Harness
+migration remain intentionally out of scope.
+
 ## H2 app-server dynamic-tool result
 
 The app-server probe was run with the same isolated temporary Codex home and
-the parser-enabled vLLM process on `8002`. A single `echo` dynamic tool was
+the parser-enabled vLLM process on `8002`. A single
+`mock_external_operation` dynamic tool was
 registered through `thread/start`. The complete exchange succeeded:
 
 ```text
 initialize
-  -> thread/start(dynamicTools=[echo])
+  -> thread/start(dynamicTools=[mock_external_operation])
   -> turn/start
-  -> raw function_call(echo, {"text":"hello"})
+  -> raw function_call(mock_external_operation, {"text":"hello"})
   -> item/tool/call
   -> UAEA probe response(success=true, contentItems=[inputText])
   -> item/completed(dynamicToolCall)
   -> raw function_call_output
-  -> agentMessage("The echo tool returned \"hello\".")
+  -> agentMessage("The mock_external_operation tool successfully processed the text \"hello\".")
   -> turn/completed
 ```
 
