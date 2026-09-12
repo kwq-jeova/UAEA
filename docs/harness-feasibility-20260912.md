@@ -564,6 +564,137 @@ The current unresolved question is whether Codex app-server can drive this
 parser-enabled Responses profile while keeping the prompt within the frozen
 8192-token context and preserving UAEA capability and observation identity.
 
+## H2 Adapter Implementation Result
+
+The first repository-local thin adapter is now implemented in:
+
+```text
+harness/codex_dynamic_tools.py
+```
+
+It maps an app-server `item/tool/call` payload into the existing UAEA
+execution boundary:
+
+```text
+app-server dynamic tool call
+  -> ActionRequest
+  -> existing ToolRegistry.execute_capability()
+  -> ToolResult
+  -> ExecutionObservation
+  -> bounded app-server tool response
+```
+
+The adapter keeps the following identities together without introducing a new
+runtime:
+
+```text
+thread_id
+turn_id
+call_id
+tool_name
+capability
+request_id
+observation_id
+```
+
+The implementation was tested with both a deterministic
+`mock.external_operation` capability and the existing
+`document.read_section` capability. Unknown dynamic tools produce a controlled
+failed `ExecutionObservation`.
+
+## H2 Real app-server Probe
+
+The corrected end-to-end probe used an isolated Codex home and a diagnostic
+vLLM instance on port `8002`. The only serving differences from the frozen
+`8001` profile were:
+
+```text
+--enable-auto-tool-choice
+--tool-call-parser hermes
+```
+
+The successful event sequence was:
+
+```text
+initialize
+  -> thread/start(dynamicTools=[mock_external_operation])
+  -> turn/start
+  -> raw function_call
+  -> item/tool/call
+  -> UAEA adapter dispatch
+  -> UAEA_TRACE(ActionRequest + ExecutionObservation)
+  -> item/completed(dynamicToolCall)
+  -> function_call_output
+  -> agentMessage
+  -> turn/completed
+```
+
+The observed UAEA trace preserved:
+
+```text
+action_request.capability = mock.external_operation
+action_request.request_id = app-server call_id
+execution_observation.capability = mock.external_operation
+harness.thread_id
+harness.turn_id
+harness.call_id
+```
+
+The model reported the returned fixture value in its final message. This is
+the first repository-local evidence that an existing UAEA capability can be
+executed through the Codex app-server dynamic-tool path and returned to the
+model for continuation.
+
+The probe also confirmed the known resource risks:
+
+- the local Qwen model still uses fallback Codex model metadata;
+- the app-server prompt consumed roughly 7.2k input tokens before the first
+  tool call, with a reported model context window of about 7.8k;
+- context compaction occurred before the final short answer;
+- the diagnostic parser-enabled profile is not the frozen default profile.
+
+The diagnostic `8002` process was stopped after the probe. The frozen
+`8001` startup script, model, quantization, context length, KV policy, and GPU
+policy were not changed.
+
+## Regression Result After H2 Adapter
+
+The repository test suite completed with:
+
+```text
+132 tests, OK
+```
+
+The unchanged Phase-1 scripted benchmark completed with:
+
+```text
+24/24 PASS
+```
+
+The adapter tests are intentionally limited to capability mapping, dispatch,
+identity preservation, bounded response formatting, and controlled failure.
+They do not claim that the Codex app-server should own UAEA cognition,
+Goal Hypothesis, Problem Space, Memory, or Web semantic routing.
+
+## Current H2 Decision
+
+H2 is complete as a feasibility and boundary experiment. The result supports
+continuing with a thin adapter approach, but does not justify a broad Harness
+migration.
+
+The next evidence needed is a small H3 comparison using:
+
+```text
+document.read_section
+fs.list
+one controlled failure
+ordinary no-tool response
+```
+
+The comparison must keep the existing UAEA path as the control group and
+measure context, latency, CPU/RAM, and GPU impact. Web, MCP, Goal Hypothesis,
+SQLite cognitive history, and any Skill framework remain out of scope.
+
 ## H2 app-server dynamic-tool result
 
 The app-server probe was run with the same isolated temporary Codex home and
