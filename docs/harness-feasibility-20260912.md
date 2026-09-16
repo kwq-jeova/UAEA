@@ -2664,3 +2664,203 @@ Per-turn reconstruction: PASS
 Thread projection consistency: PASS
 Known failure preservation: PASS
 ```
+
+## Source-owned Harness Native Execution Dependency Closure
+
+本次闭环只处理 source-owned Codex Harness 的 native execution runtime
+dependency / packaging 问题。没有修改 frozen `8001`，没有关闭 sandbox，没有绕回
+UAEA `ToolRegistry` File capability，没有修改 Codex Core，也没有升级 Codex revision。
+
+### Root Cause
+
+此前 model-mediated native File 路径失败在：
+
+```text
+model
+  -> Harness-native commandExecution
+  -> native File attempt
+  -> bubblewrap / codex-resources/bwrap missing
+```
+
+实际检查结果：
+
+```text
+Codex executable:
+/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex
+
+WSL system bwrap:
+not installed
+
+Codex bundled bwrap:
+/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex-resources/bwrap
+not present before closure
+```
+
+WSL image为：
+
+```text
+Ubuntu 24.04.4 LTS
+```
+
+`bubblewrap` apt candidate 为：
+
+```text
+0.9.0-1ubuntu0.1
+```
+
+由于当前环境没有免密 `sudo`，未安装系统包。按 Codex 自身错误信息支持的 bundled
+dependency 路径处理：
+
+```text
+/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex-resources/bwrap
+```
+
+### Resolved Dependency
+
+下载并解包 Ubuntu Noble `bubblewrap` deb 到外部 runtime dependency 目录：
+
+```text
+/mnt/d/UAEA-runtime/codex/deps/bubblewrap-ubuntu-noble/
+```
+
+复制出的 executable：
+
+```text
+/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex-resources/bwrap
+```
+
+权限：
+
+```text
+-rwxrwxrwx
+```
+
+独立 sandbox smoke：
+
+```text
+bwrap_sandbox_ok
+proc_ok
+```
+
+这验证 bundled `bwrap` 不只是存在于路径上，而是可以实际创建最小 sandbox。
+
+### Native File / Shell Validation
+
+重新执行 lifecycle probe：
+
+```text
+cd /mnt/d/UAEA
+/opt/uaea/vllm_env/bin/python scripts/h3_app_server_lifecycle_probe.py --context 32768 --gpu-memory-utilization 0.75
+```
+
+Artifact：
+
+```text
+D:\UAEA-runtime\h3-results\lifecycle-32768-20260916-204157\
+```
+
+Model plane 仍使用 diagnostic `8002`：
+
+```text
+endpoint = http://127.0.0.1:8002/v1
+max_model_len = 32768
+gpu_memory_utilization = 0.75
+vllm_returncode = 0
+```
+
+App Server 启动时仍提示系统 PATH 上没有 `bubblewrap`，但明确进入 bundled 路径：
+
+```text
+Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager.
+Codex will use the bundled bubblewrap in the meantime.
+```
+
+Thread configuration 仍为 sandboxed read-only：
+
+```text
+sandbox.type = readOnly
+sandbox.networkAccess = false
+approvalPolicy = never
+```
+
+Native File 测试结果：
+
+```text
+model_mediated_native_file.status = PASS_VIA_HARNESS_COMMAND
+tool_calls = []
+```
+
+实际 Harness-native command item：
+
+```text
+type = commandExecution
+command = /bin/bash -lc 'cat README.md'
+cwd = /mnt/d/UAEA
+source = unifiedExecStartup
+commandActions.type = read
+commandActions.path = /mnt/d/UAEA/README.md
+status = completed
+exitCode = 0
+```
+
+模型 continuation 根据文件内容回答：
+
+```text
+The project title is UAEA - Unified Autonomous Evolution Architecture.
+The first sentence of the README is "UAEA is the Unified Autonomous Evolution Architecture."
+```
+
+因此当前验证路径为：
+
+```text
+User request
+  -> local model
+  -> autonomous Harness-native commandExecution
+  -> bundled bubblewrap sandbox path
+  -> README.md read result
+  -> model continuation
+  -> turn/completed
+```
+
+不是：
+
+```text
+dynamicTools -> UAEA ToolRegistry File
+```
+
+### Trajectory Check
+
+同一 run 的 canonical trajectory：
+
+```text
+D:\UAEA-runtime\h3-results\lifecycle-32768-20260916-204157\normalized-trajectories\lifecycle-32768-20260916-204157.trajectory.jsonl
+```
+
+Reader / validator：
+
+```text
+records = 235
+validation_ok = true
+issues = []
+TURN_COMPLETED = 2
+COMMAND_EXECUTION = 3
+ERROR = 0
+```
+
+`COMMAND_EXECUTION` timeline 中包含：
+
+```text
+/bin/bash -lc 'cat README.md' inProgress
+/bin/bash -lc 'cat README.md' completed exitCode=0
+```
+
+### Closure Decision
+
+```text
+missing dependency root cause: system bwrap absent and bundled codex-resources/bwrap absent
+resolved dependency/path: codex-resources/bwrap next to source-owned Codex executable
+sandbox actually active: YES, app-server readOnly sandbox + bundled bwrap + successful commandExecution
+model-mediated native File: PASS
+Codex Core fork required: NO
+UAEA ToolRegistry fallback used: NO
+```
