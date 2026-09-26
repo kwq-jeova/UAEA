@@ -25,6 +25,11 @@ from harness.codex_dynamic_tools import (  # noqa: E402
     DynamicToolBinding,
     HarnessDynamicToolAdapter,
 )
+from harness.io_contract import (  # noqa: E402
+    effective_capability_summary,
+    runtime_fact_summary,
+    turn_context_payload,
+)
 from phase2.web_adapter import WebAdapter  # noqa: E402
 from phase2.web_capability import (  # noqa: E402
     WebFetchCapability,
@@ -33,6 +38,7 @@ from phase2.web_capability import (  # noqa: E402
     web_search_metadata,
 )
 from phase2.web_context import ProjectionLimits  # noqa: E402
+from phase2.terminal_input import read_user_input  # noqa: E402
 from runtime.ledger import LedgerStub  # noqa: E402
 from runtime.sandbox import Sandbox  # noqa: E402
 from runtime.tools import ToolRegistry  # noqa: E402
@@ -60,8 +66,35 @@ DEFAULT_CONTEXT_WINDOW = 32768
 DEFAULT_TURN_TIMEOUT = 300
 
 
+RUNTIME_FACT_SUMMARY = runtime_fact_summary()
+
+
 def json_line(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
+    return json.dumps(
+        _sanitize_json_value(value),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        default=str,
+    )
+
+
+def _sanitize_json_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return _remove_unicode_surrogates(value)
+    if isinstance(value, dict):
+        return {
+            _remove_unicode_surrogates(str(key)): _sanitize_json_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_json_value(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_sanitize_json_value(item) for item in value)
+    return value
+
+
+def _remove_unicode_surrogates(value: str) -> str:
+    return "".join(char for char in value if not 0xD800 <= ord(char) <= 0xDFFF)
 
 
 def utc_stamp() -> str:
@@ -132,14 +165,56 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                 registry,
                 "web.search",
                 description=(
-                    "Search the public web for current or external information. "
-                    "Provide an explicit search query derived from the user's request."
+                    "Discover candidate public web sources from a search results page. "
+                    "Preserve user constraints as structured arguments when present. "
+                    "Use provider for a requested search provider such as google, bing, or duckduckgo; "
+                    "when provider is set, also set allow_fallback explicitly. "
+                    "Use allow_fallback=false when the user forbids fallback to another provider. "
+                    "Do not encode search provider requirements as preferred_domains. "
+                    "Use web.fetch on a selected result URL when page-level evidence is needed. "
+                    "Constraint enforcement is best-effort and actual provider details are returned. "
+                    "Only cite URLs returned by web.search or web.fetch."
                 ),
                 input_schema={
                     "type": "object",
                     "properties": {
                         "query": {"type": "string"},
-                        "max_results": {"type": "integer"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 10},
+                        "provider": {
+                            "type": "string",
+                            "enum": ["google", "bing", "duckduckgo"],
+                            "description": "Requested search provider. Google is a provider request, not a preferred result domain.",
+                        },
+                        "allow_fallback": {
+                            "type": "boolean",
+                            "description": "Whether UAEA may use another provider when the requested provider is unsupported or unavailable. Required whenever provider is set; set false when the user forbids fallback.",
+                        },
+                        "language": {"type": "string", "description": "Preferred language code, for example en or zh."},
+                        "region": {
+                            "type": "string",
+                            "description": "Preferred region code such as us or cn. Omit this field for global/no specific region.",
+                        },
+                        "exclude_domains": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Domains to exclude best-effort, for example baidu.com.",
+                        },
+                        "preferred_domains": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Domains to prefer best-effort.",
+                        },
+                        "source_types": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": ["academic", "forum", "news", "documentation", "general"],
+                            },
+                        },
+                        "freshness": {
+                            "type": "string",
+                            "enum": ["day", "week", "month", "year", "recent", "any"],
+                        },
                     },
                     "required": ["query"],
                     "additionalProperties": False,
@@ -149,7 +224,8 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                 registry,
                 "web.fetch",
                 description=(
-                    "Fetch a specific public URL and return bounded evidence from it."
+                    "Fetch a specific public URL and return bounded page-level evidence from it. "
+                    "Use this after web.search when a candidate source needs verification or summary."
                 ),
                 input_schema={
                     "type": "object",
@@ -184,6 +260,7 @@ class InteractiveAppServer:
         self.events_path = events_path
         self.stderr_path = stderr_path
         self.turn_timeout = turn_timeout
+        self._dynamic_tools: list[dict[str, Any]] = []
         self.process: subprocess.Popen[str] | None = None
         self.thread_id = ""
         self._queue: queue.Queue[tuple[str, str | None]] = queue.Queue()
@@ -253,6 +330,7 @@ class InteractiveAppServer:
         if initialized is None or initialized.get("error") is not None:
             raise RuntimeError(f"app-server initialize failed: {initialized}")
         thread_id = self._next_id()
+        self._dynamic_tools = self.adapter.dynamic_tools()
         thread = self._request(
             {
                 "jsonrpc": "2.0",
@@ -267,7 +345,7 @@ class InteractiveAppServer:
                     "sandbox": "read-only",
                     "personality": "none",
                     "experimentalRawEvents": True,
-                    "dynamicTools": self.adapter.dynamic_tools(),
+                    "dynamicTools": self._dynamic_tools,
                 },
             },
             lambda message: message.get("id") == thread_id,
@@ -280,6 +358,12 @@ class InteractiveAppServer:
     def run_turn(self, text: str) -> None:
         request_id = self._next_id()
         print("\n[HARNESS] turn/start", flush=True)
+        print(f"[UAEA] runtime_facts injected: {RUNTIME_FACT_SUMMARY}", flush=True)
+        print(
+            "[UAEA] effective_capability_state injected: "
+            f"{effective_capability_summary(self._dynamic_tools)}",
+            flush=True,
+        )
         completion = self._request(
             {
                 "jsonrpc": "2.0",
@@ -290,6 +374,7 @@ class InteractiveAppServer:
                     "input": [{"type": "text", "text": text}],
                     "effort": "none",
                     "model": DEFAULT_MODEL,
+                    "additionalContext": turn_context_payload(self._dynamic_tools),
                 },
             },
             lambda message: (
@@ -304,7 +389,13 @@ class InteractiveAppServer:
         elif completion.get("error") is not None:
             print(f"[HARNESS] turn error: {completion['error']}", flush=True)
         else:
-            print("[HARNESS] turn/completed", flush=True)
+            turn = (completion.get("params") or {}).get("turn") or {}
+            status = turn.get("status")
+            error = turn.get("error")
+            if status and status != "completed":
+                print(f"[HARNESS] turn/{status} error={error}", flush=True)
+            else:
+                print("[HARNESS] turn/completed", flush=True)
 
     def close(self) -> None:
         if self.process is not None:
@@ -408,6 +499,8 @@ class InteractiveAppServer:
                 text = extract_text(item)
                 if text:
                     print(f"\n[ASSISTANT]\n{text}", flush=True)
+            elif item.get("type") == "dynamicToolCall":
+                print(_format_dynamic_tool_result(item), flush=True)
 
     def _handle_tool_call(self, message: dict[str, Any]) -> None:
         params = message.get("params") or {}
@@ -474,7 +567,32 @@ def extract_text(value: Any) -> str:
     return "\n".join(deduped)
 
 
+def _format_dynamic_tool_result(item: dict[str, Any]) -> str:
+    tool = item.get("tool") or "unknown"
+    status = item.get("status") or "unknown"
+    success = item.get("success")
+    text = extract_text(item.get("contentItems") or [])
+    capability = ""
+    message = ""
+    try:
+        payload = json.loads(text) if text else {}
+    except json.JSONDecodeError:
+        payload = {}
+    if isinstance(payload, dict):
+        capability = str(payload.get("capability") or "")
+        message = str(payload.get("message") or "")
+    summary = message or text[:240]
+    if len(summary) > 240:
+        summary = summary[:240] + "..."
+    return (
+        "\n[UAEA] tool_result "
+        f"tool={tool} capability={capability or '-'} status={status} "
+        f"success={success} summary={summary}"
+    )
+
+
 def run(args: argparse.Namespace) -> int:
+    os.environ.setdefault("UAEA_REPL_INPUT_MODE", "raw")
     context_window = args.context
     base_url = f"http://127.0.0.1:{DEFAULT_PORT}"
     stamp = utc_stamp()
@@ -522,7 +640,7 @@ def run(args: argparse.Namespace) -> int:
         print("Type exit or quit to stop 8002 and app-server.\n", flush=True)
         while True:
             try:
-                user_input = input("[USER] ").strip()
+                user_input = read_user_input("[USER] ").strip()
             except (EOFError, KeyboardInterrupt):
                 print("", flush=True)
                 break

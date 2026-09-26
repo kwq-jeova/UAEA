@@ -23,6 +23,69 @@ DEFAULT_SEARCH_URL_TEMPLATES = (
     "https://duckduckgo.com/html/?q={query}",
     "https://www.bing.com/search?q={query}",
 )
+SUPPORTED_SEARCH_PROVIDERS = frozenset({"duckduckgo", "bing"})
+SEARCH_PROVIDER_ALIASES = {
+    "ddg": "duckduckgo",
+    "duckduckgo": "duckduckgo",
+    "duckduckgo.com": "duckduckgo",
+    "bing": "bing",
+    "bing.com": "bing",
+    "www.bing.com": "bing",
+    "google": "google",
+    "google.com": "google",
+    "www.google.com": "google",
+}
+SUPPORTED_SOURCE_TYPES = frozenset({"academic", "forum", "news", "documentation", "general"})
+SUPPORTED_FRESHNESS = frozenset({"day", "week", "month", "year", "recent", "any"})
+PROVIDER_CONSTRAINT_SUPPORT = {
+    "duckduckgo.com": {
+        "language": "partial",
+        "region": "partial",
+        "exclude_domains": "best_effort_query_shaping_and_post_filter",
+        "preferred_domains": "best_effort_query_shaping",
+        "source_types": "best_effort_query_shaping",
+        "freshness": "unsupported",
+    },
+    "www.bing.com": {
+        "language": "partial",
+        "region": "partial",
+        "exclude_domains": "best_effort_query_shaping_and_post_filter",
+        "preferred_domains": "best_effort_query_shaping",
+        "source_types": "best_effort_query_shaping",
+        "freshness": "unsupported",
+    },
+}
+
+
+class WebSearchConstraintError(ValueError):
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
+
+
+@dataclass(frozen=True)
+class WebSearchConstraints:
+    provider: str = ""
+    allow_fallback: bool = True
+    allow_fallback_specified: bool = field(default=False, compare=False)
+    language: str = ""
+    region: str = ""
+    exclude_domains: tuple[str, ...] = field(default_factory=tuple)
+    preferred_domains: tuple[str, ...] = field(default_factory=tuple)
+    source_types: tuple[str, ...] = field(default_factory=tuple)
+    freshness: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "provider": self.provider,
+            "allow_fallback": self.allow_fallback,
+            "language": self.language,
+            "region": self.region,
+            "exclude_domains": list(self.exclude_domains),
+            "preferred_domains": list(self.preferred_domains),
+            "source_types": list(self.source_types),
+            "freshness": self.freshness,
+        }
 
 
 @dataclass(frozen=True)
@@ -155,23 +218,46 @@ class WebAdapter:
         query: str,
         *,
         max_results: int = 5,
+        constraints: WebSearchConstraints | None = None,
     ) -> WebAccessResult:
         clean_query = _safe_single_line_text(query)
         if not clean_query:
             raise ValueError("search query missing")
+        search_constraints = constraints or WebSearchConstraints()
+        effective_query = _shape_search_query(clean_query, search_constraints)
+        template_plan = self._search_template_plan(search_constraints)
+        if template_plan["status"] == "unsupported":
+            return self._record_unsupported_search_provider(
+                connection,
+                query=clean_query,
+                effective_query=effective_query,
+                constraints=search_constraints,
+                reason=str(template_plan["fallback_reason"]),
+            )
         attempt_event_ids: list[str] = []
         last_result: WebAccessResult | None = None
-        for attempt_index, template in enumerate(self.search_url_templates, start=1):
-            search_url = template.format(query=urllib.parse.quote_plus(clean_query))
+        templates = list(template_plan["templates"])
+        for attempt_index, template in enumerate(templates, start=1):
+            search_url = _search_url_for_template(template, effective_query, search_constraints)
+            provider = self._search_provider_name(search_url)
+            actual_provider = self._actual_provider_name(search_url)
             result = self.fetch_url(
                 connection,
                 search_url,
                 source_type="web_search_results",
                 metadata={
                     "query": clean_query,
-                    "search_provider": self._search_provider_name(search_url),
+                    "effective_query": effective_query,
+                    "requested_constraints": search_constraints.to_dict(),
+                    "requested_provider": search_constraints.provider or None,
+                    "actual_provider": actual_provider,
+                    "fallback_occurred": bool(template_plan["fallback_occurred"]),
+                    "fallback_reason": str(template_plan["fallback_reason"]),
+                    "constraint_application": _constraint_application_metadata(search_constraints),
+                    "search_provider": provider,
+                    "provider_constraint_support": _provider_constraint_support(provider),
                     "search_attempt_index": attempt_index,
-                    "search_attempt_count": len(self.search_url_templates),
+                    "search_attempt_count": len(templates),
                 },
             )
             attempt_event_ids.append(result.access_event_id)
@@ -186,7 +272,13 @@ class WebAdapter:
                     fallback_reason=result.error,
                 )
                 continue
-            search_results = self._parse_search_result_event(connection, result.access_event_id, clean_query, max_results)
+            search_results = self._parse_search_result_event(
+                connection,
+                result.access_event_id,
+                clean_query,
+                max_results,
+                constraints=search_constraints,
+            )
             if search_results:
                 return WebAccessResult(
                     access_event_id=result.access_event_id,
@@ -219,6 +311,8 @@ class WebAdapter:
         access_event_id: str,
         clean_query: str,
         max_results: int,
+        *,
+        constraints: WebSearchConstraints | None = None,
     ) -> tuple[WebSearchResult, ...]:
         event_row = connection.execute(
             "SELECT metadata_json, content_ref FROM web_access_events WHERE access_event_id = ?",
@@ -228,9 +322,20 @@ class WebAdapter:
             return ()
         snapshot = Path(str(event_row["content_ref"]))
         body = snapshot.read_text(encoding="utf-8", errors="replace") if snapshot.is_file() else ""
-        search_results = tuple(_parse_search_results(body, max_results=max_results))
+        search_constraints = constraints or WebSearchConstraints()
+        parsed_results = tuple(_parse_search_results(body, max_results=max_results * 3))
+        search_results = _apply_result_constraints(parsed_results, search_constraints, max_results=max_results)
         parse_status = "parsed" if search_results else "no_parsed_results"
-        self._mark_search_attempt(connection, access_event_id, clean_query, search_results, parse_status=parse_status)
+        self._mark_search_attempt(
+            connection,
+            access_event_id,
+            clean_query,
+            search_results,
+            parse_status=parse_status,
+            parsed_result_count=len(parsed_results),
+            raw_search_results=parsed_results,
+            constraints=search_constraints,
+        )
         return search_results
 
     def _mark_search_attempt(
@@ -242,6 +347,9 @@ class WebAdapter:
         *,
         parse_status: str,
         fallback_reason: str = "",
+        parsed_result_count: int | None = None,
+        raw_search_results: tuple[WebSearchResult, ...] | None = None,
+        constraints: WebSearchConstraints | None = None,
     ) -> None:
         event_row = connection.execute(
             "SELECT metadata_json FROM web_access_events WHERE access_event_id = ?",
@@ -256,6 +364,13 @@ class WebAdapter:
         metadata_payload["result_count"] = len(search_results)
         metadata_payload["results"] = [item.to_dict() for item in search_results]
         metadata_payload["search_parse_status"] = parse_status
+        if parsed_result_count is not None:
+            metadata_payload["parsed_result_count_before_filtering"] = parsed_result_count
+        if raw_search_results is not None:
+            metadata_payload["raw_results_before_filtering"] = [item.to_dict() for item in raw_search_results]
+        metadata_payload["evidence_relevance"] = _assess_search_relevance(clean_query, search_results)
+        if constraints is not None:
+            metadata_payload["post_filtering"] = _post_filtering_metadata(parsed_result_count or len(search_results), search_results, constraints)
         if fallback_reason:
             metadata_payload["fallback_reason"] = fallback_reason
         connection.execute(
@@ -333,6 +448,122 @@ class WebAdapter:
         domain = urllib.parse.urlparse(search_url).netloc
         return domain or "custom"
 
+    def _actual_provider_name(self, search_url: str) -> str:
+        return _canonical_provider_for_domain(self._search_provider_name(search_url)) or "custom"
+
+    def _search_template_plan(self, constraints: WebSearchConstraints) -> dict[str, Any]:
+        templates = tuple(self.search_url_templates)
+        requested_provider = constraints.provider
+        if not requested_provider:
+            return {
+                "status": "ok",
+                "templates": templates if constraints.allow_fallback else templates[:1],
+                "fallback_occurred": False,
+                "fallback_reason": "",
+            }
+        if requested_provider not in SUPPORTED_SEARCH_PROVIDERS:
+            if not constraints.allow_fallback:
+                return {
+                    "status": "unsupported",
+                    "templates": (),
+                    "fallback_occurred": False,
+                    "fallback_reason": f"unsupported provider: {requested_provider}",
+                }
+            return {
+                "status": "ok",
+                "templates": templates,
+                "fallback_occurred": True,
+                "fallback_reason": f"unsupported provider: {requested_provider}",
+            }
+        matching = tuple(
+            template
+            for template in templates
+            if _canonical_provider_for_url_template(template) == requested_provider
+        )
+        if matching:
+            if not constraints.allow_fallback:
+                return {
+                    "status": "ok",
+                    "templates": matching,
+                    "fallback_occurred": False,
+                    "fallback_reason": "",
+                }
+            fallback_templates = tuple(template for template in templates if template not in matching)
+            return {
+                "status": "ok",
+                "templates": matching + fallback_templates,
+                "fallback_occurred": False,
+                "fallback_reason": "",
+            }
+        if constraints.allow_fallback:
+            return {
+                "status": "ok",
+                "templates": templates,
+                "fallback_occurred": True,
+                "fallback_reason": f"requested provider unavailable in configured templates: {requested_provider}",
+            }
+        return {
+            "status": "unsupported",
+            "templates": (),
+            "fallback_occurred": False,
+            "fallback_reason": f"requested provider unavailable in configured templates: {requested_provider}",
+        }
+
+    def _record_unsupported_search_provider(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        query: str,
+        effective_query: str,
+        constraints: WebSearchConstraints,
+        reason: str,
+    ) -> WebAccessResult:
+        access_event_id = f"WEB-LIVE-{uuid4()}"
+        accessed_at = _utc_now()
+        unsupported_url = f"uaea://unsupported-search-provider/{constraints.provider or 'unknown'}"
+        event = {
+            "access_event_id": access_event_id,
+            "url": unsupported_url,
+            "title": f"Unsupported search provider: {constraints.provider}",
+            "domain": "unsupported-search-provider",
+            "accessed_at": accessed_at,
+            "access_status": "unsupported",
+            "source_type": "web_search_results",
+            "source_provenance": "external",
+            "http_status": None,
+            "content_ref": "",
+            "excerpt": "",
+            "metadata": {
+                "adapter": "phase2.web_adapter",
+                "query": query,
+                "effective_query": effective_query,
+                "requested_constraints": constraints.to_dict(),
+                "requested_provider": constraints.provider or None,
+                "actual_provider": None,
+                "fallback_occurred": False,
+                "fallback_reason": reason,
+                "search_provider": None,
+                "provider_constraint_support": {},
+                "search_parse_status": "unsupported_provider",
+                "result_count": 0,
+                "results": [],
+                "error": reason,
+            },
+        }
+        insert_web_access_event(connection, event)
+        connection.commit()
+        return WebAccessResult(
+            access_event_id=access_event_id,
+            url=unsupported_url,
+            status="unsupported",
+            http_status=None,
+            content_ref="",
+            title=f"Unsupported search provider: {constraints.provider}",
+            error=reason,
+            search_results=(),
+            related_access_event_ids=(access_event_id,),
+        )
+
 
 def _normalize_url(url: str) -> str:
     clean = _remove_unicode_surrogates(str(url or "")).strip()
@@ -345,6 +576,377 @@ def _normalize_url(url: str) -> str:
     if parsed.scheme not in {"http", "https"}:
         raise ValueError(f"unsupported URL scheme: {parsed.scheme}")
     return clean
+
+
+def normalize_search_constraints(arguments: dict[str, Any]) -> WebSearchConstraints:
+    provider = _normalize_search_provider(arguments.get("provider"))
+    allow_fallback_specified = "allow_fallback" in arguments and arguments.get("allow_fallback") not in (None, "")
+    if provider and not allow_fallback_specified:
+        raise WebSearchConstraintError(
+            "provider was explicitly specified, but fallback policy is missing. "
+            "Please retry with allow_fallback=true or allow_fallback=false.",
+            details={
+                "semantic_status": "ambiguous_provider_fallback_policy",
+                "requested_provider": provider,
+                "actual_provider": None,
+                "fallback_occurred": False,
+                "fallback_reason": "provider specified without allow_fallback policy",
+                "retry_instruction": "Retry web.search with allow_fallback=true or allow_fallback=false.",
+            },
+        )
+    allow_fallback = _normalize_allow_fallback(arguments.get("allow_fallback", True))
+    language = _normalize_short_code(arguments.get("language"), field_name="language")
+    region = _normalize_short_code(arguments.get("region"), field_name="region")
+    exclude_domains = _normalize_domain_list(arguments.get("exclude_domains"), field_name="exclude_domains")
+    preferred_domains = _normalize_domain_list(arguments.get("preferred_domains"), field_name="preferred_domains")
+    source_types = _normalize_enum_list(
+        arguments.get("source_types"),
+        field_name="source_types",
+        allowed=SUPPORTED_SOURCE_TYPES,
+    )
+    freshness = _safe_single_line_text(arguments.get("freshness")).lower()
+    if freshness and freshness not in SUPPORTED_FRESHNESS:
+        raise ValueError(f"unsupported freshness: {freshness}")
+    return WebSearchConstraints(
+        provider=provider,
+        allow_fallback=allow_fallback,
+        allow_fallback_specified=allow_fallback_specified,
+        language=language,
+        region=region,
+        exclude_domains=exclude_domains,
+        preferred_domains=preferred_domains,
+        source_types=source_types,
+        freshness=freshness,
+    )
+
+
+def _normalize_search_provider(value: object) -> str:
+    clean = _safe_single_line_text(value).lower()
+    if not clean:
+        return ""
+    normalized = SEARCH_PROVIDER_ALIASES.get(clean)
+    if normalized:
+        return normalized
+    raise ValueError(f"unsupported provider value: {clean}")
+
+
+def _normalize_allow_fallback(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value in (None, ""):
+        return True
+    if isinstance(value, str):
+        clean = _safe_single_line_text(value).lower()
+        if clean in {"true", "1", "yes"}:
+            return True
+        if clean in {"false", "0", "no"}:
+            return False
+    raise ValueError("allow_fallback must be a boolean")
+
+
+def _normalize_short_code(value: object, *, field_name: str) -> str:
+    clean = _safe_single_line_text(value).lower()
+    if not clean:
+        return ""
+    if field_name == "region" and clean in {"global", "worldwide", "world", "any"}:
+        return ""
+    if not re.fullmatch(r"[a-z]{2}(?:-[a-z]{2})?", clean):
+        raise ValueError(f"{field_name} must be a language/region code such as en or us")
+    return clean
+
+
+def _normalize_domain_list(value: object, *, field_name: str) -> tuple[str, ...]:
+    if value in (None, ""):
+        return ()
+    if not isinstance(value, list):
+        raise ValueError(f"{field_name} must be a list of domains")
+    domains: list[str] = []
+    seen: set[str] = set()
+    for item in value:
+        domain = _normalize_domain(item, field_name=field_name)
+        if domain and domain not in seen:
+            domains.append(domain)
+            seen.add(domain)
+    return tuple(domains)
+
+
+def _normalize_domain(value: object, *, field_name: str) -> str:
+    clean = _safe_single_line_text(value).lower()
+    if not clean:
+        return ""
+    if "://" in clean:
+        clean = urllib.parse.urlparse(clean).netloc
+    if clean.startswith("*."):
+        suffix = clean[2:].strip(".")
+        if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*", suffix):
+            raise ValueError(f"{field_name} contains invalid domain pattern: {value}")
+        return f"*.{suffix}"
+    clean = clean.strip(".")
+    if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+", clean):
+        raise ValueError(f"{field_name} contains invalid domain: {value}")
+    return clean
+
+
+def _normalize_enum_list(value: object, *, field_name: str, allowed: frozenset[str]) -> tuple[str, ...]:
+    if value in (None, ""):
+        return ()
+    if not isinstance(value, list):
+        raise ValueError(f"{field_name} must be a list")
+    items: list[str] = []
+    seen: set[str] = set()
+    for item in value:
+        clean = _safe_single_line_text(item).lower()
+        if not clean:
+            continue
+        if clean not in allowed:
+            raise ValueError(f"unsupported {field_name} value: {clean}")
+        if clean not in seen:
+            items.append(clean)
+            seen.add(clean)
+    return tuple(items)
+
+
+def _shape_search_query(query: str, constraints: WebSearchConstraints) -> str:
+    parts = [query]
+    for domain in constraints.exclude_domains:
+        parts.append(f"-site:{_site_query_domain(domain)}")
+    if constraints.preferred_domains:
+        preferred = " OR ".join(f"site:{_site_query_domain(domain)}" for domain in constraints.preferred_domains)
+        parts.append(f"({preferred})")
+    source_terms = _source_type_terms(constraints.source_types)
+    if source_terms:
+        parts.append(source_terms)
+    if constraints.language:
+        parts.append(f"language:{constraints.language}")
+    if constraints.freshness and constraints.freshness != "any":
+        parts.append(constraints.freshness)
+    return " ".join(part for part in parts if part).strip()
+
+
+def _source_type_terms(source_types: tuple[str, ...]) -> str:
+    terms = {
+        "academic": '(paper OR arxiv OR "conference paper" OR journal)',
+        "forum": "(forum OR reddit OR discourse OR stackexchange)",
+        "news": "(news OR analysis)",
+        "documentation": "(documentation OR docs OR reference)",
+        "general": "",
+    }
+    selected = [terms[item].strip("()") for item in source_types if terms.get(item)]
+    return f"({' OR '.join(selected)})" if selected else ""
+
+
+def _site_query_domain(domain: str) -> str:
+    clean = str(domain or "").strip().lower()
+    if clean.startswith("*."):
+        return f".{clean[2:]}"
+    return clean
+
+
+def _search_url_for_template(template: str, effective_query: str, constraints: WebSearchConstraints) -> str:
+    search_url = template.format(query=urllib.parse.quote_plus(effective_query))
+    parsed = urllib.parse.urlparse(search_url)
+    provider = parsed.netloc.lower()
+    query_items = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    if provider.endswith("bing.com"):
+        if constraints.language:
+            query_items.append(("setlang", constraints.language))
+        if constraints.region:
+            query_items.append(("cc", constraints.region))
+    elif provider.endswith("duckduckgo.com") and constraints.region:
+        query_items.append(("kl", constraints.region))
+    if query_items == urllib.parse.parse_qsl(parsed.query, keep_blank_values=True):
+        return search_url
+    return urllib.parse.urlunparse(parsed._replace(query=urllib.parse.urlencode(query_items)))
+
+
+def _constraint_application_metadata(constraints: WebSearchConstraints) -> dict[str, Any]:
+    requested = constraints.to_dict()
+    return {
+        "requested_constraints": requested,
+        "provider_enforced_constraints": [],
+        "best_effort_constraints": [
+            name
+            for name, value in requested.items()
+            if value
+        ],
+        "notes": (
+            "Search providers do not provide hard guarantees for these constraints through the current adapter. "
+            "UAEA preserves the request, applies query shaping where possible, and post-filters excluded domains."
+        ),
+    }
+
+
+def _provider_constraint_support(provider: str) -> dict[str, str]:
+    normalized = str(provider or "").lower()
+    if normalized in PROVIDER_CONSTRAINT_SUPPORT:
+        return PROVIDER_CONSTRAINT_SUPPORT[normalized]
+    canonical = _canonical_provider_for_domain(normalized)
+    if canonical == "duckduckgo":
+        return PROVIDER_CONSTRAINT_SUPPORT["duckduckgo.com"]
+    if canonical == "bing":
+        return PROVIDER_CONSTRAINT_SUPPORT["www.bing.com"]
+    return {
+        "language": "unknown",
+        "region": "unknown",
+        "exclude_domains": "best_effort_query_shaping_and_post_filter",
+        "preferred_domains": "best_effort_query_shaping",
+        "source_types": "best_effort_query_shaping",
+        "freshness": "unsupported",
+    }
+
+
+def _canonical_provider_for_url_template(template: str) -> str:
+    sample_url = str(template or "").replace("{query}", "sample")
+    return _canonical_provider_for_domain(urllib.parse.urlparse(sample_url).netloc)
+
+
+def _canonical_provider_for_domain(domain: str) -> str:
+    normalized = str(domain or "").lower().strip(".")
+    if normalized.endswith("duckduckgo.com"):
+        return "duckduckgo"
+    if normalized.endswith("bing.com"):
+        return "bing"
+    return ""
+
+
+def _apply_result_constraints(
+    results: tuple[WebSearchResult, ...],
+    constraints: WebSearchConstraints,
+    *,
+    max_results: int,
+) -> tuple[WebSearchResult, ...]:
+    filtered = [
+        result
+        for result in results
+        if not _domain_matches_any(urllib.parse.urlparse(result.url).netloc, constraints.exclude_domains)
+    ]
+    if constraints.preferred_domains:
+        filtered.sort(
+            key=lambda result: 0
+            if _domain_matches_any(urllib.parse.urlparse(result.url).netloc, constraints.preferred_domains)
+            else 1
+        )
+    return tuple(filtered[:max_results])
+
+
+def _domain_matches_any(domain: str, candidates: tuple[str, ...]) -> bool:
+    normalized = str(domain or "").lower().strip(".")
+    for candidate in candidates:
+        if candidate.startswith("*."):
+            suffix = candidate[2:]
+            if normalized == suffix or normalized.endswith(f".{suffix}"):
+                return True
+            continue
+        if normalized == candidate or normalized.endswith(f".{candidate}"):
+            return True
+    return False
+
+
+def _post_filtering_metadata(
+    parsed_count: int,
+    results: tuple[WebSearchResult, ...],
+    constraints: WebSearchConstraints,
+) -> dict[str, Any]:
+    result_domains = [urllib.parse.urlparse(result.url).netloc.lower().strip(".") for result in results]
+    preferred_domain_result_count = sum(
+        1
+        for domain in result_domains
+        if _domain_matches_any(domain, constraints.preferred_domains)
+    )
+    return {
+        "exclude_domains_applied": list(constraints.exclude_domains),
+        "preferred_domains_applied": list(constraints.preferred_domains),
+        "parsed_result_count_before_filtering": parsed_count,
+        "result_count_after_filtering": len(results),
+        "result_domains_after_filtering": result_domains,
+        "preferred_domain_result_count": preferred_domain_result_count,
+        "preferred_domain_missing": bool(constraints.preferred_domains and preferred_domain_result_count == 0),
+    }
+
+
+def _assess_search_relevance(query: str, results: tuple[WebSearchResult, ...]) -> dict[str, Any]:
+    terms = _query_relevance_terms(query)
+    if not results:
+        return {
+            "status": "low_relevance",
+            "matched_terms": [],
+            "query_terms": sorted(terms),
+            "matched_term_count": 0,
+            "query_term_count": len(terms),
+            "coverage": 0.0,
+            "phrase_match": False,
+            "note": "No parsed search results; no candidate evidence eligibility.",
+        }
+    haystack = " ".join(
+        f"{item.title} {item.url} {item.snippet}" for item in results
+    ).lower()
+    matched = sorted(term for term in terms if term in haystack)
+    matched_count = len(matched)
+    term_count = len(terms)
+    coverage = matched_count / term_count if term_count else 0.0
+    phrase_match = _has_multi_term_phrase_match(query, haystack)
+    if not terms:
+        status = "not_validated"
+    elif term_count >= 3 and matched_count < 2 and not phrase_match:
+        status = "low_relevance"
+    elif coverage >= 0.6 or phrase_match:
+        status = "relevant"
+    elif matched_count >= 2 or coverage >= 0.4:
+        status = "uncertain"
+    else:
+        status = "low_relevance"
+    return {
+        "status": status,
+        "matched_terms": matched,
+        "query_terms": sorted(terms),
+        "matched_term_count": matched_count,
+        "query_term_count": term_count,
+        "coverage": round(coverage, 3),
+        "phrase_match": phrase_match,
+        "note": (
+            "Conservative lexical diagnostic only; execution success does not imply evidence relevance. "
+            "A single noisy term match is low relevance for multi-term queries."
+        ),
+    }
+
+
+def _query_relevance_terms(query: str) -> set[str]:
+    stopwords = {
+        "and",
+        "the",
+        "for",
+        "with",
+        "from",
+        "current",
+        "latest",
+        "recent",
+        "news",
+        "paper",
+        "papers",
+        "forum",
+        "forums",
+        "language",
+        "english",
+    }
+    lower = query.lower()
+    terms = {term for term in re.findall(r"[a-z0-9][a-z0-9_-]{2,}", lower) if term not in stopwords}
+    terms.update(re.findall(r"[\u4e00-\u9fff]{2,}", query))
+    return terms
+
+
+def _has_multi_term_phrase_match(query: str, haystack: str) -> bool:
+    normalized_query = " ".join(re.findall(r"[a-z0-9]+", query.lower()))
+    if not normalized_query:
+        return False
+    parts = normalized_query.split()
+    if len(parts) < 2:
+        return False
+    if normalized_query in haystack:
+        return True
+    for index in range(len(parts) - 1):
+        if f"{parts[index]} {parts[index + 1]}" in haystack:
+            return True
+    return False
 
 
 def _utc_now() -> str:

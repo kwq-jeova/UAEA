@@ -186,6 +186,128 @@ class HarnessDynamicToolAdapterTests(unittest.TestCase):
         self.assertFalse(dispatch.to_app_server_response()["success"])
         self.assertEqual(dispatch.to_trace_metadata()["harness"]["call_id"], "call-unknown")
 
+    def test_bounded_app_server_response_remains_valid_json(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            registry.register_capability(
+                CapabilityMetadata(
+                    name="mock.external_operation",
+                    tool_name="mock_external_operation",
+                    version="0.1",
+                    permission="external",
+                    produces_observation=True,
+                    context_cost="low",
+                    future_phase="test",
+                ),
+                lambda arguments, objective: ToolResult(
+                    True,
+                    "large result",
+                    {
+                        "search_query": "recursive self improvement",
+                        "search_results": [
+                            {"title": "Returned source", "url": "https://example.test/source", "snippet": "ok"}
+                        ],
+                        "search_contract": {
+                            "citation_policy": "Only cite URLs present in search_results.",
+                            "page_evidence_requires_fetch": True,
+                        },
+                        "bounded_evidence_block": "x" * 5000,
+                    },
+                ),
+            )
+            adapter = HarnessDynamicToolAdapter(
+                registry,
+                [
+                    DynamicToolBinding.from_registry(
+                        registry,
+                        "mock.external_operation",
+                        description="Run the deterministic external fixture.",
+                        input_schema={"type": "object"},
+                    )
+                ],
+                max_output_chars=700,
+            )
+
+            dispatch = adapter.dispatch(
+                {
+                    "threadId": "thread-large",
+                    "turnId": "turn-large",
+                    "callId": "call-large",
+                    "tool": "mock_external_operation",
+                    "arguments": {},
+                }
+            )
+            text = dispatch.to_app_server_response()["contentItems"][0]["text"]
+            payload = json.loads(text)
+
+        self.assertLessEqual(len(text), 700)
+        self.assertTrue(payload["data"]["_tool_output_truncated"])
+        self.assertEqual(payload["data"]["search_results"][0]["url"], "https://example.test/source")
+        self.assertIn("citation_policy", payload["data"]["search_contract"])
+
+    def test_extreme_bounded_response_preserves_evidence_contract(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            registry.register_capability(
+                CapabilityMetadata(
+                    name="mock.external_operation",
+                    tool_name="mock_external_operation",
+                    version="0.1",
+                    permission="external",
+                    produces_observation=True,
+                    context_cost="low",
+                    future_phase="test",
+                ),
+                lambda arguments, objective: ToolResult(
+                    True,
+                    "Actual provider www.bing.com returned uncertain candidate evidence; citable_results is empty.",
+                    {
+                        "search_query": "recursive self-improvement AI papers",
+                        "search_provider": "www.bing.com",
+                        "candidate_evidence_results": [
+                            {"title": "x" * 500, "url": f"https://example.test/{idx}", "snippet": "y" * 500}
+                            for idx in range(10)
+                        ],
+                        "citable_results": [],
+                        "evidence_eligibility": {"candidate_status": "uncertain", "citable_result_count": 0},
+                        "search_contract": {
+                            "candidate_status": "uncertain",
+                            "actual_search_provider": "www.bing.com",
+                            "citation_policy": "Only cite URLs present in citable_results or later web.fetch results.",
+                        },
+                    },
+                ),
+            )
+            adapter = HarnessDynamicToolAdapter(
+                registry,
+                [
+                    DynamicToolBinding.from_registry(
+                        registry,
+                        "mock.external_operation",
+                        description="Run the deterministic external fixture.",
+                        input_schema={"type": "object"},
+                    )
+                ],
+                max_output_chars=350,
+            )
+
+            dispatch = adapter.dispatch(
+                {
+                    "threadId": "thread-small",
+                    "turnId": "turn-small",
+                    "callId": "call-small",
+                    "tool": "mock_external_operation",
+                    "arguments": {},
+                }
+            )
+            payload = json.loads(dispatch.to_app_server_response()["contentItems"][0]["text"])
+
+        self.assertEqual(payload["data"]["search_provider"], "www.bing.com")
+        self.assertEqual(payload["data"]["evidence_eligibility"]["candidate_status"], "uncertain")
+        self.assertEqual(payload["data"]["search_contract"]["candidate_status"], "uncertain")
+
 
 if __name__ == "__main__":
     unittest.main()

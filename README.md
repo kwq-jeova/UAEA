@@ -280,3 +280,74 @@ docs/phase2b-memory/memory-architecture-test-fixtures.md
 python -m unittest tests.memory.test_architecture_fixtures -v
 python scripts/evaluate_memory_fixture.py data/memory_test_fixtures/long_context_mixed_100.json --json
 ```
+
+## 7. Harness Runtime Baseline
+
+The current UAEA x Codex Harness integration is closed enough to freeze as a
+runtime baseline. The current summary and ownership boundary are recorded in:
+
+```text
+docs/harness-runtime-baseline-20260926.md
+```
+
+The verified local path is:
+
+```text
+source-owned Codex app-server
+  -> local Responses transport
+  -> local vLLM
+  -> Qwen2.5-14B-Instruct-AWQ
+```
+
+The Harness owns generic execution infrastructure:
+
+```text
+thread/turn lifecycle
+context transport and token window
+compaction mechanics
+native file/shell/sandbox execution
+generic tool protocol
+retry/continuation
+raw event emission
+```
+
+UAEA owns capability semantics and future cognition:
+
+```text
+Runtime Facts / Effective Capability State
+Web provider/fallback/evidence semantics
+trajectory normalization and provenance
+Goal Hypothesis
+Problem Space
+Working Memory
+Memory / Episode research
+```
+
+Current Harness boundary status:
+
+```text
+local Harness: PASS
+local vLLM model plane: PASS on diagnostic 8002
+UAEA dynamic capability bridge: PASS
+native sandboxed command execution: PASS
+trajectory infrastructure: PASS
+post-turn trigger: PASS
+Codex Core fork: NO
+```
+
+The frozen `8001` endpoint and Phase-1 benchmark baseline remain unchanged.
+Residual issues such as full-history pollution, partial compaction details,
+best-effort Web provider constraints, and model citation discipline are
+explicitly moved to future UAEA cognition or capability research.
+
+Historical Harness feasibility and pre-Harness freeze documents are preserved,
+not deleted, under:
+
+```text
+docs/archive/harness/
+```
+
+The next research boundary is UAEA-owned Goal Hypothesis, Problem Boundary,
+Epistemic Update, Memory, and Episode architecture. Harness integration should
+not be expanded unless a missing lifecycle hook, unobservable critical state,
+or genuinely insufficient generic runtime capability is demonstrated.

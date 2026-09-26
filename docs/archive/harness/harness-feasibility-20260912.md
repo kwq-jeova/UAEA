@@ -2864,3 +2864,659 @@ model-mediated native File: PASS
 Codex Core fork required: NO
 UAEA ToolRegistry fallback used: NO
 ```
+
+## Harness Context Runtime vs UAEA Context Semantics
+
+本次人工交互暴露的核心问题不是本地模型路径失效，而是：
+
+```text
+Harness Context Runtime
+  !=
+UAEA Working Memory / Context Semantics
+```
+
+Harness 负责 context 的承载方式；UAEA 必须负责 context 的含义、相关性和未来
+working-set selection。本节只冻结最小 runtime context composition，不实现
+Goal、Memory、Evidence scoring、Experience evaluation 或 history summarizer。
+
+### Context Composition Audit
+
+最新人工 run：
+
+```text
+D:\UAEA-runtime\h3-results\interactive-32768-20260917-120035\app-server-events.jsonl
+```
+
+确认的实际运行路径：
+
+```text
+modelProvider = uaea_local_vllm
+model = qwen25-14b-awq
+sandbox.type = readOnly
+sandbox.networkAccess = false
+modelContextWindow = 31129
+```
+
+因此模型回答：
+
+```text
+我是由 OpenAI 开发的一个语言模型
+```
+
+属于模型生成内容，不是 runtime provenance。
+
+当前模型实际收到的上下文来源至少包括：
+
+| Source | Producer | Cross-turn retained? | Pollution risk |
+| --- | --- | --- | --- |
+| Harness / Codex skills and permissions | App Server / Harness | yes | High: contains OpenAI/Codex framing and shell network restrictions |
+| Environment context | App Server / Harness | yes | Medium: filesystem/sandbox facts can be overgeneralized |
+| Tool descriptions | UAEA dynamic tool adapter via Harness | yes | Medium: tool capability is visible but schema limits are under-specified |
+| UAEA `additionalContext` | UAEA outer orchestration | per-turn injected; then visible in history | Medium if used as accumulating prompt patches |
+| Full thread history | Harness | yes | High: failed searches, bad summaries, and tool-call JSON examples remain visible |
+| Previous assistant outputs | Model via Harness thread | yes | High: model can imitate earlier protocol artifacts |
+| Previous tool results / observations | Dynamic tools via Harness | yes | High: irrelevant or low-quality search results can anchor later turns |
+
+Observed token growth:
+
+```text
+early turn input_tokens ~= 7,988
+later turn input_tokens ~= 25,474
+modelContextWindow = 31,129
+```
+
+This indicates the manual REPL is using full Harness thread context, not a
+UAEA-selected working set.
+
+### Observed Failure Modes
+
+1. Sandbox network restriction was overgeneralized:
+
+```text
+sandbox.networkAccess = false
+  -> model said it could not access the Internet
+```
+
+But UAEA dynamic Web tools were available and later executed successfully:
+
+```text
+web.search -> success
+```
+
+2. Protocol artifacts polluted later turns:
+
+```text
+assistant printed JSON tool-call examples
+  -> JSON examples entered full thread history
+  -> later turns continued to imitate and quote those JSON objects
+```
+
+3. Web source constraints were not structurally expressible:
+
+```text
+web.search(query, max_results)
+```
+
+cannot guarantee:
+
+```text
+exclude_domains
+preferred_domains
+language
+region
+source_type
+forum-only
+paper-only
+non-China-only
+```
+
+So prompts such as "use English and avoid Chinese sites" could only be folded
+into free-text query construction. The observed results still included Baidu,
+CSDN, Zhihu, and dictionary pages. This is a current capability limitation, not
+something the model should claim it can guarantee.
+
+### Minimal Runtime Facts Projection
+
+The interactive REPL now injects a small runtime facts projection on every turn:
+
+```text
+uaea.runtime_facts.model
+uaea.runtime_facts.execution
+uaea.runtime_facts.capabilities
+uaea.runtime_facts.web_limits
+```
+
+It records only stable runtime facts:
+
+```text
+model_provider = uaea_local_vllm
+model = qwen25-14b-awq
+Harness native shell/filesystem = read-only sandbox
+Harness native shell network = disabled
+UAEA dynamic web.search = available
+UAEA dynamic web.fetch = available
+shell network restriction != Web capability unavailable
+web.search filtering is limited by current schema
+```
+
+This projection is not Goal, Memory, Evidence scoring, or cognitive policy.
+It is the first narrow separation between:
+
+```text
+Harness carries context
+UAEA defines runtime meaning of context
+```
+
+### Boundary Decision
+
+Current ownership:
+
+```text
+Harness owns:
+  thread persistence
+  turn lifecycle
+  token window
+  context transport
+  compaction mechanics
+  generic runtime/tool execution
+
+UAEA owns:
+  context relevance
+  working-set selection
+  capability-state projection
+  future Goal / Memory / Evidence semantics
+```
+
+The next context layer should be:
+
+```text
+Conversation Working Set
+```
+
+but it is not implemented in this checkpoint. Full-history filtering,
+protocol-artifact suppression, failed-search demotion, and evidence-quality
+selection should be designed separately after more raw trajectory review.
+
+## Structured Web Search Action Schema
+
+本轮将 `web.search(query, max_results)` 扩展为向后兼容的结构化 action：
+
+```text
+query
+max_results
+language
+region
+exclude_domains
+preferred_domains
+source_types
+freshness
+```
+
+`source_types` 当前只接受：
+
+```text
+academic
+forum
+news
+documentation
+general
+```
+
+`freshness` 当前只接受：
+
+```text
+day
+week
+month
+year
+recent
+any
+```
+
+UAEA 会验证字段类型、枚举、domain 格式和 `max_results` 范围。未识别字段
+明确失败，不静默丢弃用户约束。旧调用只提供 `query` 和
+`max_results` 时继续有效。
+
+### Provider Constraint Mapping
+
+当前 provider 顺序仍然是：
+
+```text
+DuckDuckGo -> Bing fallback
+```
+
+实际 provider 的约束能力按 best-effort 记录，不伪造 hard guarantee：
+
+| Constraint | DuckDuckGo | Bing | UAEA 行为 |
+| --- | --- | --- | --- |
+| `language` | partial | partial | query shaping / provider 参数 |
+| `region` | partial | partial | provider 参数 |
+| `exclude_domains` | best-effort | best-effort | query shaping + post-filter |
+| `preferred_domains` | best-effort | best-effort | query shaping + result ordering |
+| `source_types` | best-effort | best-effort | query shaping |
+| `freshness` | unsupported | unsupported | 保留请求并标记 limitation |
+
+如果 DuckDuckGo 无法连接，Bing fallback 会保留：
+
+```text
+requested_constraints
+provider_constraint_support
+fallback_reason
+actual provider
+```
+
+“排除中国网站”目前仍然不是严格保证；它会被保留为结构化请求，
+并通过 `-site:<domain>` 和结果后过滤尽力执行。
+
+### Search vs Fetch
+
+```text
+web.search
+  = source discovery / candidate acquisition from a search results page
+
+web.fetch
+  = page-level evidence acquisition for a specific URL
+```
+
+`web.search` 不自动 fetch 第一条结果。需要网页正文、论文内容或论坛原帖时，
+由模型根据返回的候选 URL 决定是否继续调用 `web.fetch`。
+
+搜索 metadata 现在明确区分：
+
+```text
+search execution success
+!=
+evidence relevance success
+```
+
+当前只提供薄的 `low / uncertain / not_validated` lexical relevance 诊断，
+不构建 Evidence ranking 或新的 semantic framework。
+
+### Runtime Truthfulness
+
+Interactive Harness 的 Runtime Facts 现在暴露结构化 Web action 字段，
+并要求模型报告实际 provider。模型不得把实际的 DuckDuckGo/Bing 请求
+描述为 Google 请求。每次搜索结果保留：
+
+```text
+requested_constraints
+effective_query
+search_provider
+provider_constraint_support
+fallback / related access events
+evidence_relevance
+```
+
+本轮没有实现 Goal、Memory、Evidence scoring、自动 fetch 或新的 Web
+provider。
+
+## Harness I/O Contract v0
+
+本节把 pinned `rust-v0.154.0` 源码审计结论收敛成 UAEA 外层可依赖的最小
+Harness I/O contract。它不是 Codex Core fork 计划，也不是 Goal / Memory
+实现。
+
+Pinned source evidence：
+
+```text
+D:\UAEA-deps\codex\rust-v0.154.0
+commit = 6b9826e3aa83b1a5947db50f4332cb9c65f1b340
+tag = rust-v0.154.0
+```
+
+### Input Contract
+
+UAEA 当前只依赖以下 App Server 输入面：
+
+```text
+turn/start.input
+turn/start.additionalContext
+turn/start.model
+turn/start.sandboxPolicy
+turn/start.cwd
+turn/start.approvalPolicy
+turn/start.responsesapiClientMetadata
+turn/start.outputSchema
+turn/steer.additionalContext
+dynamicToolCall.response
+```
+
+`additionalContext` 的 runtime 形状来自 Rust protocol，而不是单独来自生成的
+JSON / TypeScript schema：
+
+```text
+additionalContext: {
+  "<opaque-source-id>": {
+    "kind": "application" | "untrusted",
+    "value": "<string>"
+  }
+}
+```
+
+关键生命周期：
+
+```text
+turn/start.additionalContext
+  -> map_additional_context(...)
+  -> TurnInputRequest.with_additional_context(...)
+  -> AdditionalContextStore.merge(...)
+  -> ResponseItem
+  -> session history
+  -> clone_history().for_prompt(...)
+  -> Prompt.input
+  -> Responses request
+```
+
+因此 `additionalContext` 不是旁路 metadata，也不是一次性 prompt patch。它会进入
+Harness thread history。UAEA 可以用它做轻量 runtime facts / pre-turn cognitive
+projection，但不能把它当成长期 Working Memory 或 Goal store。
+
+### Output Contract
+
+UAEA 当前只依赖以下 App Server 输出面：
+
+```text
+turn/started
+turn/completed
+item/started
+item/completed
+rawResponseItem/completed
+rawResponse/completed
+thread/tokenUsage/updated
+error
+item/tool/call
+item/commandExecution/outputDelta
+item/commandExecution/terminalInteraction
+```
+
+这些事件进入：
+
+```text
+Harness raw event
+  -> HarnessEventNormalizer
+  -> TrajectoryEvent
+  -> HarnessTrajectoryWriter
+  -> canonical run-level JSONL
+```
+
+Normalizer 只做结构归一化，不判断 Goal、Memory、Evidence quality 或
+Experience value。
+
+### Runtime Facts Projection
+
+最小 runtime facts projection 已集中到：
+
+```text
+harness/io_contract.py
+```
+
+当前包含：
+
+```text
+model_provider = uaea_local_vllm
+model = qwen25-14b-awq
+Harness native shell/filesystem = read-only sandbox
+Harness native shell network = disabled
+UAEA dynamic web.search = available
+UAEA dynamic web.fetch = available
+shell network restriction != Web capability unavailable
+web.search constraints = preserved, best-effort provider enforcement
+```
+
+`scripts/h3_harness_interactive_repl.py` 只调用该 contract，不再自己拥有这组
+runtime facts。这样后续 Goal / Memory / Experience 模块不需要依赖交互脚本私有
+结构。
+
+### Boundary Decision
+
+当前稳定边界：
+
+```text
+UAEA
+  -> additionalContext / dynamic tool response / model config
+  -> Codex App Server
+  -> ordered app-server events
+  -> HarnessEventNormalizer
+  -> UAEA TrajectoryEvent
+```
+
+不稳定或不可作为唯一依据的面：
+
+```text
+generated JSON / TypeScript schema for experimental fields
+provider-side KV/cache behavior
+Core internal causal ordering beyond emitted event order
+Harness compaction summary as Memory input
+```
+
+当前结论：
+
+```text
+Harness Runtime Contract v0: PASS / PARTIAL
+Current App Server suitable as UAEA stable runtime boundary: YES / PARTIAL
+Concrete reason to fork Codex Core: NO
+Goal implemented: NO
+Memory implemented: NO
+```
+
+## H3 Web Search Result Contract Hardening
+
+最近人工测试暴露的失败面：
+
+```text
+User asks for English AI recursive self-improvement sources,
+excluding Chinese websites and preferring papers/forums.
+  -> model calls web.search with structured constraints
+  -> search provider returns kimi.com / zhihu.com / aliyun.com
+  -> model answers with arXiv/forum URLs that were not present in evidence
+```
+
+这不是单一的 `web.fetch` 缺失问题。真实原因包括：
+
+```text
+web.search = search-results-page source discovery
+provider constraints = best-effort, not hard guarantee
+exclude_domains only filters explicit domains supplied by the model
+preferred_domains may receive zero actual matches
+search execution success != evidence relevance success
+page-level claims require web.fetch
+```
+
+本轮加固保持边界不变：
+
+```text
+Tool executes and returns bounded evidence.
+Tool does not become a Web agent.
+Harness carries the tool response.
+Model/Cognition must reason from returned evidence only.
+```
+
+UAEA now exposes a stable `web.search` result contract in the tool result:
+
+```text
+search_contract:
+  evidence_level = search_results_only
+  candidate_status = candidate_results | constraints_partially_satisfied | low_relevance
+  constraint_enforcement = best_effort
+  page_evidence_requires_fetch = true
+  citation_policy = only cite URLs present in search_results or later web.fetch results
+  recommended_next_action = revise query / report low relevance / fetch returned URL
+```
+
+The adapter also records mechanical post-filtering metadata:
+
+```text
+result_domains_after_filtering
+preferred_domain_result_count
+preferred_domain_missing
+```
+
+Harness dynamic tool responses are now bounded as valid JSON instead of being
+cut mid-string. This prevents important fields such as `search_contract`,
+`evidence_relevance`, and `post_filtering` from being hidden behind invalid
+truncated JSON.
+
+Still not implemented:
+
+```text
+automatic web.fetch follow-up
+semantic source quality scoring
+country/platform exclusion inference
+Goal / Memory / Evidence scoring
+Web agent behavior
+```
+
+## Web Evidence Eligibility Boundary
+
+本轮进一步冻结 Web evidence boundary：
+
+```text
+SearchResult != CandidateEvidence != CitableEvidence
+```
+
+`web.search` 现在保留三层结果：
+
+```text
+raw search results
+  retained in web_access_event.content_ref / metadata.raw_results_before_filtering / trajectory raw event
+
+candidate_evidence_results
+  non-low-relevance search results that may be considered for follow-up
+
+citable_results
+  only relevant search results; page-level claims still require web.fetch
+```
+
+当 relevance gate 判断为：
+
+```text
+low_relevance
+```
+
+ToolResult 会返回：
+
+```text
+candidate_evidence_results = []
+citable_results = []
+search_results = []
+search_contract.recommended_next_action = revise query
+search_contract.page_evidence_requires_fetch = false
+```
+
+同时 raw 结果不会被删除，会继续保存在 source history / raw event 中用于诊断和
+未来 evidence analysis。这样保留事实记录，但不赋予 evidence eligibility。
+
+Relevance gate 当前是保守机械判断，不是 semantic ranking model。多词查询只命中
+一个噪声词时会落到 `low_relevance`，例如只命中 `recursive` 或
+`artificial`，不会被当成可引用候选。
+
+Provider truthfulness 也进入 Web contract：
+
+```text
+search_contract.actual_search_provider
+ToolResult.message starts with Actual provider <provider>
+```
+
+如果用户要求 Google，但实际 provider 是 Bing，模型应报告实际 provider，不能
+声称使用 Google / Google Scholar。
+
+本轮仍不实现：
+
+```text
+Search Query LLM
+automatic query rewriting
+automatic web.fetch
+Google API
+Goal / Memory / Working Memory
+```
+
+## Effective Capability State Projection
+
+最新人工测试暴露的问题不是入口错误，而是模型在 tool routing 前把：
+
+```text
+Harness native shell network = disabled
+```
+
+误解为：
+
+```text
+UAEA web.search unavailable
+```
+
+因此本轮新增一个独立的 turn-level projection：
+
+```text
+Runtime Facts
+  -> Capability Resolution
+  -> Effective Capability State
+  -> turn-level projection
+  -> Model tool routing
+```
+
+实现位置：
+
+```text
+harness/io_contract.py
+```
+
+新增 contract：
+
+```text
+effective_capability_state(dynamic_tools)
+effective_capability_context(dynamic_tools)
+turn_context_payload(dynamic_tools)
+effective_capability_summary(dynamic_tools)
+```
+
+`EffectiveCapabilityState` 从实际 `thread/start.dynamicTools` 生成，而不是手写假设。
+当前包含：
+
+```text
+execution_planes.harness_native_shell.network = disabled
+execution_planes.uaea_dynamic_tools.available = true
+capabilities.web.search.available = true
+capabilities.web.fetch.available = true
+resolution.external_or_recent_public_information = web.search
+```
+
+`scripts/h3_harness_interactive_repl.py` 每轮现在注入：
+
+```text
+uaea.runtime_facts.*
+uaea.effective_capability_state
+```
+
+并打印：
+
+```text
+[UAEA] effective_capability_state injected: effective_capabilities=...
+```
+
+这不是 Goal、Memory 或 Working Memory。它只是本 turn 的 executable capability
+state projection，用于让模型在回答前先解析当前有效执行能力。
+
+### Human Retest
+
+自然输入：
+
+```text
+请查一下最近六个月 AI development trends。
+```
+
+结果：
+
+```text
+model -> web_search
+tool result -> low_relevance
+final answer -> reports low relevance, no raw URLs listed
+```
+
+本轮同时做了两个小的 boundary 修正：
+
+```text
+region=global -> normalized as no specific region
+low_relevance raw_search_result_domains -> not projected to model-visible ToolResult
+```
+
+raw results 仍保留在 source history / raw event 中。

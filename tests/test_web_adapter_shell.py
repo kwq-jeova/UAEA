@@ -17,7 +17,7 @@ if str(PHASE1_ROOT) not in sys.path:
     sys.path.insert(0, str(PHASE1_ROOT))
 
 from memory.sqlite_store import connect, counts, get_web_access_event, initialize
-from phase2.web_adapter import WebAdapter
+from phase2.web_adapter import WebAdapter, WebSearchConstraints, normalize_search_constraints
 from phase2.web_capability import WebFetchCapability, WebSearchCapability, web_fetch_metadata, web_search_metadata
 from phase2.web_context import ProjectionLimits, project_web_access_events
 from phase2.web_shell import Phase2WebShell, parse_web_command, parse_web_request
@@ -118,6 +118,363 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertEqual(observation.capability, "web.search")
         self.assertEqual(observation.tool_name, "web_search")
         self.assertEqual(observation.status, "success")
+
+    def test_web_search_preserves_structured_constraints_and_applies_domain_filter(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            db_path = root / "source.sqlite"
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            with local_web_server() as server:
+                registry.register_capability(
+                    web_search_metadata(),
+                    WebSearchCapability(
+                        db_path=db_path,
+                        adapter=WebAdapter(
+                            snapshot_root=root / "snapshots-constraints",
+                            timeout_seconds=5,
+                            search_url_template=f"{server}/search.html?q={{query}}",
+                        ),
+                        projection_limits=ProjectionLimits(max_sources=1, per_source_chars=300, total_chars=300),
+                    ),
+                )
+                result = registry.execute_capability(
+                    "web.search",
+                    {
+                        "query": "AI recursive self-improvement",
+                        "max_results": 2,
+                        "language": "en",
+                        "region": "us",
+                        "exclude_domains": ["example.test", "*.cn"],
+                        "preferred_domains": ["docs.vllm.ai", "*.edu"],
+                        "source_types": ["academic", "forum"],
+                        "freshness": "recent",
+                    },
+                    "structured web search",
+                )
+            with closing(connect(db_path)) as connection:
+                event = get_web_access_event(connection, result.data["access_event_id"])
+
+        assert event is not None
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["requested_constraints"]["language"], "en")
+        self.assertEqual(result.data["requested_constraints"]["exclude_domains"], ["example.test", "*.cn"])
+        self.assertEqual(result.data["requested_constraints"]["preferred_domains"], ["docs.vllm.ai", "*.edu"])
+        self.assertEqual(result.data["requested_constraints"]["source_types"], ["academic", "forum"])
+        self.assertEqual(result.data["search_results"], [])
+        self.assertEqual(result.data["candidate_evidence_results"], [])
+        self.assertEqual(result.data["citable_results"], [])
+        self.assertEqual(result.data["raw_search_result_count"], 2)
+        self.assertEqual(result.data["raw_search_result_domains"], [])
+        self.assertEqual(result.data["provider_constraint_support"]["exclude_domains"], "best_effort_query_shaping_and_post_filter")
+        self.assertEqual(result.data["evidence_relevance"]["status"], "low_relevance")
+        self.assertEqual(result.data["evidence_eligibility"]["candidate_status"], "low_relevance")
+        self.assertIn("web_access_event.metadata.results", result.data["evidence_eligibility"]["raw_results_retained_in"])
+        self.assertEqual(result.data["search_contract"]["candidate_status"], "low_relevance")
+        self.assertFalse(result.data["search_contract"]["page_evidence_requires_fetch"])
+        self.assertTrue(result.data["search_contract"]["actual_search_provider"].startswith("127.0.0.1:"))
+        self.assertIn("Only cite URLs present in citable_results", result.data["search_contract"]["citation_policy"])
+        self.assertIn("do not repeat the same query", result.data["search_contract"]["repeat_query_policy"])
+        self.assertIn("revise", result.data["search_contract"]["recommended_next_action"].lower())
+        self.assertEqual(result.data["evidence_reference"]["source_id"], result.data["access_event_id"])
+        self.assertIn("raw search results were retained internally", result.data["evidence_reference"]["summary"])
+        self.assertNotIn("https://example.test/qwen25", result.data["evidence_reference"]["summary"])
+        self.assertNotIn("https://example.test/qwen25", result.data["bounded_evidence_block"])
+        self.assertIn("low-relevance", result.message)
+        self.assertIn("Actual provider", result.message)
+        self.assertIn("do not cite, do not call this Google", result.message)
+        self.assertIn("do not repeat the same query", result.message)
+        self.assertEqual(event["metadata"]["requested_constraints"]["region"], "us")
+        self.assertEqual(len(event["metadata"]["results"]), 0)
+        self.assertEqual(len(event["metadata"]["raw_results_before_filtering"]), 2)
+        self.assertEqual(event["metadata"]["post_filtering"]["result_count_after_filtering"], 0)
+        self.assertEqual(event["metadata"]["post_filtering"]["preferred_domain_result_count"], 0)
+        self.assertTrue(event["metadata"]["post_filtering"]["preferred_domain_missing"])
+        self.assertIn("-site%3Aexample.test", event["url"])
+        self.assertIn("-site%3A.cn", event["url"])
+
+    def test_web_search_uncertain_results_are_candidates_but_not_citable(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            db_path = root / "source.sqlite"
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            with local_web_server() as server:
+                registry.register_capability(
+                    web_search_metadata(),
+                    WebSearchCapability(
+                        db_path=db_path,
+                        adapter=WebAdapter(
+                            snapshot_root=root / "snapshots-uncertain",
+                            timeout_seconds=5,
+                            search_url_template=f"{server}/search.html?q={{query}}",
+                        ),
+                    ),
+                )
+                result = registry.execute_capability(
+                    "web.search",
+                    {"query": "vLLM unrelated"},
+                    "uncertain web search",
+                )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["evidence_relevance"]["status"], "uncertain")
+        self.assertGreater(len(result.data["candidate_evidence_results"]), 0)
+        self.assertEqual(result.data["citable_results"], [])
+        self.assertEqual(result.data["search_contract"]["candidate_status"], "uncertain")
+        self.assertIn("Do not list or cite URLs yet", result.data["search_contract"]["recommended_next_action"])
+        self.assertIn("citable_results is empty", result.message)
+        self.assertIn("do not list or invent URLs", result.message)
+
+    def test_web_search_relevant_results_are_citable_candidates(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            db_path = root / "source.sqlite"
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            with local_web_server() as server:
+                registry.register_capability(
+                    web_search_metadata(),
+                    WebSearchCapability(
+                        db_path=db_path,
+                        adapter=WebAdapter(
+                            snapshot_root=root / "snapshots-relevant",
+                            timeout_seconds=5,
+                            search_url_template=f"{server}/search.html?q={{query}}",
+                        ),
+                    ),
+                )
+                result = registry.execute_capability(
+                    "web.search",
+                    {"query": "Qwen2.5 AWQ vLLM"},
+                    "relevant web search",
+                )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["evidence_relevance"]["status"], "relevant")
+        self.assertGreater(len(result.data["candidate_evidence_results"]), 0)
+        self.assertGreater(len(result.data["citable_results"]), 0)
+        self.assertEqual(result.data["search_contract"]["candidate_status"], "relevant")
+        self.assertTrue(result.data["search_contract"]["page_evidence_requires_fetch"])
+
+    def test_legacy_web_search_query_and_max_results_remain_compatible(self):
+        with self.fixture_connection() as connection, tempfile.TemporaryDirectory() as tmpdir:
+            with local_web_server() as server:
+                adapter = WebAdapter(
+                    snapshot_root=Path(tmpdir),
+                    timeout_seconds=5,
+                    search_url_template=f"{server}/search.html?q={{query}}",
+                )
+                result = adapter.search(connection, "vLLM Qwen2.5 AWQ", max_results=1)
+
+        self.assertEqual(result.status, "fetched")
+        self.assertEqual(len(result.search_results), 1)
+
+    def test_web_search_constraint_validation_is_explicit(self):
+        self.assertEqual(
+            normalize_search_constraints(
+                {
+                    "provider": "Google",
+                    "allow_fallback": False,
+                    "language": "EN",
+                    "region": "global",
+                    "exclude_domains": ["https://baidu.com", "baidu.com"],
+                    "preferred_domains": ["arxiv.org", "*.edu"],
+                    "source_types": ["academic", "forum"],
+                    "freshness": "recent",
+                }
+            ),
+            WebSearchConstraints(
+                provider="google",
+                allow_fallback=False,
+                language="en",
+                region="",
+                exclude_domains=("baidu.com",),
+                preferred_domains=("arxiv.org", "*.edu"),
+                source_types=("academic", "forum"),
+                freshness="recent",
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "invalid domain"):
+            normalize_search_constraints({"exclude_domains": ["not a domain"]})
+        with self.assertRaisesRegex(ValueError, "unsupported source_types"):
+            normalize_search_constraints({"source_types": ["social"]})
+        with self.assertRaisesRegex(ValueError, "language/region code"):
+            normalize_search_constraints({"language": "english"})
+        with self.assertRaisesRegex(ValueError, "allow_fallback"):
+            normalize_search_constraints({"allow_fallback": "sometimes"})
+        with self.assertRaisesRegex(ValueError, "fallback policy is missing"):
+            normalize_search_constraints({"query": "AI", "provider": "google"})
+
+    def test_explicit_provider_missing_fallback_policy_fails_closed_before_http(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            adapter = FixtureSearchAdapter(
+                snapshot_root=root / "snapshots",
+                search_url_template="https://www.bing.com/search?q={query}",
+            )
+            registry.register_capability(
+                web_search_metadata(),
+                WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter),
+            )
+            result = registry.execute_capability(
+                "web.search",
+                {
+                    "query": "AI recursive self-improvement recent developments",
+                    "provider": "google",
+                },
+                "ambiguous google search",
+            )
+
+        self.assertFalse(result.ok)
+        self.assertEqual(adapter.http_get_calls, [])
+        self.assertEqual(result.data["access_status"], "failed")
+        self.assertEqual(result.data["semantic_status"], "ambiguous_provider_fallback_policy")
+        self.assertEqual(result.data["requested_provider"], "google")
+        self.assertIsNone(result.data["actual_provider"])
+        self.assertFalse(result.data["fallback_occurred"])
+        self.assertIn("fallback policy is missing", result.message)
+        self.assertIn("allow_fallback=true", result.data["retry_instruction"])
+        self.assertIn("allow_fallback=false", result.data["retry_instruction"])
+
+    def test_strict_google_without_fallback_fails_closed_before_http(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            adapter = FixtureSearchAdapter(
+                snapshot_root=root / "snapshots",
+                search_url_template="https://www.bing.com/search?q={query}",
+            )
+            registry.register_capability(
+                web_search_metadata(),
+                WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter),
+            )
+            result = registry.execute_capability(
+                "web.search",
+                {
+                    "query": "AI recursive self-improvement recent developments",
+                    "provider": "google",
+                    "allow_fallback": False,
+                },
+                "strict google search",
+            )
+            with closing(connect(root / "source.sqlite")) as connection:
+                event = get_web_access_event(connection, result.data["access_event_id"])
+
+        assert event is not None
+        self.assertFalse(result.ok)
+        self.assertEqual(adapter.http_get_calls, [])
+        self.assertEqual(result.data["status"], "unsupported")
+        self.assertEqual(result.data["access_status"], "unsupported")
+        self.assertEqual(result.data["requested_provider"], "google")
+        self.assertIsNone(result.data["actual_provider"])
+        self.assertFalse(result.data["fallback_occurred"])
+        self.assertIn("unsupported provider: google", result.data["fallback_reason"])
+        self.assertEqual(event["metadata"]["requested_provider"], "google")
+        self.assertIsNone(event["metadata"]["actual_provider"])
+        self.assertFalse(event["metadata"]["fallback_occurred"])
+
+    def test_google_with_fallback_allowed_records_bing_as_actual_provider(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            adapter = FixtureSearchAdapter(
+                snapshot_root=root / "snapshots",
+                search_url_template="https://www.bing.com/search?q={query}",
+            )
+            registry.register_capability(
+                web_search_metadata(),
+                WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter),
+            )
+            result = registry.execute_capability(
+                "web.search",
+                {
+                    "query": "Qwen2.5 AWQ vLLM",
+                    "provider": "google",
+                    "allow_fallback": True,
+                },
+                "fallback google search",
+            )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(len(adapter.http_get_calls), 1)
+        self.assertEqual(result.data["requested_provider"], "google")
+        self.assertEqual(result.data["actual_provider"], "bing")
+        self.assertTrue(result.data["fallback_occurred"])
+        self.assertIn("unsupported provider: google", result.data["fallback_reason"])
+        self.assertEqual(result.data["search_provider"], "www.bing.com")
+        self.assertEqual(result.data["search_contract"]["requested_provider"], "google")
+        self.assertEqual(result.data["search_contract"]["actual_provider"], "bing")
+
+    def test_provider_unspecified_preserves_default_provider_fallback_behavior(self):
+        with self.fixture_connection() as connection, tempfile.TemporaryDirectory() as tmpdir:
+            with local_web_server() as server:
+                adapter = WebAdapter(
+                    snapshot_root=Path(tmpdir),
+                    timeout_seconds=5,
+                    search_url_templates=(
+                        f"{server}/empty-search.html?q={{query}}",
+                        f"{server}/search.html?q={{query}}",
+                    ),
+                )
+                result = adapter.search(connection, "vLLM Qwen2.5 AWQ", max_results=2)
+                event = get_web_access_event(connection, result.access_event_id)
+
+        assert event is not None
+        self.assertEqual(result.status, "fetched")
+        self.assertEqual(len(result.related_access_event_ids), 2)
+        self.assertIsNone(event["metadata"]["requested_provider"])
+        self.assertEqual(event["metadata"]["actual_provider"], "custom")
+        self.assertFalse(event["metadata"]["fallback_occurred"])
+
+    def test_explicit_bing_uses_bing_provider_without_fallback(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            adapter = FixtureSearchAdapter(
+                snapshot_root=root / "snapshots",
+                search_url_templates=(
+                    "https://duckduckgo.com/html/?q={query}",
+                    "https://www.bing.com/search?q={query}",
+                ),
+            )
+            registry.register_capability(
+                web_search_metadata(),
+                WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter),
+            )
+            result = registry.execute_capability(
+                "web.search",
+                {
+                    "query": "Qwen2.5 AWQ vLLM",
+                    "provider": "bing",
+                    "allow_fallback": False,
+                },
+                "explicit bing search",
+            )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(len(adapter.http_get_calls), 1)
+        self.assertIn("www.bing.com", adapter.http_get_calls[0])
+        self.assertEqual(result.data["requested_provider"], "bing")
+        self.assertEqual(result.data["actual_provider"], "bing")
+        self.assertFalse(result.data["fallback_occurred"])
+        self.assertEqual(result.data["search_provider"], "www.bing.com")
+
+    def test_web_search_rejects_unknown_fields_and_invalid_max_results(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            capability = WebSearchCapability(
+                db_path=root / "source.sqlite",
+                adapter=WebAdapter(snapshot_root=root / "snapshots"),
+            )
+            registry.register_capability(web_search_metadata(), capability)
+            unknown = registry.execute_capability("web.search", {"query": "x", "unexpected": True}, "test")
+            invalid = registry.execute_capability("web.search", {"query": "x", "max_results": 11}, "test")
+
+        self.assertFalse(unknown.ok)
+        self.assertEqual(unknown.data["error"], "unsupported fields")
+        self.assertEqual(unknown.data["unsupported_fields"], ["unexpected"])
+        self.assertFalse(invalid.ok)
+        self.assertIn("between 1 and 10", invalid.data["error"])
 
     def test_live_fetch_records_source_history_and_projects_bounded_context(self):
         with self.fixture_connection() as connection, tempfile.TemporaryDirectory() as tmpdir:
@@ -655,6 +1012,33 @@ class FakeChatModel:
 class FailingChatModel:
     def chat(self, messages: list[dict], max_tokens: int = 256, temperature: float = 0.1) -> str:
         raise RuntimeError("intent model failed")
+
+
+class FixtureSearchAdapter(WebAdapter):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(timeout_seconds=5, **kwargs)
+        self.http_get_calls: list[str] = []
+
+    def _http_get(self, url: str) -> dict:
+        self.http_get_calls.append(url)
+        return {
+            "status": 200,
+            "content_type": "text/html; charset=utf-8",
+            "body": b"""
+            <!doctype html>
+            <html>
+              <head><title>Fixture search</title></head>
+              <body>
+                <ol>
+                  <li class="b_algo">
+                    <h2><a href="https://www.bing.com/ck/a?u=a1aHR0cHM6Ly9kb2NzLnZsbG0uYWkvZW4vbGF0ZXN0L2ZlYXR1cmVzL3F1YW50aXphdGlvbi9hdXRvX2F3cS5odG1s">Qwen2.5 AWQ vLLM report</a></h2>
+                    <div class="b_caption"><p>vLLM documentation page about Qwen2.5 AWQ quantization.</p></div>
+                  </li>
+                </ol>
+              </body>
+            </html>
+            """,
+        }
 
 
 @contextmanager

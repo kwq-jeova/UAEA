@@ -78,9 +78,7 @@ class HarnessToolDispatch:
             "message": self.observation.message,
             "data": self.tool_result.data,
         }
-        text = json.dumps(payload, ensure_ascii=False, default=str)
-        if len(text) > self.max_output_chars:
-            text = text[: self.max_output_chars] + "\n...[bounded output truncated]"
+        text = _bounded_json_text(payload, self.max_output_chars)
         return {
             "success": self.tool_result.ok,
             "contentItems": [{"type": "inputText", "text": text}],
@@ -181,3 +179,146 @@ def _arguments(value: Any) -> dict[str, Any]:
         if isinstance(decoded, dict):
             return decoded
     return {}
+
+
+def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
+    budget = max(1, int(max_chars))
+    for candidate in (
+        payload,
+        _bounded_payload(payload, string_limit=800, list_limit=10),
+        _bounded_payload(payload, string_limit=240, list_limit=6),
+        _bounded_payload(payload, string_limit=80, list_limit=3),
+        _minimal_payload(payload),
+    ):
+        text = json.dumps(candidate, ensure_ascii=False, default=str)
+        if len(text) <= budget:
+            return text
+    fallback = {
+        "ok": bool(payload.get("ok")),
+        "capability": str(payload.get("capability") or ""),
+        "tool": str(payload.get("tool") or ""),
+        "status": str(payload.get("status") or ""),
+        "message": _truncate_text(str(payload.get("message") or ""), max(20, budget // 4)),
+        "data": _fallback_data(payload, budget),
+    }
+    return json.dumps(fallback, ensure_ascii=False, default=str)
+
+
+def _bounded_payload(payload: dict[str, Any], *, string_limit: int, list_limit: int) -> dict[str, Any]:
+    bounded = _bound_value(payload, string_limit=string_limit, list_limit=list_limit)
+    if isinstance(bounded, dict):
+        data = bounded.get("data")
+        if isinstance(data, dict):
+            data["_tool_output_truncated"] = True
+    return bounded if isinstance(bounded, dict) else dict(payload)
+
+
+def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    data = payload.get("data")
+    minimal_data: dict[str, Any] = {"_tool_output_truncated": True}
+    if isinstance(data, dict):
+        for key in (
+            "capability",
+            "tool",
+            "access_status",
+            "search_query",
+            "search_results",
+            "raw_search_result_count",
+            "raw_search_result_domains",
+            "candidate_evidence_results",
+            "citable_results",
+            "search_contract",
+            "evidence_eligibility",
+            "evidence_relevance",
+            "requested_constraints",
+            "requested_provider",
+            "actual_provider",
+            "fallback_occurred",
+            "fallback_reason",
+            "effective_query",
+            "search_provider",
+            "constraint_application",
+            "provider_constraint_support",
+            "post_filtering",
+            "url",
+            "title",
+            "error",
+        ):
+            if key in data:
+                minimal_data[key] = _bound_value(data[key], string_limit=160, list_limit=5)
+    return {
+        "ok": bool(payload.get("ok")),
+        "capability": str(payload.get("capability") or ""),
+        "tool": str(payload.get("tool") or ""),
+        "status": str(payload.get("status") or ""),
+        "message": _truncate_text(str(payload.get("message") or ""), 240),
+        "data": minimal_data,
+    }
+
+
+def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
+    data = payload.get("data")
+    fallback: dict[str, Any] = {"_tool_output_truncated": True}
+    if not isinstance(data, dict):
+        return fallback
+    for key in (
+        "search_query",
+        "search_provider",
+        "requested_provider",
+        "actual_provider",
+        "fallback_occurred",
+        "fallback_reason",
+        "raw_search_result_count",
+        "raw_search_result_domains",
+        "evidence_eligibility",
+        "search_contract",
+        "evidence_relevance",
+        "citable_results",
+        "error",
+    ):
+        if key in data:
+            fallback[key] = _bound_value(data[key], string_limit=120, list_limit=3)
+    text = json.dumps(fallback, ensure_ascii=False, default=str)
+    if len(text) <= max(1, budget // 2):
+        return fallback
+    for key in ("raw_search_result_domains", "evidence_relevance", "citable_results"):
+        fallback.pop(key, None)
+        text = json.dumps(fallback, ensure_ascii=False, default=str)
+        if len(text) <= max(1, budget // 2):
+            return fallback
+    return {
+        "_tool_output_truncated": True,
+        "search_provider": str(data.get("search_provider") or ""),
+        "requested_provider": data.get("requested_provider"),
+        "actual_provider": data.get("actual_provider"),
+        "fallback_occurred": bool(data.get("fallback_occurred")),
+        "fallback_reason": str(data.get("fallback_reason") or ""),
+        "evidence_eligibility": _bound_value(data.get("evidence_eligibility") or {}, string_limit=80, list_limit=2),
+        "search_contract": _bound_value(data.get("search_contract") or {}, string_limit=80, list_limit=2),
+    }
+
+
+def _bound_value(value: Any, *, string_limit: int, list_limit: int) -> Any:
+    if isinstance(value, str):
+        return _truncate_text(value, string_limit)
+    if isinstance(value, list):
+        bounded_items = [_bound_value(item, string_limit=string_limit, list_limit=list_limit) for item in value[:list_limit]]
+        if len(value) > list_limit:
+            bounded_items.append({"_truncated_items": len(value) - list_limit})
+        return bounded_items
+    if isinstance(value, tuple):
+        return [_bound_value(item, string_limit=string_limit, list_limit=list_limit) for item in value[:list_limit]]
+    if isinstance(value, dict):
+        return {
+            str(key): _bound_value(item, string_limit=string_limit, list_limit=list_limit)
+            for key, item in value.items()
+        }
+    return value
+
+
+def _truncate_text(value: str, max_chars: int) -> str:
+    if len(value) <= max_chars:
+        return value
+    suffix = "\n...[field truncated]"
+    keep = max(0, max_chars - len(suffix))
+    return value[:keep] + suffix
