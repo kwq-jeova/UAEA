@@ -187,6 +187,7 @@ class WebSearchCapability:
         if not isinstance(event_metadata, dict):
             event_metadata = {}
         raw_search_results = _raw_search_results(event_metadata, access_result)
+        candidate_search_results = [result.to_dict() for result in access_result.search_results]
         extra_data = {
             "search_query": query,
             "raw_search_result_count": len(raw_search_results),
@@ -204,6 +205,7 @@ class WebSearchCapability:
                 "effective_query",
                 "requested_provider",
                 "actual_provider",
+                "acquisition_backend",
                 "fallback_occurred",
                 "fallback_reason",
                 "constraint_application",
@@ -211,20 +213,50 @@ class WebSearchCapability:
                 "search_provider",
                 "evidence_relevance",
                 "post_filtering",
+                "execution_status",
+                "reason",
             ):
+                if key == "evidence_relevance" and (access_result.status != "fetched" or not candidate_search_results):
+                    continue
                 if key in event_metadata:
                     extra_data[key] = event_metadata[key]
-        eligibility = _evidence_eligibility(extra_data, raw_search_results)
+        if access_result.status != "fetched":
+            outcome = _execution_outcome(access_result, event)
+            extra_data.update(_unevaluated_evidence("execution_not_successful"))
+            extra_data.update(outcome)
+            return _web_tool_result(
+                capability=WEB_SEARCH_CAPABILITY, tool=WEB_SEARCH_TOOL,
+                access_result=access_result, event=event, evidence_reference=evidence_reference,
+                projection=projection, success_message="", failure_message=outcome["failure_explanation"],
+                extra_data=extra_data,
+            )
+        if not candidate_search_results:
+            extra_data.update(_unevaluated_evidence("no_candidates"))
+            extra_data["raw_search_result_domains"] = []
+            extra_data["bounded_evidence_block"] = (
+                "[WEB EXECUTION RESULT]\nexecution_status: success\n"
+                "evidence_evaluation: not performed; no candidates returned."
+            )
+            return _web_tool_result(
+                capability=WEB_SEARCH_CAPABILITY, tool=WEB_SEARCH_TOOL,
+                access_result=access_result, event=event, evidence_reference=evidence_reference,
+                projection=projection,
+                success_message=f"Search executed, but no candidate results were returned for {query}.",
+                failure_message="", extra_data=extra_data,
+            )
+        eligibility = _evidence_eligibility(extra_data, candidate_search_results)
         if eligibility["candidate_status"] == "low_relevance":
             extra_data["raw_search_result_domains"] = []
-        candidate_results = _eligible_results(raw_search_results, eligibility["candidate_status"])
-        citable_results = _citable_results(raw_search_results, eligibility["candidate_status"])
+        candidate_results = _eligible_results(candidate_search_results, eligibility["candidate_status"])
+        citable_results = _citable_results(candidate_search_results, eligibility["candidate_status"])
         extra_data.update(
             {
                 "evidence_eligibility": eligibility,
                 "candidate_evidence_results": candidate_results,
                 "citable_results": citable_results,
                 "search_results": candidate_results,
+                "evidence_status": eligibility["candidate_status"],
+                "evidence_evaluation": {"performed": True},
             }
         )
         extra_data["search_contract"] = _search_contract(extra_data)
@@ -288,16 +320,82 @@ def _web_tool_result(
     }
     if extra_data:
         data.update(extra_data)
+    event_metadata = event.get("metadata") if event else None
+    if isinstance(event_metadata, dict) and isinstance(event_metadata.get("network_diagnostics"), dict):
+        data["network_diagnostics"] = event_metadata["network_diagnostics"]
     if access_result.error:
         data["error"] = access_result.error
+    outcome = _execution_outcome(access_result, event)
+    data.update(outcome)
+    data["status"] = outcome["execution_status"]
+    if isinstance(data.get("evidence_evaluation"), dict) and data["evidence_evaluation"].get("performed") is False:
+        data["evidence_refs"] = []
+    if not outcome["execution_succeeded"]:
+        data.update(_unevaluated_evidence("execution_not_successful"))
+        data["evidence_refs"] = []
+        data["bounded_evidence_block"] = (
+            "[WEB EXECUTION RESULT]\n"
+            f"execution_status: {outcome['execution_status']}\nreason: {outcome['reason']}\n"
+            f"failure_explanation: {outcome['failure_explanation']}\n"
+            "evidence_evaluation: not performed; no successful execution evidence."
+        )
+        failure_message = outcome["failure_explanation"]
     message = success_message if access_result.status == "fetched" else failure_message
     return ToolResult(access_result.status == "fetched", message, data)
+
+
+def _unevaluated_evidence(reason: str) -> dict[str, Any]:
+    return {
+        "evidence_status": None,
+        "evidence_evaluation": {"performed": False, "reason": reason},
+        "candidate_evidence_results": [], "citable_results": [], "search_results": [],
+    }
+
+
+def _execution_outcome(access_result, event: dict[str, Any] | None) -> dict[str, Any]:
+    metadata = event.get("metadata", {}) if event else {}
+    if not isinstance(metadata, dict):
+        metadata = {}
+    if access_result.status == "fetched":
+        return {"execution_status": "success", "execution_succeeded": True,
+                "http_attempted": True, "reason": None}
+    status = str(metadata.get("execution_status") or (
+        "unsupported" if access_result.status == "unsupported" else "network_failure"
+    ))
+    reason = str(metadata.get("reason") or (
+        "provider_not_implemented" if status == "unsupported" else "execution_failed"
+    ))
+    provider = str(metadata.get("requested_provider") or "Requested")
+    explanations = {
+        "provider_not_implemented": f"{provider.title()} provider is not implemented in the current runtime. No HTTP request to this provider was attempted.",
+        "provider_not_configured": f"{provider.title()} provider has no configured search endpoint. No search was executed.",
+        "request_timeout": "The HTTP request timed out. No usable results were acquired.",
+        "network_error": "The HTTP request failed because of a network error. No usable results were acquired.",
+        "http_error": f"The endpoint returned HTTP {access_result.http_status}. No usable results were acquired.",
+        "credential_missing": "Google search requires SERPAPI_KEY in the private runtime environment. No search was executed.",
+        "credential_invalid": "The Google acquisition credential has an invalid format. No search was executed.",
+        "credential_rejected": "The Google acquisition backend rejected the credential or access permission. No usable results were acquired.",
+        "backend_rate_limited": "The Google acquisition backend returned a rate/quota limit. No usable results were acquired.",
+        "backend_error": "The Google acquisition backend reported an execution error. No usable results were acquired.",
+        "invalid_backend_response": "The Google acquisition backend did not return a valid confirmed Google SERP response.",
+        "response_too_large": "The Google acquisition response exceeded the configured size limit.",
+    }
+    return {
+        "execution_status": status, "execution_succeeded": False, "reason": reason,
+        "http_attempted": bool(metadata.get("http_attempted", status != "unsupported")),
+        "failure_explanation": explanations.get(reason, f"Web execution failed: {access_result.error}"),
+    }
 
 
 def _model_visible_evidence_reference(
     evidence_reference: dict[str, Any],
     extra_data: dict[str, Any] | None,
 ) -> dict[str, Any]:
+    evaluation = extra_data.get("evidence_evaluation") if isinstance(extra_data, dict) else None
+    if isinstance(evaluation, dict) and evaluation.get("performed") is False:
+        return {**evidence_reference, "summary": (
+            "No eligible search candidates were acquired; this reference is diagnostic provenance only."
+        )}
     contract = extra_data.get("search_contract") if isinstance(extra_data, dict) else {}
     if not isinstance(contract, dict) or contract.get("candidate_status") != "low_relevance":
         return evidence_reference
@@ -321,10 +419,23 @@ def _failed_web_result(
         "capability": capability,
         "tool": tool,
         "access_status": "failed",
+        "status": "validation_failed",
+        "execution_status": "validation_failed",
+        "execution_succeeded": False,
+        "http_attempted": False,
+        "reason": "invalid_action",
+        **_unevaluated_evidence("validation_not_successful"),
         "error": error,
     }
     if extra_data:
         data.update(extra_data)
+    if isinstance(extra_data, dict) and extra_data.get("semantic_status"):
+        data.setdefault("error_kind", "semantic_validation")
+        data.setdefault("retryable", True)
+        data.setdefault(
+            "recommended_next_action",
+            "Retry the same capability with the missing semantic constraint resolved.",
+        )
     return ToolResult(
         False,
         message,
@@ -423,7 +534,7 @@ def _evidence_eligibility(data: dict[str, Any], raw_search_results: list[dict[st
     return {
         "candidate_status": candidate_status,
         "relevance_status": relevance_status,
-        "raw_search_result_count": len(raw_search_results),
+        "raw_search_result_count": int(data.get("raw_search_result_count", len(raw_search_results))),
         "candidate_evidence_count": len(_eligible_results(raw_search_results, candidate_status)),
         "citable_result_count": len(_citable_results(raw_search_results, candidate_status)),
         "raw_results_retained_in": [

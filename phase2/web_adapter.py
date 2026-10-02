@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import base64
+import json
 import re
 import sqlite3
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -16,6 +17,8 @@ from typing import Any
 from uuid import uuid4
 
 from memory.sqlite_store import insert_web_access_event
+from phase2.serpapi_backend import SERPAPI_ENDPOINT, SerpApiFailure, google_search
+from phase2.network_observability import NetworkObservation, observe_open, observe_read
 
 
 DEFAULT_USER_AGENT = "UAEA-Phase2-WebAdapter/0.1"
@@ -23,7 +26,7 @@ DEFAULT_SEARCH_URL_TEMPLATES = (
     "https://duckduckgo.com/html/?q={query}",
     "https://www.bing.com/search?q={query}",
 )
-SUPPORTED_SEARCH_PROVIDERS = frozenset({"duckduckgo", "bing"})
+SUPPORTED_SEARCH_PROVIDERS = frozenset({"duckduckgo", "bing", "google"})
 SEARCH_PROVIDER_ALIASES = {
     "ddg": "duckduckgo",
     "duckduckgo": "duckduckgo",
@@ -38,6 +41,14 @@ SEARCH_PROVIDER_ALIASES = {
 SUPPORTED_SOURCE_TYPES = frozenset({"academic", "forum", "news", "documentation", "general"})
 SUPPORTED_FRESHNESS = frozenset({"day", "week", "month", "year", "recent", "any"})
 PROVIDER_CONSTRAINT_SUPPORT = {
+    "www.google.com": {
+        "language": "partial_hl_and_lr",
+        "region": "partial_gl",
+        "exclude_domains": "best_effort_query_shaping_and_post_filter",
+        "preferred_domains": "best_effort_query_shaping",
+        "source_types": "best_effort_query_shaping",
+        "freshness": "best_effort_query_shaping",
+    },
     "duckduckgo.com": {
         "language": "partial",
         "region": "partial",
@@ -150,8 +161,11 @@ class WebAdapter:
         started_at = time.monotonic()
         base_metadata = dict(metadata or {})
         base_metadata.update({"adapter": "phase2.web_adapter", "requested_url": normalized_url})
+        network = NetworkObservation(normalized_url)
+        base_metadata["network_diagnostics"] = network.data
         try:
-            response_payload = self._http_get(normalized_url)
+            with network:
+                response_payload = self._http_get(normalized_url)
         except urllib.error.HTTPError as exc:
             return self._record_failure(
                 connection,
@@ -160,10 +174,14 @@ class WebAdapter:
                 accessed_at=accessed_at,
                 http_status=exc.code,
                 error=f"HTTP {exc.code}: {exc.reason}",
-                metadata={**base_metadata, "latency_ms": round((time.monotonic() - started_at) * 1000, 3)},
+                metadata={**base_metadata, "execution_status": "http_failure", "reason": "http_error",
+                          "latency_ms": round((time.monotonic() - started_at) * 1000, 3)},
                 source_type=source_type,
             )
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            timed_out = isinstance(exc, TimeoutError) or (
+                isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, TimeoutError)
+            )
             return self._record_failure(
                 connection,
                 access_event_id=access_event_id,
@@ -171,7 +189,9 @@ class WebAdapter:
                 accessed_at=accessed_at,
                 http_status=None,
                 error=str(exc),
-                metadata={**base_metadata, "latency_ms": round((time.monotonic() - started_at) * 1000, 3)},
+                metadata={**base_metadata, "execution_status": "timeout" if timed_out else "network_failure",
+                          "reason": "request_timeout" if timed_out else "network_error",
+                          "latency_ms": round((time.monotonic() - started_at) * 1000, 3)},
                 source_type=source_type,
             )
 
@@ -225,7 +245,17 @@ class WebAdapter:
             raise ValueError("search query missing")
         search_constraints = constraints or WebSearchConstraints()
         effective_query = _shape_search_query(clean_query, search_constraints)
-        template_plan = self._search_template_plan(search_constraints)
+        attempt_event_ids: list[str] = []
+        if search_constraints.provider == "google":
+            google_result = self._search_google(connection, clean_query, effective_query, max_results, search_constraints)
+            if google_result.search_results or not search_constraints.allow_fallback:
+                return google_result
+            attempt_event_ids.append(google_result.access_event_id)
+            template_plan = {"status": "ok", "templates": self.search_url_templates,
+                             "fallback_occurred": True,
+                             "fallback_reason": google_result.error or "Google returned no eligible candidates"}
+        else:
+            template_plan = self._search_template_plan(search_constraints)
         if template_plan["status"] == "unsupported":
             return self._record_unsupported_search_provider(
                 connection,
@@ -234,7 +264,6 @@ class WebAdapter:
                 constraints=search_constraints,
                 reason=str(template_plan["fallback_reason"]),
             )
-        attempt_event_ids: list[str] = []
         last_result: WebAccessResult | None = None
         templates = list(template_plan["templates"])
         for attempt_index, template in enumerate(templates, start=1):
@@ -323,7 +352,11 @@ class WebAdapter:
         snapshot = Path(str(event_row["content_ref"]))
         body = snapshot.read_text(encoding="utf-8", errors="replace") if snapshot.is_file() else ""
         search_constraints = constraints or WebSearchConstraints()
-        parsed_results = tuple(_parse_search_results(body, max_results=max_results * 3))
+        event_metadata = json.loads(str(event_row["metadata_json"]))
+        if event_metadata.get("acquisition_backend") == "serpapi":
+            parsed_results = tuple(_parse_google_search_results(json.loads(body)))
+        else:
+            parsed_results = tuple(_parse_search_results(body, max_results=max_results * 3))
         search_results = _apply_result_constraints(parsed_results, search_constraints, max_results=max_results)
         parse_status = "parsed" if search_results else "no_parsed_results"
         self._mark_search_attempt(
@@ -368,7 +401,8 @@ class WebAdapter:
             metadata_payload["parsed_result_count_before_filtering"] = parsed_result_count
         if raw_search_results is not None:
             metadata_payload["raw_results_before_filtering"] = [item.to_dict() for item in raw_search_results]
-        metadata_payload["evidence_relevance"] = _assess_search_relevance(clean_query, search_results)
+        if parse_status != "fetch_failed" and search_results:
+            metadata_payload["evidence_relevance"] = _assess_search_relevance(clean_query, search_results)
         if constraints is not None:
             metadata_payload["post_filtering"] = _post_filtering_metadata(parsed_result_count or len(search_results), search_results, constraints)
         if fallback_reason:
@@ -388,10 +422,67 @@ class WebAdapter:
         )
         connection.commit()
 
+    def _search_google(self, connection: sqlite3.Connection, query: str, effective_query: str,
+                       max_results: int, constraints: WebSearchConstraints) -> WebAccessResult:
+        parameters: dict[str, Any] = {"q": effective_query, "num": max_results}
+        if constraints.language:
+            language = constraints.language.split("-")[0]
+            parameters.update({"hl": language, "lr": f"lang_{language}"})
+        if constraints.region:
+            parameters["gl"] = constraints.region.split("-")[0]
+        provenance_url = "https://www.google.com/search?" + urllib.parse.urlencode(parameters)
+        access_event_id = f"WEB-LIVE-{uuid4()}"
+        accessed_at = _utc_now()
+        metadata: dict[str, Any] = {
+            "adapter": "phase2.web_adapter", "query": query, "effective_query": effective_query,
+            "requested_constraints": constraints.to_dict(), "requested_provider": "google",
+            "actual_provider": None, "search_provider": None,
+            "acquisition_backend": "serpapi", "acquisition_endpoint": SERPAPI_ENDPOINT,
+            "fallback_occurred": False, "fallback_reason": "",
+            "constraint_application": _constraint_application_metadata(constraints),
+            "provider_constraint_support": _provider_constraint_support("www.google.com"),
+            "search_attempt_index": 1,
+        }
+        started_at = time.monotonic()
+        network = NetworkObservation(SERPAPI_ENDPOINT)
+        metadata["network_diagnostics"] = network.data
+        try:
+            with network:
+                payload = google_search(parameters, timeout=self.timeout_seconds,
+                                        max_bytes=self.max_snapshot_bytes, user_agent=self.user_agent)
+        except SerpApiFailure as exc:
+            metadata.update({"execution_status": exc.status, "reason": exc.reason,
+                             "http_attempted": exc.http_attempted,
+                             "latency_ms": round((time.monotonic() - started_at) * 1000, 3)})
+            failure = self._record_failure(
+                connection, access_event_id=access_event_id, url=provenance_url,
+                accessed_at=accessed_at, http_status=exc.http_status, error=exc.reason,
+                metadata=metadata, source_type="web_search_results",
+            )
+            return replace(failure, related_access_event_ids=(access_event_id,))
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        content_ref = str(self._write_snapshot(access_event_id, provenance_url, body, "application/json"))
+        metadata.update({"actual_provider": "google", "search_provider": "www.google.com",
+                         "execution_status": "success", "http_attempted": True,
+                         "content_type": "application/json", "snapshot_truncated": False,
+                         "latency_ms": round((time.monotonic() - started_at) * 1000, 3)})
+        title = f"Google search: {query}"
+        insert_web_access_event(connection, {
+            "access_event_id": access_event_id, "url": provenance_url, "title": title,
+            "domain": "www.google.com", "accessed_at": accessed_at, "access_status": "fetched",
+            "source_type": "web_search_results", "source_provenance": "external",
+            "http_status": 200, "content_ref": content_ref, "excerpt": "", "metadata": metadata,
+        })
+        connection.commit()
+        results = self._parse_search_result_event(connection, access_event_id, query, max_results,
+                                                 constraints=constraints)
+        return WebAccessResult(access_event_id, provenance_url, "fetched", 200, content_ref, title,
+                               search_results=results, related_access_event_ids=(access_event_id,))
+
     def _http_get(self, url: str) -> dict[str, Any]:
         request = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
-        with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-            body = response.read(self.max_snapshot_bytes + 1)
+        with observe_open(urllib.request.urlopen, request, timeout=self.timeout_seconds) as response:
+            body = observe_read(response, self.max_snapshot_bytes + 1)
             return {
                 "status": int(getattr(response, "status", 200)),
                 "content_type": str(response.headers.get("Content-Type") or ""),
@@ -548,6 +639,9 @@ class WebAdapter:
                 "result_count": 0,
                 "results": [],
                 "error": reason,
+                "execution_status": "unsupported",
+                "reason": ("provider_not_implemented" if constraints.provider not in SUPPORTED_SEARCH_PROVIDERS
+                           else "provider_not_configured"),
             },
         }
         insert_web_access_event(connection, event)
@@ -785,6 +879,8 @@ def _provider_constraint_support(provider: str) -> dict[str, str]:
         return PROVIDER_CONSTRAINT_SUPPORT["duckduckgo.com"]
     if canonical == "bing":
         return PROVIDER_CONSTRAINT_SUPPORT["www.bing.com"]
+    if canonical == "google":
+        return PROVIDER_CONSTRAINT_SUPPORT["www.google.com"]
     return {
         "language": "unknown",
         "region": "unknown",
@@ -979,6 +1075,28 @@ def _plain_text_excerpt(body: bytes, *, content_type: str, limit: int = 1200) ->
     text = "\n".join(" ".join(line.split()) for line in text.splitlines())
     text = "\n".join(line for line in text.splitlines() if line.strip())
     return text[:limit].rstrip()
+
+
+def _parse_google_search_results(payload: dict[str, Any]) -> list[WebSearchResult]:
+    results: list[WebSearchResult] = []
+    seen: set[str] = set()
+    for item in payload.get("organic_results", []):
+        if not isinstance(item, dict):
+            continue
+        url, title = item.get("link"), item.get("title")
+        if not isinstance(url, str) or not isinstance(title, str) or not title.strip():
+            continue
+        try:
+            parsed = urllib.parse.urlsplit(url)
+            valid = parsed.scheme in {"http", "https"} and parsed.hostname
+        except ValueError:
+            valid = False
+        if not valid or url in seen:
+            continue
+        seen.add(url)
+        snippet = item.get("snippet", "")
+        results.append(WebSearchResult(title.strip(), url, snippet if isinstance(snippet, str) else ""))
+    return results
 
 
 def _parse_search_results(html: str, *, max_results: int) -> list[WebSearchResult]:

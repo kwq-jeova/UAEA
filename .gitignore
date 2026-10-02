@@ -14,3 +14,9 @@ tests/test_resources/
 .vscode/
 Thumbs.db
 .DS_Store
+
+# Private Web credentials belong in ~/.config/uaea/web.env, never here.
+.env
+.env.*
+web.env
+web.env.*

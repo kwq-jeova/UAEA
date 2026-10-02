@@ -30,6 +30,9 @@ from harness.io_contract import (  # noqa: E402
     runtime_fact_summary,
     turn_context_payload,
 )
+from harness.semantic_state_adapter import (  # noqa: E402
+    HarnessSemanticStateAdapter,
+)
 from phase2.web_adapter import WebAdapter  # noqa: E402
 from phase2.web_capability import (  # noqa: E402
     WebFetchCapability,
@@ -38,6 +41,7 @@ from phase2.web_capability import (  # noqa: E402
     web_search_metadata,
 )
 from phase2.web_context import ProjectionLimits  # noqa: E402
+from phase2.web_environment import WebEnvironmentError, load_web_environment  # noqa: E402
 from phase2.terminal_input import read_user_input  # noqa: E402
 from runtime.ledger import LedgerStub  # noqa: E402
 from runtime.sandbox import Sandbox  # noqa: E402
@@ -268,12 +272,18 @@ class InteractiveAppServer:
         self._handled_call_ids: set[str] = set()
         self._events_file: Any = None
         self._stderr_file: Any = None
+        self._semantic_snapshots_file: Any = None
+        self.semantic_state = HarnessSemanticStateAdapter()
+        self.adapter.bind_semantic_state_adapter(self.semantic_state)
 
     def start(self) -> None:
         self.events_path.parent.mkdir(parents=True, exist_ok=True)
         self.workspace.mkdir(parents=True, exist_ok=True)
         self._events_file = self.events_path.open("w", encoding="utf-8")
         self._stderr_file = self.stderr_path.open("w", encoding="utf-8")
+        self._semantic_snapshots_file = self.events_path.with_name(
+            "semantic-state-snapshots.jsonl"
+        ).open("w", encoding="utf-8")
         env = os.environ.copy()
         env["CODEX_HOME"] = str(self.codex_home)
         for name in (
@@ -281,6 +291,7 @@ class InteractiveAppServer:
             "OPENAI_BASE_URL",
             "CODEX_API_KEY",
             "CHATGPT_API_KEY",
+            "SERPAPI_KEY",
         ):
             env.pop(name, None)
         self.process = subprocess.Popen(
@@ -357,11 +368,19 @@ class InteractiveAppServer:
 
     def run_turn(self, text: str) -> None:
         request_id = self._next_id()
+        semantic_projection = self.semantic_state.prepare_turn(self.thread_id, text)
         print("\n[HARNESS] turn/start", flush=True)
         print(f"[UAEA] runtime_facts injected: {RUNTIME_FACT_SUMMARY}", flush=True)
         print(
             "[UAEA] effective_capability_state injected: "
             f"{effective_capability_summary(self._dynamic_tools)}",
+            flush=True,
+        )
+        print(
+            "[UAEA] semantic_state projection: "
+            f"topic={semantic_projection.payload.get('topic') or '-'} "
+            f"relation={semantic_projection.payload['turn_relation']['relation']} "
+            f"constraints={len(semantic_projection.payload.get('constraints') or [])}",
             flush=True,
         )
         completion = self._request(
@@ -374,7 +393,10 @@ class InteractiveAppServer:
                     "input": [{"type": "text", "text": text}],
                     "effort": "none",
                     "model": DEFAULT_MODEL,
-                    "additionalContext": turn_context_payload(self._dynamic_tools),
+                    "additionalContext": turn_context_payload(
+                        self._dynamic_tools,
+                        semantic_projection=semantic_projection.payload,
+                    ),
                 },
             },
             lambda message: (
@@ -422,6 +444,10 @@ class InteractiveAppServer:
             if handle is not None:
                 handle.flush()
                 handle.close()
+        if self._semantic_snapshots_file is not None:
+            self._semantic_snapshots_file.flush()
+            self._semantic_snapshots_file.close()
+            self._semantic_snapshots_file = None
 
     def _next_id(self) -> int:
         value = self._request_id
@@ -469,10 +495,28 @@ class InteractiveAppServer:
             except json.JSONDecodeError:
                 continue
             if self._events_file is not None:
+                observed_at = datetime.utcnow().isoformat()
                 self._events_file.write(
-                    json_line({"observed_at": datetime.utcnow().isoformat(), "message": message}) + "\n"
+                    json_line({"observed_at": observed_at, "message": message}) + "\n"
                 )
                 self._events_file.flush()
+                semantic_updates = self.semantic_state.consume_raw_event(
+                    {"observed_at": observed_at, "message": message},
+                    raw_event_reference={"path": str(self.events_path)},
+                )
+                for snapshot in semantic_updates:
+                    if self._semantic_snapshots_file is not None:
+                        self._semantic_snapshots_file.write(
+                            json_line(
+                                {
+                                    "observed_at": observed_at,
+                                    "event": "TURN_COMPLETED",
+                                    "snapshot": snapshot,
+                                }
+                            )
+                            + "\n"
+                        )
+                        self._semantic_snapshots_file.flush()
             self._handle_message(message)
             if predicate(message):
                 return message
@@ -592,6 +636,11 @@ def _format_dynamic_tool_result(item: dict[str, Any]) -> str:
 
 
 def run(args: argparse.Namespace) -> int:
+    try:
+        load_web_environment()
+    except WebEnvironmentError as exc:
+        print(f"[WEB ENV] ERROR: {exc}", file=sys.stderr)
+        return 2
     os.environ.setdefault("UAEA_REPL_INPUT_MODE", "raw")
     context_window = args.context
     base_url = f"http://127.0.0.1:{DEFAULT_PORT}"

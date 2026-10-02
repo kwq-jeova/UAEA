@@ -7,9 +7,11 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.error
 from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Iterator
+from unittest.mock import patch
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PHASE1_ROOT = PROJECT_ROOT / "runtime" / "phase1-runtime"
@@ -28,6 +30,113 @@ from runtime.tools import ToolRegistry
 
 
 class WebAdapterAndShellTests(unittest.TestCase):
+    @patch.dict("os.environ", {"SERPAPI_KEY": ""})
+    def test_missing_google_credential_bypasses_all_relevance_evaluation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            adapter = FixtureSearchAdapter(snapshot_root=root / "snapshots")
+            capability = WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter)
+            with patch("phase2.web_adapter._assess_search_relevance") as assess, \
+                    patch("phase2.web_capability._evidence_eligibility") as evaluate:
+                result = capability({"query": "AGI research", "provider": "google", "allow_fallback": False}, "strict")
+            with closing(connect(root / "source.sqlite")) as connection:
+                event = get_web_access_event(connection, result.data["access_event_id"])
+        assess.assert_not_called()
+        evaluate.assert_not_called()
+        self.assertEqual(adapter.http_get_calls, [])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.data["execution_status"], "configuration_error")
+        self.assertEqual(result.data["reason"], "credential_missing")
+        self.assertEqual(result.data["requested_provider"], "google")
+        self.assertIsNone(result.data["actual_provider"])
+        self.assertFalse(result.data["fallback_occurred"])
+        self.assertFalse(result.data["http_attempted"])
+        self.assertFalse(result.data["evidence_evaluation"]["performed"])
+        self.assertIsNone(result.data["evidence_status"])
+        self.assertIn("Google search requires SERPAPI_KEY", result.message)
+        self.assertNotIn("low_relevance", json.dumps(result.data))
+        self.assertNotIn("revise_query", json.dumps(result.data))
+        self.assertNotIn("evidence_eligibility", result.data)
+        self.assertEqual(event["metadata"]["reason"], "credential_missing")
+
+    def test_failed_search_classifies_transport_error_without_relevance(self):
+        failures = (
+            (urllib.error.URLError("DNS failure"), "network_failure", "network_error"),
+            (TimeoutError("request expired"), "timeout", "request_timeout"),
+            (urllib.error.URLError(TimeoutError("wrapped timeout")), "timeout", "request_timeout"),
+            (urllib.error.HTTPError("https://www.bing.com", 503, "Unavailable", {}, None), "http_failure", "http_error"),
+        )
+        for error, status, reason in failures:
+            with self.subTest(status=status, error=type(error).__name__), tempfile.TemporaryDirectory() as tmpdir:
+                root = Path(tmpdir)
+                adapter = WebAdapter(snapshot_root=root / "snapshots")
+                capability = WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter)
+                with patch.object(adapter, "_http_get", side_effect=error) as request, \
+                        patch("phase2.web_adapter._assess_search_relevance") as assess, \
+                        patch("phase2.web_capability._evidence_eligibility") as evaluate:
+                    result = capability({"query": "AGI research", "provider": "bing", "allow_fallback": False}, "transport")
+                with closing(connect(root / "source.sqlite")) as connection:
+                    event = get_web_access_event(connection, result.data["access_event_id"])
+                request.assert_called_once()
+                assess.assert_not_called()
+                evaluate.assert_not_called()
+                self.assertFalse(result.ok)
+                self.assertEqual(result.data["status"], status)
+                self.assertEqual(result.data["reason"], reason)
+                self.assertEqual(result.data["actual_provider"], "bing")
+                self.assertFalse(result.data["execution_succeeded"])
+                self.assertTrue(result.data["http_attempted"])
+                self.assertEqual(result.data["citable_results"], [])
+                self.assertNotIn("low_relevance", json.dumps(result.data))
+                self.assertNotIn("revise_query", json.dumps(result.data))
+                self.assertNotIn("evidence_relevance", event["metadata"])
+                self.assertEqual(event["access_status"], "failed")
+
+    def test_successful_search_without_candidates_skips_relevance(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            adapter = WebAdapter(snapshot_root=root / "snapshots")
+            capability = WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter)
+            with patch.object(adapter, "_http_get", return_value={
+                "status": 200, "content_type": "text/html", "body": b"<html>No results</html>",
+            }), patch("phase2.web_adapter._assess_search_relevance") as assess, \
+                    patch("phase2.web_capability._evidence_eligibility") as evaluate:
+                result = capability({"query": "AGI research", "provider": "bing", "allow_fallback": False}, "empty")
+        assess.assert_not_called()
+        evaluate.assert_not_called()
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["execution_status"], "success")
+        self.assertEqual(result.data["actual_provider"], "bing")
+        self.assertIsNone(result.data["evidence_status"])
+        self.assertEqual(result.data["evidence_evaluation"], {"performed": False, "reason": "no_candidates"})
+        self.assertNotIn("low_relevance", json.dumps(result.data))
+
+    def test_successful_candidate_search_keeps_low_relevance_separate_from_execution(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            adapter = FixtureSearchAdapter(snapshot_root=root / "snapshots")
+            capability = WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter)
+            result = capability({"query": "marine mammal acoustics", "provider": "bing", "allow_fallback": False}, "unrelated")
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data["execution_status"], "success")
+        self.assertEqual(result.data["evidence_status"], "low_relevance")
+        self.assertTrue(result.data["evidence_evaluation"]["performed"])
+        self.assertEqual(result.data["citable_results"], [])
+        self.assertIn("revise", result.data["search_contract"]["recommended_next_action"].lower())
+
+    def test_supported_provider_without_configured_endpoint_is_not_network_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            adapter = FixtureSearchAdapter(snapshot_root=root / "snapshots", search_url_template="https://www.bing.com/search?q={query}")
+            result = WebSearchCapability(db_path=root / "source.sqlite", adapter=adapter)(
+                {"query": "AGI research", "provider": "duckduckgo", "allow_fallback": False}, "unconfigured",
+            )
+        self.assertEqual(adapter.http_get_calls, [])
+        self.assertEqual(result.data["execution_status"], "unsupported")
+        self.assertEqual(result.data["reason"], "provider_not_configured")
+        self.assertIsNone(result.data["actual_provider"])
+        self.assertFalse(result.data["evidence_evaluation"]["performed"])
+
     def test_web_fetch_capability_uses_registry_and_returns_bounded_observation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -166,23 +275,20 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertEqual(result.data["raw_search_result_count"], 2)
         self.assertEqual(result.data["raw_search_result_domains"], [])
         self.assertEqual(result.data["provider_constraint_support"]["exclude_domains"], "best_effort_query_shaping_and_post_filter")
-        self.assertEqual(result.data["evidence_relevance"]["status"], "low_relevance")
-        self.assertEqual(result.data["evidence_eligibility"]["candidate_status"], "low_relevance")
-        self.assertIn("web_access_event.metadata.results", result.data["evidence_eligibility"]["raw_results_retained_in"])
-        self.assertEqual(result.data["search_contract"]["candidate_status"], "low_relevance")
-        self.assertFalse(result.data["search_contract"]["page_evidence_requires_fetch"])
-        self.assertTrue(result.data["search_contract"]["actual_search_provider"].startswith("127.0.0.1:"))
-        self.assertIn("Only cite URLs present in citable_results", result.data["search_contract"]["citation_policy"])
-        self.assertIn("do not repeat the same query", result.data["search_contract"]["repeat_query_policy"])
-        self.assertIn("revise", result.data["search_contract"]["recommended_next_action"].lower())
+        self.assertEqual(result.data["execution_status"], "success")
+        self.assertEqual(result.data["evidence_evaluation"], {"performed": False, "reason": "no_candidates"})
+        self.assertIsNone(result.data["evidence_status"])
+        self.assertNotIn("evidence_relevance", result.data)
+        self.assertNotIn("evidence_eligibility", result.data)
+        self.assertNotIn("search_contract", result.data)
+        self.assertEqual(len(event["metadata"]["raw_results_before_filtering"]), 2)
         self.assertEqual(result.data["evidence_reference"]["source_id"], result.data["access_event_id"])
-        self.assertIn("raw search results were retained internally", result.data["evidence_reference"]["summary"])
+        self.assertIn("diagnostic provenance only", result.data["evidence_reference"]["summary"])
         self.assertNotIn("https://example.test/qwen25", result.data["evidence_reference"]["summary"])
         self.assertNotIn("https://example.test/qwen25", result.data["bounded_evidence_block"])
-        self.assertIn("low-relevance", result.message)
-        self.assertIn("Actual provider", result.message)
-        self.assertIn("do not cite, do not call this Google", result.message)
-        self.assertIn("do not repeat the same query", result.message)
+        self.assertIn("no candidate results", result.message)
+        self.assertTrue(result.data["execution_succeeded"])
+        self.assertEqual(result.data["actual_provider"], "custom")
         self.assertEqual(event["metadata"]["requested_constraints"]["region"], "us")
         self.assertEqual(len(event["metadata"]["results"]), 0)
         self.assertEqual(len(event["metadata"]["raw_results_before_filtering"]), 2)
@@ -334,8 +440,15 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertIn("fallback policy is missing", result.message)
         self.assertIn("allow_fallback=true", result.data["retry_instruction"])
         self.assertIn("allow_fallback=false", result.data["retry_instruction"])
+        self.assertEqual(result.data["error_kind"], "semantic_validation")
+        self.assertTrue(result.data["retryable"])
+        self.assertEqual(
+            result.data["recommended_next_action"],
+            "Retry the same capability with the missing semantic constraint resolved.",
+        )
 
-    def test_strict_google_without_fallback_fails_closed_before_http(self):
+    @patch.dict("os.environ", {"SERPAPI_KEY": ""})
+    def test_strict_google_without_credential_fails_closed_before_http(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
@@ -362,16 +475,18 @@ class WebAdapterAndShellTests(unittest.TestCase):
         assert event is not None
         self.assertFalse(result.ok)
         self.assertEqual(adapter.http_get_calls, [])
-        self.assertEqual(result.data["status"], "unsupported")
-        self.assertEqual(result.data["access_status"], "unsupported")
+        self.assertEqual(result.data["status"], "configuration_error")
+        self.assertEqual(result.data["access_status"], "failed")
         self.assertEqual(result.data["requested_provider"], "google")
         self.assertIsNone(result.data["actual_provider"])
         self.assertFalse(result.data["fallback_occurred"])
-        self.assertIn("unsupported provider: google", result.data["fallback_reason"])
+        self.assertEqual(result.data["reason"], "credential_missing")
+        self.assertEqual(result.data["fallback_reason"], "")
         self.assertEqual(event["metadata"]["requested_provider"], "google")
         self.assertIsNone(event["metadata"]["actual_provider"])
         self.assertFalse(event["metadata"]["fallback_occurred"])
 
+    @patch.dict("os.environ", {"SERPAPI_KEY": ""})
     def test_google_with_fallback_allowed_records_bing_as_actual_provider(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -399,7 +514,7 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertEqual(result.data["requested_provider"], "google")
         self.assertEqual(result.data["actual_provider"], "bing")
         self.assertTrue(result.data["fallback_occurred"])
-        self.assertIn("unsupported provider: google", result.data["fallback_reason"])
+        self.assertEqual(result.data["fallback_reason"], "credential_missing")
         self.assertEqual(result.data["search_provider"], "www.bing.com")
         self.assertEqual(result.data["search_contract"]["requested_provider"], "google")
         self.assertEqual(result.data["search_contract"]["actual_provider"], "bing")

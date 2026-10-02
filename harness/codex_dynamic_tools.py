@@ -17,6 +17,14 @@ from runtime.capability import ToolResult  # noqa: E402
 from runtime.semantic_observation import ExecutionObservation  # noqa: E402
 
 
+IDENTITY_FIELDS = frozenset({
+    "title", "url", "path", "handle", "content_ref", "source_kind", "source_id",
+    "source_event_id", "observation_id", "request_id", "thread_id", "turn_id",
+    "item_id", "event_id", "call_id", "owner", "scope", "sha256", "hash",
+    "object_id", "effective_state_id", "access_event_id", "web_source_id", "location",
+})
+
+
 @dataclass(frozen=True)
 class DynamicToolBinding:
     """Explicit mapping from an app-server tool name to a UAEA capability."""
@@ -63,6 +71,7 @@ class HarnessToolDispatch:
     action_request: ActionRequest
     tool_result: ToolResult
     observation: ExecutionObservation
+    semantic_validation: dict[str, Any] | None = None
     max_output_chars: int = 4000
 
     @property
@@ -70,13 +79,19 @@ class HarnessToolDispatch:
         return self.tool_result.ok
 
     def to_app_server_response(self) -> dict[str, Any]:
+        data = _model_visible_tool_data(
+            self.observation.capability,
+            self.tool_result.data,
+        )
         payload = {
             "ok": self.tool_result.ok,
             "capability": self.observation.capability,
             "tool": self.observation.tool_name,
-            "status": self.observation.status,
+            "status": data.get("execution_status", self.observation.status),
             "message": self.observation.message,
-            "data": self.tool_result.data,
+            "identity": {"thread_id": self.thread_id, "turn_id": self.turn_id,
+                         "call_id": self.call_id, "observation_id": self.observation.observation_id},
+            "data": data,
         }
         text = _bounded_json_text(payload, self.max_output_chars)
         return {
@@ -94,6 +109,7 @@ class HarnessToolDispatch:
             },
             "action_request": self.action_request.to_dict(),
             "execution_observation": self.observation.to_event_metadata(),
+            "semantic_validation": dict(self.semantic_validation or {}),
         }
 
 
@@ -111,8 +127,12 @@ class HarnessDynamicToolAdapter:
         self.bindings = tuple(bindings)
         self.max_output_chars = max(1, int(max_output_chars))
         self._bindings_by_tool = {binding.tool_name: binding for binding in self.bindings}
+        self._semantic_state_adapter: Any | None = None
         if len(self._bindings_by_tool) != len(self.bindings):
             raise ValueError("Duplicate Harness dynamic tool name")
+
+    def bind_semantic_state_adapter(self, adapter: Any) -> None:
+        self._semantic_state_adapter = adapter
 
     def dynamic_tools(self) -> list[dict[str, Any]]:
         return [binding.to_app_server_spec() for binding in self.bindings]
@@ -129,6 +149,7 @@ class HarnessDynamicToolAdapter:
         tool_name = str(params.get("tool") or "")
         arguments = _arguments(params.get("arguments"))
         binding = self._bindings_by_tool.get(tool_name)
+        semantic_validation: dict[str, Any] | None = None
 
         if binding is None:
             action_request = ActionRequest(
@@ -148,11 +169,54 @@ class HarnessDynamicToolAdapter:
                 parameters=arguments,
                 request_id=call_id,
             )
-            result = self.registry.execute_capability(
-                action_request.capability,
-                action_request.parameters,
-                objective or f"Harness dynamic tool call: {binding.capability}",
-            )
+            if self._semantic_state_adapter is not None:
+                semantic_validation = self._semantic_state_adapter.validate_tool_action(
+                    thread_id,
+                    action_request.capability,
+                    action_request.parameters,
+                    turn_id=turn_id,
+                    call_id=call_id,
+                )
+            if semantic_validation is not None and not semantic_validation.get("valid"):
+                conflicts = list(semantic_validation.get("conflicts") or [])
+                result = ToolResult(
+                    False,
+                    "Action rejected by UAEA semantic authority: "
+                    + "; ".join(conflicts),
+                    {
+                        "capability": binding.capability,
+                        "tool": binding.tool_name,
+                        "execution_status": "validation_failed",
+                        "execution_succeeded": False,
+                        "http_attempted": False,
+                        "reason": "semantic_constraint_conflict",
+                        "failure_explanation": "Action was rejected before execution by UAEA semantic validation.",
+                        "requested_provider": arguments.get("provider"),
+                        "actual_provider": None,
+                        "fallback_occurred": False,
+                        "error_kind": "semantic_validation",
+                        "semantic_status": "constraint_conflict",
+                        "retryable": True,
+                        "active_constraints": semantic_validation.get("active_constraints", []),
+                        "effective_state_id": semantic_validation.get("effective_state_id", ""),
+                        "semantic_items": semantic_validation.get("semantic_items", []),
+                        "proposed_action": semantic_validation.get("proposed_action", {}),
+                        "conflicts": conflicts,
+                        "retry_instruction": (
+                            "Retry with an action that satisfies the active semantic "
+                            "constraints and their ownership/scope; do not change "
+                            "the user's policy or silently rewrite the proposed action."
+                        ),
+                        "provenance": semantic_validation.get("provenance", {}),
+                        "authorization": semantic_validation.get("authorization", {}),
+                    },
+                )
+            else:
+                result = self.registry.execute_capability(
+                    action_request.capability,
+                    action_request.parameters,
+                    objective or f"Harness dynamic tool call: {binding.capability}",
+                )
             observation_tool_name = binding.tool_name
 
         observation = ExecutionObservation.from_tool_result(observation_tool_name, result)
@@ -164,6 +228,7 @@ class HarnessDynamicToolAdapter:
             action_request=action_request,
             tool_result=result,
             observation=observation,
+            semantic_validation=semantic_validation,
             max_output_chars=self.max_output_chars,
         )
 
@@ -181,8 +246,109 @@ def _arguments(value: Any) -> dict[str, Any]:
     return {}
 
 
+def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[str, Any]:
+    """Project capability output for the Harness model without mutating provenance."""
+
+    projected = dict(data)
+    if capability in {"web.search", "web.fetch"}:
+        projected.pop("network_diagnostics", None)
+    if capability in {"web.search", "web.fetch"} and data.get("execution_succeeded") is False:
+        projected = {key: data[key] for key in (
+            "capability", "tool", "access_event_id", "web_source_id", "access_status", "status",
+            "execution_status", "execution_succeeded", "http_attempted", "reason",
+            "failure_explanation", "requested_provider", "actual_provider", "fallback_occurred",
+            "acquisition_backend",
+            "fallback_reason", "requested_constraints", "http_status", "error", "error_kind",
+            "semantic_status", "retryable", "retry_instruction",
+            "evidence_status", "evidence_evaluation", "citable_results",
+            "active_constraints", "effective_state_id", "semantic_items",
+            "proposed_action", "conflicts", "authorization",
+        ) if key in data}
+        if data.get("error_kind") == "semantic_validation" and "recommended_next_action" in data:
+            projected["recommended_next_action"] = data["recommended_next_action"]
+        projected["execution_fact_contract"] = (
+            "Requested provider is user intent, not proof of execution. Actual provider alone "
+            "does not prove success; execution_succeeded is authoritative. Explain failures "
+            "using reason/failure_explanation; do not infer a network restriction from an "
+            "unimplemented provider or change the user's provider policy."
+        )
+        if data.get("error_kind") == "semantic_validation":
+            projected["semantic_items"] = [
+                {"item_id": item["object_id"], "owner": item["owner"],
+                 "scope": item["metadata"]["scope"], "value": item["metadata"]["value"],
+                 "provenance": {key: item["metadata"]["provenance"].get(key)
+                                for key in ("thread_id", "turn_id", "event_id")}}
+                for item in data.get("semantic_items", [])
+            ]
+            authorization = data.get("authorization", {})
+            projected["authorization"] = {
+                "state": authorization.get("state"), "model_proposal": authorization.get("model_proposal"),
+                "source_items": [{"item_id": item["object_id"], "owner": item["owner"],
+                                  "scope": item["metadata"]["scope"],
+                                  "source_turn_id": item["metadata"]["provenance"].get("turn_id")}
+                                 for item in authorization.get("source_items", [])],
+            }
+        return projected
+    if projected.get("error_kind") == "semantic_validation" and "semantic_items" in projected:
+        projected["semantic_items"] = [
+            {"item_id": item["object_id"], "owner": item["owner"], "status": item["status"],
+             "kind": item["metadata"]["kind"], "scope": item["metadata"]["scope"],
+             "value": item["metadata"]["value"],
+             "provenance": {key: item["metadata"]["provenance"].get(key)
+                            for key in ("thread_id", "turn_id", "event_id")}}
+            for item in projected["semantic_items"]
+        ]
+    if capability != "web.search":
+        return projected
+
+    contract = projected.get("search_contract")
+    eligibility = projected.get("evidence_eligibility")
+    candidate_status = ""
+    if isinstance(contract, Mapping):
+        candidate_status = str(contract.get("candidate_status") or "")
+    if not candidate_status and isinstance(eligibility, Mapping):
+        candidate_status = str(eligibility.get("candidate_status") or "")
+
+    if candidate_status != "low_relevance":
+        return projected
+
+    # Raw results remain in the ToolResult/SQLite/trajectory provenance path.
+    # The App Server receives only the bounded semantic outcome.
+    for key in (
+        "raw_search_results",
+        "raw_results_before_filtering",
+        "raw_result_domains",
+        "raw_search_result_domains",
+        "search_results",
+        "candidate_evidence_results",
+        "citable_results",
+    ):
+        if key in projected:
+            projected[key] = []
+    projected["bounded_evidence_block"] = (
+        "[WEB SEARCH RESULT CONTRACT]\n"
+        "candidate_status: low_relevance\n"
+        "citable_results: 0\n"
+        "action: revise_query\n"
+        "citation_policy: do not cite or summarize low-relevance raw search results as evidence."
+    )
+    projected["model_visible_evidence"] = {
+        "candidate_status": "low_relevance",
+        "citable_results": [],
+        "recommended_next_action": "revise_query",
+        "citation_policy": (
+            "Do not cite or summarize low-relevance raw search results as evidence."
+        ),
+    }
+    return projected
+
+
 def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
     budget = max(1, int(max_chars))
+    data = payload.get("data", {})
+    if (payload.get("capability") == "web.search" and isinstance(data, dict)
+            and data.get("execution_succeeded") is True):
+        return _bounded_search_evidence(payload, budget)
     for candidate in (
         payload,
         _bounded_payload(payload, string_limit=800, list_limit=10),
@@ -201,7 +367,67 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
         "message": _truncate_text(str(payload.get("message") or ""), max(20, budget // 4)),
         "data": _fallback_data(payload, budget),
     }
-    return json.dumps(fallback, ensure_ascii=False, default=str)
+    if "identity" in payload:
+        fallback["identity"] = payload["identity"]
+    text = json.dumps(fallback, ensure_ascii=False, default=str)
+    if len(text) > budget:
+        raise ValueError("Tool result identity/contract exceeds projection budget")
+    return text
+
+
+def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
+    data = payload["data"]
+    candidates = [dict(item) for item in data.get("citable_results", [])
+                  if isinstance(item, dict) and isinstance(item.get("title"), str)
+                  and item["title"] and isinstance(item.get("url"), str) and item["url"]]
+    contract = data.get("search_contract") or {}
+    eligibility = data.get("evidence_eligibility") or {}
+    status = contract.get("candidate_status") or eligibility.get("candidate_status") or data.get("evidence_status")
+    if status == "low_relevance":
+        candidates = []
+    projected = {key: data[key] for key in (
+        "access_event_id", "web_source_id", "execution_status", "execution_succeeded",
+        "http_attempted", "reason", "requested_provider", "actual_provider",
+        "acquisition_backend", "fallback_occurred", "evidence_status",
+    ) if key in data}
+    projected.update({
+        "_tool_output_truncated": True,
+        "search_query": _truncate_text(str(data.get("search_query") or ""), 180),
+        "fallback_reason": _truncate_text(str(data.get("fallback_reason") or ""), 120),
+        "search_contract": {
+            "evidence_level": "search_results_only", "candidate_status": status,
+            "page_evidence_requires_fetch": True,
+            "citation_policy": "Only cite retained citable_results URLs; fetch before page-level claims.",
+        },
+        "eligible_result_count": len(candidates),
+    })
+    reference = data.get("evidence_reference")
+    if isinstance(reference, dict):
+        projected["evidence_reference"] = {key: reference[key] for key in
+            ("source_kind", "source_id", "source_event_id", "location") if key in reference}
+    bounded = {**payload, "message": _truncate_text(str(payload.get("message") or ""), 160), "data": projected}
+    # Drop descriptions before candidate quantity. Never truncate a retained title/URL pair.
+    for count in range(min(3, len(candidates)), -1, -1):
+        for snippet_chars in (120, 0):
+            retained = []
+            for item in candidates[:count]:
+                candidate = {"title": item["title"], "url": item["url"]}
+                if snippet_chars and item.get("snippet"):
+                    candidate["snippet"] = _truncate_text(str(item["snippet"]), snippet_chars)
+                retained.append(candidate)
+            projected["citable_results"] = retained
+            projected["citable_result_count"] = count
+            projected["search_contract"]["citable_result_count"] = count
+            projected["omitted_eligible_result_count"] = len(candidates) - count
+            projected["recommended_next_action"] = "fetch_selected_candidate" if count else "revise_query"
+            if candidates and not count:
+                projected["projection_status"] = "identity_exceeds_budget"
+                projected["recommended_next_action"] = "report_projection_limit"
+                bounded["message"] = "Search executed, but no complete candidate identity fits the projection budget. No URL was supplied."
+            text = json.dumps(bounded, ensure_ascii=False, default=str)
+            if len(text) <= budget:
+                return text
+    raise ValueError("Search execution/provenance identity exceeds projection budget")
 
 
 def _bounded_payload(payload: dict[str, Any], *, string_limit: int, list_limit: int) -> dict[str, Any]:
@@ -218,6 +444,23 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
     minimal_data: dict[str, Any] = {"_tool_output_truncated": True}
     if isinstance(data, dict):
         for key in (
+            "status",
+            "execution_status",
+            "execution_succeeded",
+            "http_attempted",
+            "reason",
+            "failure_explanation",
+            "evidence_status",
+            "evidence_evaluation",
+            "error_kind",
+            "semantic_status",
+            "retryable",
+            "retry_instruction",
+            "effective_state_id",
+            "active_constraints",
+            "proposed_action",
+            "conflicts",
+            "semantic_items",
             "capability",
             "tool",
             "access_status",
@@ -233,6 +476,7 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "requested_constraints",
             "requested_provider",
             "actual_provider",
+            "acquisition_backend",
             "fallback_occurred",
             "fallback_reason",
             "effective_query",
@@ -243,10 +487,15 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "url",
             "title",
             "error",
+            "path", "handle", "content_ref", "section_index", "section_title",
+            "sha256", "source_kind", "source_id", "source_event_id",
+            "evidence_reference", "evidence_refs", "authorization",
+            "access_event_id", "web_source_id",
         ):
             if key in data:
-                minimal_data[key] = _bound_value(data[key], string_limit=160, list_limit=5)
-    return {
+                minimal_data[key] = data[key] if key in IDENTITY_FIELDS and isinstance(data[key], str) else \
+                    _bound_value(data[key], string_limit=160, list_limit=5)
+    result = {
         "ok": bool(payload.get("ok")),
         "capability": str(payload.get("capability") or ""),
         "tool": str(payload.get("tool") or ""),
@@ -254,6 +503,9 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "message": _truncate_text(str(payload.get("message") or ""), 240),
         "data": minimal_data,
     }
+    if "identity" in payload:
+        result["identity"] = payload["identity"]
+    return result
 
 
 def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
@@ -261,11 +513,27 @@ def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
     fallback: dict[str, Any] = {"_tool_output_truncated": True}
     if not isinstance(data, dict):
         return fallback
+    for key in ("path", "handle", "content_ref", "section_index", "sha256", "source_kind",
+                "source_id", "source_event_id", "evidence_reference", "evidence_refs"):
+        if key in data:
+            fallback[key] = data[key] if key in IDENTITY_FIELDS and isinstance(data[key], str) else \
+                _bound_value(data[key], string_limit=80, list_limit=2)
+    if data.get("execution_succeeded") is False:
+        return {**fallback, "_tool_output_truncated": True, **{
+            key: data[key] for key in (
+                "execution_status", "execution_succeeded", "reason", "http_attempted",
+                "requested_provider", "actual_provider", "fallback_occurred", "evidence_status",
+                "acquisition_backend",
+                "error_kind", "semantic_status", "retryable", "effective_state_id",
+                "active_constraints", "authorization", "semantic_items",
+            ) if key in data
+        }}
     for key in (
         "search_query",
         "search_provider",
         "requested_provider",
         "actual_provider",
+        "acquisition_backend",
         "fallback_occurred",
         "fallback_reason",
         "raw_search_result_count",
@@ -287,10 +555,15 @@ def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
         if len(text) <= max(1, budget // 2):
             return fallback
     return {
+        **{key: fallback[key] for key in (
+            "path", "handle", "content_ref", "section_index", "sha256", "source_kind",
+            "source_id", "source_event_id", "evidence_reference", "evidence_refs",
+        ) if key in fallback},
         "_tool_output_truncated": True,
         "search_provider": str(data.get("search_provider") or ""),
         "requested_provider": data.get("requested_provider"),
         "actual_provider": data.get("actual_provider"),
+        "acquisition_backend": data.get("acquisition_backend"),
         "fallback_occurred": bool(data.get("fallback_occurred")),
         "fallback_reason": str(data.get("fallback_reason") or ""),
         "evidence_eligibility": _bound_value(data.get("evidence_eligibility") or {}, string_limit=80, list_limit=2),
@@ -310,7 +583,8 @@ def _bound_value(value: Any, *, string_limit: int, list_limit: int) -> Any:
         return [_bound_value(item, string_limit=string_limit, list_limit=list_limit) for item in value[:list_limit]]
     if isinstance(value, dict):
         return {
-            str(key): _bound_value(item, string_limit=string_limit, list_limit=list_limit)
+            str(key): item if key in IDENTITY_FIELDS and isinstance(item, str) else
+            _bound_value(item, string_limit=string_limit, list_limit=list_limit)
             for key, item in value.items()
         }
     return value

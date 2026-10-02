@@ -1,5 +1,8 @@
 # Phase-2A Model Artifact Baseline
 
+> 历史 Phase-2A baseline：模型与 artifact 实验保留用于复现；旧 Phase-1 generic Runtime
+> 不是当前主执行路径。现行 ownership、Harness 主路径与物理边界见主 README。
+
 This document records the Phase-2A model and artifact selection boundary after
 the bounded vLLM validation with Qwen2.5-14B-Instruct-AWQ.
 

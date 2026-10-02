@@ -56,6 +56,13 @@ from .trajectory_reader import (
     read_trajectory_jsonl,
     validate_trajectory_records,
 )
+from .semantic_state_adapter import (
+    SEMANTIC_PROJECTION_SCHEMA,
+    SEMANTIC_STATE_SCHEMA,
+    HarnessSemanticStateAdapter,
+    SemanticProjection,
+    semantic_projection_context,
+)
 
 __all__ = [
     "AGENT_OUTPUT",
@@ -93,6 +100,10 @@ __all__ = [
     "TrajectoryWriterStats",
     "TurnTimeline",
     "USER_INPUT",
+    "HarnessSemanticStateAdapter",
+    "SEMANTIC_PROJECTION_SCHEMA",
+    "SEMANTIC_STATE_SCHEMA",
+    "SemanticProjection",
     "additional_context_payload",
     "application_context",
     "effective_capability_context",
@@ -101,6 +112,7 @@ __all__ = [
     "read_trajectory_jsonl",
     "runtime_fact_summary",
     "runtime_facts_context",
+    "semantic_projection_context",
     "turn_context_payload",
     "untrusted_context",
     "validate_trajectory_records",

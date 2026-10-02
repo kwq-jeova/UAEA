@@ -1,353 +1,132 @@
 # UAEA
 
-UAEA is the Unified Autonomous Evolution Architecture.
+UAEA（Unified Autonomous Evolution Architecture）当前以 **Phase-1 semantic baseline + 本地 Harness Runtime Baseline** 为主路径。
+Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability contract 与 evidence/provenance，
+后续研究转向 longitudinal cognition，而不是继续扩建通用 Agent Runtime。
 
-The project separates a stable cognitive runtime from replaceable inference
-platforms. Phase-1 freezes the agent control plane. Phase-2A introduces an
-inference runtime abstraction so model serving engines and model artifacts can
-change without redefining workflow, observation, artifact, or recovery
-semantics.
+当前阶段结论与 Boundary Matrix：[Boundary Integrity Audit](docs/boundary-integrity-audit-20261002.md)。
+本次结构边界修复不等同于模型自然语言行为、网页可达性或相关度质量已全部验收。
 
-## 1. Project Vision
-
-UAEA is designed around three long-running goals:
-
-- Cognitive runtime: preserve stable agent semantics for goals, workflows,
-  tools, semantic observations, artifacts, and failure handling.
-- Agent evolution pipeline: keep runtime traces and artifacts structured enough
-  to support future memory, reflection, evaluation, and improvement loops.
-- Inference abstraction: allow LMF, vLLM, local Transformers, OpenAI-compatible
-  APIs, TensorRT-LLM, SGLang, or other inference runtimes to be selected behind
-  a common contract.
-
-The governing rule is:
-
-```text
-Cognitive Runtime stable
-  -> Inference contract stable
-  -> Backend implementation replaceable
-```
-
-## 2. Architecture Overview
-
-Phase-1 is included as a frozen Git submodule:
-
-```text
-runtime/phase1-runtime
-tag: v1.0.0-phase1-runtime
-commit: de0ecb0e8837c848f842a996fa2dad1c93666f2f
-```
-
-Phase-1 freezes the Runtime Control Plane:
-
-- Workflow lifecycle
-- Goal / Intent relation
-- Cursor execution model
-- Capability execution
-- Execution Observation
-- Semantic Observation
-- Artifact lifecycle
-- Failure handling
-- L0-L6 benchmark semantics
-
-Phase-2A lives outside the frozen submodule:
-
-```text
-backend/             ModelBackend contract and adapters
-benchmark/inference/ inference-only measurement framework
-tests/               Phase-2A contract tests
-docs/                architecture and validation records
-data/                benchmark, trace, and diagnostic artifacts
-```
-
-Runtime path:
+## 当前架构与职责
 
 ```text
 User
-  -> Phase-1 Cognitive Runtime
-  -> ModelBackend Contract
-  -> Backend Adapter
-  -> Inference Platform
+  -> UAEA semantic extraction / scoped effective state
+  -> bounded pre-turn additionalContext
+  -> source-owned local Codex app-server (rust-v0.154.0)
+  -> local vLLM / Qwen2.5-14B-Instruct-AWQ
+  -> model action proposal
+  -> UAEA semantic validation / ToolRegistry capability boundary
+  -> execution observation / bounded actionable evidence
+  -> Harness continuation / turn completion
+  -> raw events / semantic diagnostic snapshots
 ```
 
-Current backend adapters:
+**Harness Runtime Baseline: CLOSED**。**Codex Core fork: NOT REQUIRED**。
 
-- `LMFBackend`
-- `VLLMBackend`
-- `TransformersBackend`
-- `MockBackend`
-
-Trace layer:
-
-```text
-InferenceRequest
-  -> TracingBackend
-  -> InferenceTraceRecord
-  -> JSONL trace sink
-```
-
-Trace records are emitted outside the frozen Phase-1 Runtime and may include
-backend, model artifact, tokenizer metadata, rendered prompt, token ids,
-generation config, finish reason, latency, and token usage.
-
-## 3. Current Progress
-
-| Area | Status |
+| Harness owns | UAEA owns |
 | --- | --- |
-| Phase-1 Cognitive Runtime Freeze | PASS |
-| LMF baseline | PASS |
-| ModelBackend contract | PASS |
-| Inference trace layer | PASS |
-| vLLM transport/API | PASS |
-| vLLM backend adapter | PASS |
-| vLLM semantic migration | bounded L0-L6 PASS |
+| thread persistence / turn lifecycle / model invocation | capability-specific semantic contracts |
+| generic context transport / token window / compaction mechanics | semantic extraction / classification / ownership / scope |
+| native File / Shell / Sandbox | effective semantic state / bounded semantic projection |
+| generic tool lifecycle / continuation | semantic authority / action validation |
+| raw runtime event emission | evidence semantics / provenance / trajectory normalization |
+| generic execution mechanics | future Goal / Memory / Episode cognition |
 
-Current production baseline:
+UAEA → Harness：typed `additionalContext`、dynamic tool schema、经过语义校验的 capability result。
+Harness → UAEA：有序 thread/turn/item events、tool result、command execution、token usage、错误及 terminal boundary。
+执行事实以结构化 result 为准；requested provider、actual provider 和 successful execution 不可互相替代。
 
-```text
-LMFBackend
-DeepSeek-R1-Distill-Qwen-14B
-HF/LLaMA-Factory 4-bit loading path
-Phase-1 L0/L1/L2: PASS
-```
-
-Current vLLM production candidate:
+## 物理边界与人工入口
 
 ```text
-VLLMBackend
+RTX 5090 D v2
+24GB VRAM
+single GPU
 Qwen2.5-14B-Instruct-AWQ
-traditional AWQ / auto_awq / GEMM
-Phase-1 L0/L1/L2/L3/L4/L5/L6: PASS
+4-bit / AWQ
+vLLM
 ```
 
-Rejected vLLM artifact:
+冻结的 `8001` 保持原配置。当前人工 Harness 使用既有 `8002` diagnostic profile：
+`max_model_len=32768`、`gpu_memory_utilization=0.75`、Codex `model_context_window=32768`、
+`--enable-auto-tool-choice --tool-call-parser hermes`。实际 effective window 可能由 Harness 再折算，不改实验条件。
 
-```text
-DeepSeek-R1-Distill-Qwen-14B-AWQ-INT4
-compressed-tensors WNA16
-Rejected for current production use due to first-token `!` pathology and
-logprobs NaN under vLLM 0.26.0 on the current RTX 5090 D environment.
+在已配置的 WSL 中：
+
+```bash
+cd /mnt/d/UAEA
+bash scripts/start_h3_harness_interactive.sh --turn-timeout 420
 ```
 
-The DS14B result does not mean the original checkpoint is damaged, and it does
-not mean compressed-tensors is globally unusable. The compatibility boundary is
-the specific artifact representation, vLLM execution path, engine version, and
-hardware envelope.
+Web 代理和 `SERPAPI_KEY` 自动从仓库外 `~/.config/uaea/web.env` 加载；权限必须为 `600`。
+不要将真实 key 写入 repo、命令行或聊天；[私有环境配置](docs/web-runtime-environment.md)。
+该入口保留停止 app-server/8002 的原逻辑，不启动旧 direct Web REPL。
 
-## 4. Validation Status
+## Phase-1 Semantic Baseline 的状态
 
-| Component | Status |
-| --- | --- |
-| Phase-1 Runtime | PASS |
-| LMF Backend | PASS |
-| ModelBackend Contract | PASS |
-| Trace Layer | PASS |
-| DS14B HF/LLaMA-Factory 4-bit | PASS |
-| DS14B AWQ compressed-tensors vLLM | Rejected |
-| Qwen2.5-14B-AWQ vLLM smoke | PASS |
-| Qwen2.5-14B-AWQ Phase-1 selected cases | PASS |
-| Qwen2.5-14B-AWQ Phase-1 L0/L1/L2 | PASS |
-| Qwen2.5-14B-AWQ Phase-1 L3/L4/L5/L6 | PASS |
+冻结子模块：`runtime/phase1-runtime`，commit `1f311291df027baceca40779643e5107b9eb6fb3`。
 
-Qwen2.5-14B-AWQ validation artifacts:
+- Phase-1 generic runtime mechanics：作为 legacy/A-B baseline 保存；主路径由 Harness 接替。
+- Phase-1 semantic architecture：通过 `harness/semantic_state_adapter.py` 复用
+  `ContextManager`、`TurnRelationRecord`、`ExecutionObservation`、`SemanticObservation`、
+  `RuntimeObjectRecord/Store`、`WorkflowRunRecord` 与 `ProjectionRecord`。
+- workflow record 在 bridge 中只提供 task identity/ownership，不启动旧 planner、step 或 execution loop。
+- ActiveGoal anchor 代码保留，但当前 Harness bridge 不激活；`ActiveGoal != future longitudinal Goal Hypothesis`。
+- 当前有限 relation/extraction surface 不是完整 intent arbitration，也不保证任意多 topic/隐含任务切换。
+- Goal Hypothesis / Working Memory / Episode / Experience engine：本轮均未实现。
+  既有 Memory Candidate/SQLite source-evidence 资产保留，不等于长期认知层已接入。
 
-```text
-data/benchmark_results/qwen25_awq_phase1/
-data/inference_traces/qwen25_awq_phase1/
+## Web Semantic / Evidence Boundary
+
+Google semantic provider 已由 SerpApi backend 实现；`serpapi` 只是 acquisition backend，不是 model-facing provider。
+Harness/inference 仍在本地，Web 请求是显式外部 capability。
+
+- 输入只有 `provider`、`allow_fallback`，结果分离
+  `requested_provider/actual_provider/acquisition_backend/fallback_occurred/fallback_reason`。
+- strict `allow_fallback=false` fail-closed；显式 provider 缺少 fallback policy 时不执行。
+- 在 semantic bridge 中，模型提出 `allow_fallback=true` 不构成授权：
+  只有有效 user-derived scoped policy 可授予；unknown/pending 被拒绝。
+  provider 未指定且不显式提出 fallback 的既有默认 policy 保持不变。
+- 执行失败不进入 evidence relevance 分类；raw provenance 保留，
+  low-relevance links 不作为 model-visible citable evidence。
+- bounded result 可减少 snippets、metadata 和候选数量，但保留每个候选的完整 `title/url` 及来源 identity。
+  projected citable count 与实际保留列表一致；无法容纳身份时明确报告限制，不输出残缺 URL。
+- 来源/语言/时间要求仍是 best-effort，不承诺真实“热度排行”或跨站点访问成功。
+- 网络诊断在实际请求进程记录 open/header/read、HTTP/SSL/proxy/timeout 信息；不进入 model-visible projection。
+  timeout 仍是 20 秒，不新增 retry。
+
+[Google backend 历史接入记录](docs/google-backend-phase1.md) ·
+[网络诊断](docs/web-network-observability-phase1.md) ·
+[当前边界与剩余风险](docs/boundary-integrity-audit-20261002.md)
+
+## Trajectory 与验证
+
+Normalizer → Writer → canonical run-level JSONL → Reader/validator 的 contract 保持：
+`<run_id>.trajectory.jsonl` 是 writer run 的 canonical source；
+thread 文件只是 derived projection。sequence 是 UAEA 接收顺序，不是 Harness 内部因果序号。
+
+Lifecycle probe 已接入 writer；当前人工 REPL 实际保存 `app-server-events.jsonl`、adapter trace、
+source history 和 semantic snapshots，不能声称每个人工 run 都已有 canonical normalized 文件。
+未来 cognition 必须优先消费 raw trajectory，不能把 compacted summary 当唯一原始经历。
+
+```bash
+python3 -m unittest tests.test_harness_boundary_integrity tests.test_harness_semantic_state_adapter
+python3 -m unittest discover -s tests -t .
+python3 runtime/phase1-runtime/tests/runtime_benchmark/phase1_runtime_benchmark.py --mode scripted --level all
 ```
 
-Historical DS14B failure diagnostics are archived under:
+真实失败 artifact 与只读重放证据见 Boundary Audit。修改后须人工复测真实 search → fetch，
+确认模型引用的是 retained candidate，而不是自行补造链接。
 
-```text
-data/archive/phase2a_ds14b_vllm_failure/
-docs/archive/phase2a-vllm-diagnostics/
-```
+## 历史与下一步
 
-The active DS14B root-cause summary remains:
+历史不删除；[原 README](docs/archive/harness/readme-before-boundary-audit-20261002.md) 保存此前
+Phase-1/Phase-2A、LMF 和早期 Harness 的完整描述。
+[Harness baseline](docs/harness-runtime-baseline-20260926.md) 保留冻结依据；
+[历史索引](docs/archive/harness/README.md) 区分当前结论与阶段记录。
+LMF/其它 inference adapter 是保留的研究资产，不是当前 Harness 验证路径。
 
-```text
-docs/phase2a-vllm-root-cause-analysis.md
-```
-
-The current model/artifact selection baseline is:
-
-```text
-docs/phase2a-model-artifact-baseline.md
-docs/phase2a-vllm-qwen25-equivalence-report.md
-```
-
-## 5. Running Validation
-
-Run Phase-2A unit tests from the repository root:
-
-```text
-python -m unittest discover -s tests -t . -v
-```
-
-Run the frozen Phase-1 benchmark through vLLM:
-
-```text
-python benchmark_phase1_vllm.py \
-  --base-url http://127.0.0.1:8001/v1 \
-  --model qwen25-14b-awq \
-  --level L0 \
-  --json \
-  --trace-output data/inference_traces/qwen25_awq_phase1/example.jsonl
-```
-
-The bounded Qwen2.5-AWQ L0-L6 baseline was generated with:
-
-```text
-data/inference_traces/qwen25_awq_phase1/qwen25_awq_l0_l2_20260815T065250Z.jsonl
-data/inference_traces/vllm_qwen25_phase1_l3_l6.jsonl
-data/inference_traces/vllm_qwen25_phase1_l3_l6.enriched.jsonl
-data/benchmark_results/qwen25_awq_phase1/
-data/benchmark_results/vllm_qwen25/
-```
-
-vLLM model assets are stored outside the repository:
-
-```text
-/opt/uaea-models/models/
-/opt/uaea-models/cache/
-/opt/uaea/vllm_env
-```
-
-Generated vLLM runtime logs belong outside source control:
-
-```text
-/opt/uaea-runtime/vllm/
-```
-
-## 6. Engineering Principle
-
-Preserve evidence, isolate variables, validate abstraction.
-
-Failed experiments are retained and archived instead of hidden. Passing
-benchmarks are accepted only when Phase-1 Runtime semantics and benchmark
-expectations remain unchanged.
-
-Next roadmap boundary:
-
-```text
-Phase-2A: bounded vLLM production validation complete for Phase-1 L0-L6
-Phase-2A next: harden production serving and monitoring without changing Phase-1
-Phase-2B: define Memory Boundary Architecture before SQLite implementation
-```
-
-Current Phase-2B Memory architecture baseline:
-
-```text
-docs/phase2b-memory-boundary-architecture.md
-docs/phase2b-memory/memory-architecture-boundary-v0.1.md
-docs/phase2b-memory/python-environment.md
-```
-
-Phase-2B review conclusion:
-
-```text
-Conversation Context != Memory
-
-Memory Element
-  + lifecycle_state
-  + representation_facets
-  + confidence
-  + validity_boundary
-  + evidence_references
-  + relationship_edges
-```
-
-Episodic, semantic, and procedural/habit forms are treated as representation
-facets, not mutually exclusive memory types. Consolidation is a state
-transition process. Dormant is a lifecycle state. SQLite remains a persistence
-adapter and does not define the Memory architecture.
-
-Phase-2B implementation slice:
-
-```text
-Memory Candidate domain model
-Structural validation
-Evidence references
-Scope hypothesis
-Candidate lifecycle
-```
-
-Phase-2B architecture test fixture:
-
-```text
-data/memory_test_fixtures/long_context_mixed_100.json
-docs/phase2b-memory/memory-architecture-test-fixtures.md
-python -m unittest tests.memory.test_architecture_fixtures -v
-python scripts/evaluate_memory_fixture.py data/memory_test_fixtures/long_context_mixed_100.json --json
-```
-
-## 7. Harness Runtime Baseline
-
-The current UAEA x Codex Harness integration is closed enough to freeze as a
-runtime baseline. The current summary and ownership boundary are recorded in:
-
-```text
-docs/harness-runtime-baseline-20260926.md
-```
-
-The verified local path is:
-
-```text
-source-owned Codex app-server
-  -> local Responses transport
-  -> local vLLM
-  -> Qwen2.5-14B-Instruct-AWQ
-```
-
-The Harness owns generic execution infrastructure:
-
-```text
-thread/turn lifecycle
-context transport and token window
-compaction mechanics
-native file/shell/sandbox execution
-generic tool protocol
-retry/continuation
-raw event emission
-```
-
-UAEA owns capability semantics and future cognition:
-
-```text
-Runtime Facts / Effective Capability State
-Web provider/fallback/evidence semantics
-trajectory normalization and provenance
-Goal Hypothesis
-Problem Space
-Working Memory
-Memory / Episode research
-```
-
-Current Harness boundary status:
-
-```text
-local Harness: PASS
-local vLLM model plane: PASS on diagnostic 8002
-UAEA dynamic capability bridge: PASS
-native sandboxed command execution: PASS
-trajectory infrastructure: PASS
-post-turn trigger: PASS
-Codex Core fork: NO
-```
-
-The frozen `8001` endpoint and Phase-1 benchmark baseline remain unchanged.
-Residual issues such as full-history pollution, partial compaction details,
-best-effort Web provider constraints, and model citation discipline are
-explicitly moved to future UAEA cognition or capability research.
-
-Historical Harness feasibility and pre-Harness freeze documents are preserved,
-not deleted, under:
-
-```text
-docs/archive/harness/
-```
-
-The next research boundary is UAEA-owned Goal Hypothesis, Problem Boundary,
-Epistemic Update, Memory, and Episode architecture. Harness integration should
-not be expanded unless a missing lifecycle hook, unobservable critical state,
-or genuinely insufficient generic runtime capability is demonstrated.
+下一研究方向：UAEA Episode / Goal Hypothesis / Working Memory / associative relation。
+只有 missing lifecycle hook、unobservable critical state、impossible context projection
+或 generic runtime capability 真正不足，才重新打开 Harness work；不自动开始下一阶段实现。

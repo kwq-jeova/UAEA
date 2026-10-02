@@ -1,5 +1,9 @@
 # Phase-2B Memory Boundary Architecture
 
+> 历史架构草案：保留 Memory boundary 研究思路，不代表当前实现。
+> generic runtime 已由 Harness 承担；Phase-1 semantic objects 通过 UAEA bridge 复用。
+> 下文旧 Runtime ownership 属当时方案，当前入口为主 README 与 Boundary Integrity Audit。
+
 > Status: architecture draft
 > Scope: boundary design only
 > Non-goal: SQLite implementation, Memory CRUD, retrieval implementation, or

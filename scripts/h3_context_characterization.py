@@ -874,6 +874,7 @@ def start_vllm(
         raise RuntimeError(f"model config not found: {model_root}")
     env = os.environ.copy()
     env["HF_HOME"] = env.get("HF_HOME", "/opt/uaea-models/cache")
+    env.pop("SERPAPI_KEY", None)
     env["CUDA_HOME"] = env.get(
         "CUDA_HOME",
         str(vllm_root / "lib" / "python3.12" / "site-packages" / "nvidia" / "cu13"),

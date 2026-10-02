@@ -215,9 +215,14 @@ def turn_context_payload(
     *,
     model_provider: str = RUNTIME_FACT_MODEL_PROVIDER,
     model: str = RUNTIME_FACT_MODEL,
+    semantic_projection: Mapping[str, Any] | None = None,
 ) -> dict[str, dict[str, str]]:
     payload = runtime_facts_context(model_provider=model_provider, model=model)
     payload.update(effective_capability_context(dynamic_tools))
+    if semantic_projection is not None:
+        payload["uaea.semantic_state_projection"] = application_context(
+            json.dumps(dict(semantic_projection), ensure_ascii=False, sort_keys=True)
+        ).to_app_server()
     return payload
 
 

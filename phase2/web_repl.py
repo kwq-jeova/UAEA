@@ -7,6 +7,7 @@ from pathlib import Path
 from .runtime_factory import build_agent
 from .terminal_input import read_user_input
 from .web_context import ProjectionLimits
+from .web_environment import load_web_environment
 from .web_shell import Phase2WebShell
 
 
@@ -16,6 +17,7 @@ DEFAULT_SNAPSHOT_ROOT = PROJECT_ROOT / "data" / "memory" / "web_snapshots"
 
 
 def main() -> None:
+    load_web_environment()
     agent, ledger, config = build_agent()
     shell = Phase2WebShell(
         agent,
