@@ -866,6 +866,8 @@ def start_vllm(
     vllm_root: Path,
     model_root: Path,
     gpu_memory_utilization: float,
+    *,
+    generation_diagnostics_path: Path | None = None,
 ) -> subprocess.Popen[Any]:
     vllm_binary = vllm_root / "bin" / "vllm"
     if not vllm_binary.is_file():
@@ -887,9 +889,13 @@ def start_vllm(
     env["VLLM_USE_FLASHINFER_SAMPLER"] = "0"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_file = log_path.open("w", encoding="utf-8")
+    command = [str(vllm_binary)]
+    if generation_diagnostics_path is not None:
+        command = [str(vllm_root / "bin" / "python"),
+                   str(PROJECT_ROOT / "scripts" / "h3_vllm_diagnostic_launcher.py"),
+                   "--diagnostic-path", str(generation_diagnostics_path)]
     process = subprocess.Popen(
-        [
-            str(vllm_binary),
+        command + [
             "serve",
             str(model_root),
             "--served-model-name",

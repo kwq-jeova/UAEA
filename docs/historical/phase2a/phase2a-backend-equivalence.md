@@ -1,0 +1,120 @@
+# UAEA Phase-2A-2 Backend Equivalence Validation
+
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / LMF/Mock contract
+> Phase: 2026-08；Phase-2A-2
+> Still valid: 历史 equivalence evidence
+> Superseded: 当前主执行路径由 Harness 替代
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
+## Purpose
+
+Phase-2A-2 verifies that inference implementations can change behind the
+`ModelBackend` contract without changing the frozen Phase-1 Runtime lifecycle.
+This is a control-plane equivalence check, not a claim that a deterministic
+mock has the same language quality as DS14B.
+
+## Boundary Review
+
+```text
+Frozen Phase-1 Agent
+  -> ModelClient.chat(...)
+  -> ModelBackend.generate(InferenceRequest)
+  -> InferenceResponse or structured InferenceError
+```
+
+Prompt construction, action interpretation, Workflow state, Observations,
+Artifact lifecycle, and recovery remain owned by Phase-1. Backends only convert
+an engine-neutral request into generated text and inference metadata.
+
+The Runtime does not receive LLaMA-Factory, OpenAI wire-format, Transformers,
+bnb, CUDA, or quantization objects.
+
+## Compared Backends
+
+### LMFBackend
+
+Production adapter for the existing OpenAI-compatible LLaMA-Factory API. It
+owns HTTP transport, response conversion, latency and token metadata, and
+structured transport errors.
+
+### MockBackend
+
+Deterministic validation adapter with no network dependency. It records input
+requests, returns stable responses, and can emit timeout, unavailable, or
+invalid-response failures through the same `InferenceError` contract.
+
+## Equivalence Contract
+
+| Component | Expected |
+|---|---|
+| Workflow lifecycle | Identical and owned by Phase-1 |
+| Artifact state | Identical and owned by Phase-1 |
+| Recovery behavior | Identical controlled failure boundary |
+| Observation format | Identical Runtime-owned format |
+| Backend metadata | Backend-specific |
+
+Backend switching is performed by dependency injection into the Phase-2
+Runtime factory. The constructed Agent type and frozen lifecycle implementation
+do not change.
+
+## Validation Coverage
+
+Contract tests cover normal generation, metadata preservation, timeout,
+unavailable backend, invalid response, Phase-1-compatible `RuntimeError`
+conversion, and backend switching.
+
+The frozen L0-L6 benchmark remains the regression authority for Workflow,
+Artifact, Context, and recovery semantics.
+
+## Verification Result
+
+```text
+Phase-2 backend tests: 17 passed, 0 failed
+Frozen Phase-1 L0-L6/core benchmark: 24 passed, 0 failed
+Phase-1 submodule status: clean at de0ecb0
+```
+
+A real `python main.py` smoke request was sent through `LMFBackend` to the
+existing local LLaMA-Factory-compatible API. The request completed in about
+320.1 seconds and produced successful `document.read_section` execution, a
+Semantic Observation, a `COMPLETE` Workflow Artifact, and `finish_reason=stop`.
+The high latency is an inference performance observation, not a backend
+contract or Runtime lifecycle failure.
+
+## Conclusion
+
+Inference backend selection is an implementation detail behind `ModelClient`.
+Future vLLM or API adapters must implement the same request, response, and error
+contract and pass the frozen Phase-1 regression suite.
+
+`VLLMBackend` now implements this contract. Its adapter-level equivalence is
+covered by contract tests; real-model semantic equivalence remains pending a
+running vLLM service.
+
+## Phase-1 Runtime on vLLM Backend
+
+The Phase-1 benchmark can be driven through the backend facade without
+changing the frozen Runtime lifecycle.
+
+```text
+Phase-1 Runtime
+  -> ModelBackend API
+  -> VLLMBackend
+  -> vLLM Server
+```
+
+Benchmark entry point:
+
+```text
+python benchmark_phase1_vllm.py
+```
+
+Validation targets:
+
+- vLLM serving PASS
+- Backend contract PASS
+- Phase-1 benchmark PASS
+- Runtime behavior equivalent PASS

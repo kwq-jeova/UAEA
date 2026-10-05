@@ -1,5 +1,14 @@
 # Phase-2A vLLM Equivalence Analysis
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / 早期归因
+> Phase: Phase-2A早期；2026-08
+> Still valid: 结论有时点，不复活旧调参计划
+> Superseded: 后续matrix/root-cause/Qwen证据
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 > 目标：判断 vLLM 是否可以作为 Phase-2A 的 inference backend，而不破坏 Phase-1 runtime semantics。
 >
 > 注意：该文档现在属于历史分析记录。新的归因框架请以

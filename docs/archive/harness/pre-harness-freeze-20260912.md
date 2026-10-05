@@ -1,5 +1,14 @@
 # UAEA Pre-Harness Baseline
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / Pre-Harness freeze
+> Phase: 2026-09-12
+> Still valid: legacy/A-B baseline保存
+> Superseded: 主路径由Harness baseline替代
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 Date: 2026-09-12
 
 This document records the Phase-1 / Phase-2 state before any Codex Harness

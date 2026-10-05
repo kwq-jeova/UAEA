@@ -1,6 +1,13 @@
 # Phase-2A Document Archive Index
 
-This directory is an index for Phase-2A historical document archives.
+> Status: CURRENT（历史导航，不是运行基线）
+> Role: IMPLEMENTATION_NOTE / Phase2A导航
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+
+本目录是 Phase-2A 历史导航。当前执行 baseline 见 [当前基线](../../current/README.md)，
+完整 Phase-2A 实验正文见 [历史证据索引](../../historical/README.md)。
+Phase-2A 的“active”只表示当时阶段，不代表现行 Harness 主路径。
 
 ## Archived Topics
 
@@ -8,9 +15,9 @@ This directory is an index for Phase-2A historical document archives.
 | --- | --- | --- | --- |
 | vLLM DS14B diagnostic notes | `docs/archive/phase2a-vllm-diagnostics/` | historical | background evidence for the DS14B AWQ rejection |
 
-## Active Documents
+## 历史：治理前的 Active Documents 清单
 
-The following documents remain active and are intentionally not moved:
+以下原清单保留用于追溯。正文已按有效性迁移，旧路径仅作为导向页，不再是 active architecture authority：
 
 ```text
 docs/phase2a-model-artifact-baseline.md

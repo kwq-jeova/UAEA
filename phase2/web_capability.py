@@ -426,6 +426,8 @@ def _failed_web_result(
         "reason": "invalid_action",
         **_unevaluated_evidence("validation_not_successful"),
         "error": error,
+        "validation_source": "capability_input",
+        "retryable": True,
     }
     if extra_data:
         data.update(extra_data)
@@ -504,15 +506,17 @@ def _search_success_message(query: str, data: dict[str, Any]) -> str:
     if candidate_status == "low_relevance":
         return (
             f"Actual provider {provider}{fallback} returned low-relevance candidate results for {query}; "
-            "do not cite, do not call this Google, and do not repeat the same query unchanged."
+            "do not cite or repeat the same query unchanged. Evidence is insufficient for this query; "
+            "this does not imply network/authorization restrictions or absence of material."
         )
     if candidate_status == "uncertain":
         return (
             f"Actual provider {provider}{fallback} returned uncertain candidate evidence for {query}; "
-            "citable_results is empty, so do not list or invent URLs and do not call this Google."
+            "citable_results is empty, so do not list or invent URLs. Evidence is insufficient for this query; "
+            "this does not imply network/authorization restrictions or absence of material."
         )
     if candidate_status == "constraints_partially_satisfied":
-        return f"Actual provider {provider}{fallback} returned partially constraint-satisfied candidates for {query}; do not call this Google."
+        return f"Actual provider {provider}{fallback} returned partially constraint-satisfied candidates for {query}."
     return f"Actual provider {provider}{fallback} searched web for {query}."
 
 

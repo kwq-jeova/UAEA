@@ -1,5 +1,14 @@
 # UAEA Phase-2A vLLM Migration Context Manifest
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / 旧环境manifest
+> Phase: Phase-2A早期；2026-08
+> Still valid: 仅当时环境，不是当前物理配置
+> Superseded: 当前README/runtime/env guide
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 > 目标：恢复 Phase-2A vLLM migration 的当前工程上下文与技术基线。
 
 ## 1. 项目归属

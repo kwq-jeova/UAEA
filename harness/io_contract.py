@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from .semantic_authority import SEMANTIC_AUTHORITY_SCHEMA, has_execution_authority
+
 
 ADDITIONAL_CONTEXT_APPLICATION = "application"
 ADDITIONAL_CONTEXT_UNTRUSTED = "untrusted"
@@ -220,9 +222,34 @@ def turn_context_payload(
     payload = runtime_facts_context(model_provider=model_provider, model=model)
     payload.update(effective_capability_context(dynamic_tools))
     if semantic_projection is not None:
-        payload["uaea.semantic_state_projection"] = application_context(
-            json.dumps(dict(semantic_projection), ensure_ascii=False, sort_keys=True)
-        ).to_app_server()
+        projection = dict(semantic_projection)
+        if projection.get("authority_contract") == SEMANTIC_AUTHORITY_SCHEMA:
+            authority_keys = {"schema", "authority_contract", "semantic_scope_id", "task_id",
+                              "effective_state_id", "constraints", "semantic_bindings"}
+            authority = {key: value for key, value in projection.items() if key in authority_keys}
+            context = {key: value for key, value in projection.items() if key not in authority_keys}
+            bindings = projection.get("semantic_bindings") or []
+            valid_bindings = [binding for binding in bindings
+                              if isinstance(binding, Mapping) and has_execution_authority(binding)]
+            eligible = {binding["value"] for binding in valid_bindings}
+            proposed_constraints = projection.get("constraints") or []
+            authority["constraints"] = [value for value in proposed_constraints if value in eligible]
+            authority["semantic_bindings"] = valid_bindings
+            unqualified = [value for value in proposed_constraints if value not in eligible]
+            if unqualified:
+                context["unqualified_constraints"] = unqualified
+            context.update({"effective_state_id": projection.get("effective_state_id"),
+                            "authority_level": "interpretation"})
+            payload["uaea.semantic_state_projection"] = application_context(
+                json.dumps(authority, ensure_ascii=False, sort_keys=True)
+            ).to_app_server()
+            payload["uaea.semantic_interpretations"] = untrusted_context(
+                json.dumps(context, ensure_ascii=False, sort_keys=True)
+            ).to_app_server()
+        else:
+            payload["uaea.semantic_state_projection"] = untrusted_context(
+                json.dumps(projection, ensure_ascii=False, sort_keys=True)
+            ).to_app_server()
     return payload
 
 

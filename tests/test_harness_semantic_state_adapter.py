@@ -41,7 +41,8 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
     def test_turn_scope_expires_at_completion_and_cannot_affect_next_turn(self):
         adapter = HarnessSemanticStateAdapter()
         projection = adapter.prepare_turn("thread", "本轮只关注论文", turn_id="t1")
-        self.assertIn("prefer:academic_papers", projection.payload["constraints"])
+        self.assertIn("prefer:academic_papers", projection.payload["source_preferences"])
+        self.assertEqual(projection.payload["constraints"], [])
         adapter.consume_raw_event(_completed("thread", "t1"))
         snapshot = adapter.snapshot("thread")
         constraint = next(item for item in snapshot["semantic_items"]
@@ -50,7 +51,7 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         self.assertEqual(constraint["status"], "expired")
         self.assertEqual(constraint["metadata"]["lifecycle_reason"], "turn_terminal_boundary")
         next_projection = adapter.prepare_turn("thread", "继续研究", turn_id="t2")
-        self.assertNotIn("prefer:academic_papers", next_projection.payload["constraints"])
+        self.assertNotIn("prefer:academic_papers", next_projection.payload["source_preferences"])
 
     def test_relation_signal_alone_does_not_authorize_owner_change(self):
         adapter = HarnessSemanticStateAdapter()
@@ -74,7 +75,7 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
                               ("t4", "不对，请重新检查")):
             projection = adapter.prepare_turn("thread", text, turn_id=turn_id)
             self.assertEqual(projection.payload["task_id"], first.payload["task_id"])
-            self.assertIn("prefer:academic_papers", projection.payload["constraints"])
+            self.assertIn("prefer:academic_papers", projection.payload["source_preferences"])
             adapter.consume_raw_event(_completed("thread", turn_id))
 
     def test_explicit_owner_change_expires_task_items_but_retains_session_items(self):
@@ -85,7 +86,7 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         adapter.consume_raw_event(_completed("thread", "t2"))
         projection = adapter.prepare_turn("thread", "新任务：研究编译器", turn_id="t3")
         self.assertNotEqual(projection.payload["task_id"], previous.payload["task_id"])
-        self.assertNotIn("prefer:academic_papers", projection.payload["constraints"])
+        self.assertNotIn("prefer:academic_papers", projection.payload["source_preferences"])
         self.assertIn("web.exclude_provider=bing", projection.payload["constraints"])
         decision = adapter.validate_tool_action(
             "thread", "web.search", {"provider": "bing", "allow_fallback": False}, turn_id="t3",
@@ -104,9 +105,9 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         adapter.prepare_turn("thread", "本会话只关注论坛", turn_id="t1")
         adapter.consume_raw_event(_completed("thread", "t1"))
         projection = adapter.prepare_turn("thread", "新任务：论文复现", turn_id="t2")
-        self.assertIn("prefer:forums", projection.payload["constraints"])
+        self.assertIn("prefer:forums", projection.payload["source_preferences"])
         revoked = adapter.prepare_turn("thread", "本会话取消搜索限制", turn_id="t3")
-        self.assertNotIn("prefer:forums", revoked.payload["constraints"])
+        self.assertNotIn("prefer:forums", revoked.payload["source_preferences"])
         item = next(item for item in adapter.snapshot("thread")["semantic_items"]
                     if item["metadata"]["value"] == "prefer:forums")
         self.assertEqual(item["metadata"]["lifecycle_reason"], "explicit_revocation")
@@ -191,8 +192,8 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         adapter.prepare_turn("thread", "本轮只关注论文", turn_id="t2")
         adapter.consume_raw_event(_completed("thread", "t2", "interrupted"))
         snapshot = adapter.snapshot("thread")
-        self.assertIn("prefer:forums", snapshot["constraints"])
-        self.assertNotIn("prefer:academic_papers", snapshot["constraints"])
+        self.assertIn("prefer:forums", snapshot["source_preferences"])
+        self.assertNotIn("prefer:academic_papers", snapshot["source_preferences"])
 
     def test_google_only_constraint_is_materialized_and_validates_actions(self):
         adapter = HarnessSemanticStateAdapter()
@@ -343,9 +344,10 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         self.assertEqual(snapshot["turn_count"], 4)
         self.assertEqual(snapshot["completed_turn_count"], 4)
         self.assertEqual(snapshot["topic"], "AI agent research")
-        self.assertIn("prefer:academic_papers", snapshot["constraints"])
-        self.assertIn("prefer:forums", snapshot["constraints"])
-        self.assertIn("exclude:commercial_promotional", snapshot["constraints"])
+        self.assertIn("prefer:academic_papers", snapshot["source_preferences"])
+        self.assertIn("prefer:forums", snapshot["source_preferences"])
+        self.assertIn("exclude:commercial_promotional", snapshot["source_preferences"])
+        self.assertEqual(snapshot["constraints"], [])
         self.assertEqual(snapshot["turn_relation"]["relation"], "reference")
         self.assertEqual(snapshot["references"], ["direction:first"])
         self.assertEqual(len(snapshot["semantic_observations"]), 0)
@@ -359,7 +361,7 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
 
         next_projection = adapter.prepare_turn(thread_id, "请比较第一个方向的证据")
         self.assertEqual(next_projection.payload["topic"], "AI agent research")
-        self.assertIn("prefer:academic_papers", next_projection.payload["constraints"])
+        self.assertIn("prefer:academic_papers", next_projection.payload["source_preferences"])
         self.assertEqual(next_projection.payload["turn_relation"]["relation"], "reference")
 
     def test_relation_classification_covers_new_task_continuation_reference_challenge(self):
@@ -434,7 +436,9 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         self.assertIn("uaea.semantic_state_projection", payload)
         projection_value = payload["uaea.semantic_state_projection"]["value"]
         self.assertEqual(json.loads(projection_value)["schema"], "uaea.semantic_projection.v0")
-        self.assertEqual(json.loads(projection_value)["topic"], "AI agent research")
+        self.assertNotIn("topic", json.loads(projection_value))
+        self.assertEqual(payload["uaea.semantic_interpretations"]["kind"], "untrusted")
+        self.assertEqual(json.loads(payload["uaea.semantic_interpretations"]["value"])["topic"], "AI agent research")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ from typing import Any, Mapping
 
 from runtime.runtime_objects import RuntimeObjectRecord, RuntimeObjectStore, utc_now
 
+from .semantic_authority import EXECUTION_CONSTRAINT, INTERPRETATION, has_execution_authority
+
 
 SCOPES = {"turn", "task", "cross_task", "explicit_until_revoked"}
 _PRIORITY = {"cross_task": 0, "explicit_until_revoked": 0, "task": 1, "turn": 2}
@@ -19,8 +21,17 @@ class EffectiveSemanticState:
 
     @property
     def constraints(self) -> list[str]:
-        return [str(item.metadata["value"]) for item in self.items
-                if item.metadata["kind"] == "capability_constraint"]
+        return [str(item.metadata["value"]) for item in self.execution_constraint_items]
+
+    @property
+    def execution_constraint_items(self) -> tuple[RuntimeObjectRecord, ...]:
+        return tuple(item for item in self.items if has_execution_authority(item.metadata))
+
+    @property
+    def interpretation_items(self) -> tuple[RuntimeObjectRecord, ...]:
+        return tuple(item for item in self.items
+                     if item.metadata["kind"] == "capability_constraint"
+                     and not has_execution_authority(item.metadata))
 
     def values(self, kind: str) -> list[str]:
         return [str(item.metadata["value"]) for item in self.items
@@ -36,6 +47,7 @@ class ScopedSemanticResolver:
     def bind(
         self, *, kind: str, key: str, value: str, scope: str, owner: str,
         provenance: Mapping[str, Any], strength: str = "hard",
+        promotion_basis: Mapping[str, Any] | None = None,
     ) -> RuntimeObjectRecord:
         if scope not in SCOPES:
             raise ValueError(f"Unsupported semantic scope: {scope}")
@@ -43,12 +55,17 @@ class ScopedSemanticResolver:
             object_type="semantic_item", owner=owner, status="active",
             source_event_ids=[str(provenance.get("event_id") or "")],
             metadata={"kind": kind, "key": key, "value": value, "scope": scope,
-                      "strength": strength, "provenance": dict(provenance)},
+                      "strength": strength, "provenance": dict(provenance),
+                      "authority_level": EXECUTION_CONSTRAINT if promotion_basis else INTERPRETATION,
+                      "promotion_basis": dict(promotion_basis or {})},
         )
+        if not has_execution_authority(record.metadata):
+            record.metadata["authority_level"] = INTERPRETATION
         for previous in self.items():
             if (previous.status == "active" and previous.owner == owner
                     and previous.metadata["scope"] == scope
-                    and previous.metadata["key"] == key):
+                    and previous.metadata["key"] == key
+                    and has_execution_authority(previous.metadata) == has_execution_authority(record.metadata)):
                 previous.status = "superseded"
                 previous.metadata["superseded_by"] = record.object_id
                 previous.updated_at = utc_now()
@@ -72,7 +89,7 @@ class ScopedSemanticResolver:
                 item.metadata["revocation_provenance"] = dict(provenance)
 
     def resolve(self, *, task_id: str, input_id: str) -> EffectiveSemanticState:
-        chosen: dict[str, RuntimeObjectRecord] = {}
+        chosen: dict[tuple[str, bool], RuntimeObjectRecord] = {}
         for item in self.items():
             if item.status != "active":
                 continue
@@ -83,7 +100,7 @@ class ScopedSemanticResolver:
             if scope == "task" and item.owner != task_id:
                 self._expire(item, "task_owner_inactive")
                 continue
-            key = str(item.metadata["key"])
+            key = (str(item.metadata["key"]), has_execution_authority(item.metadata))
             previous = chosen.get(key)
             if previous is None or _PRIORITY[scope] >= _PRIORITY[previous.metadata["scope"]]:
                 chosen[key] = item

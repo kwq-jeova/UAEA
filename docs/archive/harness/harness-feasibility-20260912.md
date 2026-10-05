@@ -1,5 +1,14 @@
 # UAEA Harness Feasibility Research
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / H2/H2.5/H3全程
+> Phase: 2026-09-12—26
+> Still valid: checkpoint证据，不是当前操作计划；研究段落仍可入口
+> Superseded: 当前 Harness baseline/audit
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 Date: 2026-09-12
 
 This document records the first Harness research pass after the

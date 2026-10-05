@@ -1,5 +1,14 @@
 # UAEA Phase-2A vLLM AB Difference Report
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / A/B差异报告
+> Phase: Phase-2A早期；2026-08
+> Still valid: 历史假设与优先级保存
+> Superseded: A/B/C变量框架与Qwen控制
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 > 范围：比较同一 Runtime contract 下，LMFBackend 与 VLLMBackend 的语义闭环差异。
 
 ## 1. 比较对象

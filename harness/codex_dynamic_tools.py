@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from .recovery_observation import recovery_observation
+from .observation_boundary import factual_web_message, observation_boundary
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PHASE1_ROOT = PROJECT_ROOT / "runtime" / "phase1-runtime"
@@ -83,12 +86,28 @@ class HarnessToolDispatch:
             self.observation.capability,
             self.tool_result.data,
         )
+        if data.get("execution_status") == "validation_failed":
+            if self.semantic_validation is not None:
+                for key in ("active_constraints", "effective_state_id", "authorization"):
+                    data[key] = self.semantic_validation[key]
+                data["policy_validation_passed"] = self.semantic_validation["valid"]
+                if self.observation.capability == "web.search":
+                    data["authorization"] = {**data["authorization"], "scope": "web.provider_fallback"}
+            if self.observation.capability == "web.search" and data.get("http_attempted") is False:
+                data.setdefault("requested_provider", self.action_request.parameters.get("provider"))
+                data.setdefault("actual_provider", None)
+            recovery = recovery_observation(data)
+            if recovery is not None:
+                data["recovery"] = recovery
+                data["authorization"] = recovery["authorization"]
+        if self.observation.capability in {"web.search", "web.fetch"}:
+            data["observation_boundary"] = observation_boundary()
         payload = {
             "ok": self.tool_result.ok,
             "capability": self.observation.capability,
             "tool": self.observation.tool_name,
             "status": data.get("execution_status", self.observation.status),
-            "message": self.observation.message,
+            "message": factual_web_message(self.observation.capability, data, self.observation.message),
             "identity": {"thread_id": self.thread_id, "turn_id": self.turn_id,
                          "call_id": self.call_id, "observation_id": self.observation.observation_id},
             "data": data,
@@ -260,18 +279,13 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
             "acquisition_backend",
             "fallback_reason", "requested_constraints", "http_status", "error", "error_kind",
             "semantic_status", "retryable", "retry_instruction",
+            "validation_source", "unsupported_fields",
             "evidence_status", "evidence_evaluation", "citable_results",
             "active_constraints", "effective_state_id", "semantic_items",
             "proposed_action", "conflicts", "authorization",
         ) if key in data}
         if data.get("error_kind") == "semantic_validation" and "recommended_next_action" in data:
             projected["recommended_next_action"] = data["recommended_next_action"]
-        projected["execution_fact_contract"] = (
-            "Requested provider is user intent, not proof of execution. Actual provider alone "
-            "does not prove success; execution_succeeded is authoritative. Explain failures "
-            "using reason/failure_explanation; do not infer a network restriction from an "
-            "unimplemented provider or change the user's provider policy."
-        )
         if data.get("error_kind") == "semantic_validation":
             projected["semantic_items"] = [
                 {"item_id": item["object_id"], "owner": item["owner"],
@@ -346,6 +360,30 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
 def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
     budget = max(1, int(max_chars))
     data = payload.get("data", {})
+    if isinstance(data, dict) and data.get("recovery"):
+        text = json.dumps(payload, ensure_ascii=False, default=str)
+        if len(text) <= budget:
+            return text
+        compact = {key: payload[key] for key in ("ok", "capability", "tool", "status", "identity") if key in payload}
+        compact["message"] = _truncate_text(str(payload.get("message") or ""), 120)
+        compact["data"] = {key: data[key] for key in (
+            "execution_status", "execution_succeeded", "http_attempted", "reason",
+            "requested_provider", "actual_provider", "fallback_occurred", "recovery",
+            "error_kind", "semantic_status", "active_constraints", "effective_state_id",
+            "semantic_items", "authorization", "retryable", "retry_instruction",
+            "validation_source", "policy_validation_passed", "observation_boundary",
+        ) if key in data}
+        if "error" in data:
+            compact["data"]["error"] = _truncate_text(str(data["error"]), 400)
+        text = json.dumps(compact, ensure_ascii=False, default=str)
+        if len(text) > budget:
+            for key in ("active_constraints", "effective_state_id", "semantic_items",
+                        "authorization", "retryable", "retry_instruction", "semantic_status"):
+                compact["data"].pop(key, None)
+            text = json.dumps(compact, ensure_ascii=False, default=str)
+        if len(text) > budget:
+            raise ValueError("Tool rejection recovery contract exceeds projection budget")
+        return text
     if (payload.get("capability") == "web.search" and isinstance(data, dict)
             and data.get("execution_succeeded") is True):
         return _bounded_search_evidence(payload, budget)
@@ -364,7 +402,9 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
         "capability": str(payload.get("capability") or ""),
         "tool": str(payload.get("tool") or ""),
         "status": str(payload.get("status") or ""),
-        "message": _truncate_text(str(payload.get("message") or ""), max(20, budget // 4)),
+        "message": _truncate_text(str(payload.get("message") or ""),
+                                  min(120, max(20, budget // 4)) if isinstance(data, dict) and data.get("observation_boundary")
+                                  else max(20, budget // 4)),
         "data": _fallback_data(payload, budget),
     }
     if "identity" in payload:
@@ -389,6 +429,7 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
         "access_event_id", "web_source_id", "execution_status", "execution_succeeded",
         "http_attempted", "reason", "requested_provider", "actual_provider",
         "acquisition_backend", "fallback_occurred", "evidence_status",
+        "observation_boundary",
     ) if key in data}
     projected.update({
         "_tool_output_truncated": True,
@@ -420,6 +461,8 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
             projected["search_contract"]["citable_result_count"] = count
             projected["omitted_eligible_result_count"] = len(candidates) - count
             projected["recommended_next_action"] = "fetch_selected_candidate" if count else "revise_query"
+            if data.get("observation_boundary"):
+                bounded["message"] = _truncate_text(factual_web_message("web.search", projected, ""), 160)
             if candidates and not count:
                 projected["projection_status"] = "identity_exceeds_budget"
                 projected["recommended_next_action"] = "report_projection_limit"
@@ -450,6 +493,7 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "http_attempted",
             "reason",
             "failure_explanation",
+            "validation_source", "policy_validation_passed", "observation_boundary",
             "evidence_status",
             "evidence_evaluation",
             "error_kind",
@@ -493,7 +537,7 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "access_event_id", "web_source_id",
         ):
             if key in data:
-                minimal_data[key] = data[key] if key in IDENTITY_FIELDS and isinstance(data[key], str) else \
+                minimal_data[key] = data[key] if key == "observation_boundary" or (key in IDENTITY_FIELDS and isinstance(data[key], str)) else \
                     _bound_value(data[key], string_limit=160, list_limit=5)
     result = {
         "ok": bool(payload.get("ok")),
@@ -526,8 +570,9 @@ def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
                 "acquisition_backend",
                 "error_kind", "semantic_status", "retryable", "effective_state_id",
                 "active_constraints", "authorization", "semantic_items",
+                "validation_source", "policy_validation_passed", "observation_boundary",
             ) if key in data
-        }}
+        }, **({"error": _truncate_text(str(data["error"]), 160)} if data.get("error") else {})}
     for key in (
         "search_query",
         "search_provider",
@@ -583,7 +628,7 @@ def _bound_value(value: Any, *, string_limit: int, list_limit: int) -> Any:
         return [_bound_value(item, string_limit=string_limit, list_limit=list_limit) for item in value[:list_limit]]
     if isinstance(value, dict):
         return {
-            str(key): item if key in IDENTITY_FIELDS and isinstance(item, str) else
+            str(key): item if key == "observation_boundary" or (key in IDENTITY_FIELDS and isinstance(item, str)) else
             _bound_value(item, string_limit=string_limit, list_limit=list_limit)
             for key, item in value.items()
         }

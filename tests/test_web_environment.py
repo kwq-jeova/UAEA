@@ -223,14 +223,13 @@ class WebEnvironmentTests(unittest.TestCase):
         )
         with patch.dict(os.environ, {"SERPAPI_KEY": self.secret}), \
                 patch.object(interactive_repl.subprocess, "Popen") as spawn, \
+                patch.object(interactive_repl, "ProviderHistoryBridge"), \
                 patch.object(interactive_repl.threading, "Thread"), \
                 patch.object(app, "_request", side_effect=[{"result": {}}, {"result": {"thread": {"id": "test"}}}]):
             app.start()
             self.assertNotIn("SERPAPI_KEY", spawn.call_args.kwargs["env"])
             self.assertEqual(os.environ["SERPAPI_KEY"], self.secret)
-        app._events_file.close()
-        app._stderr_file.close()
-        app._semantic_snapshots_file.close()
+        app.close()
 
     def test_vllm_does_not_inherit_web_key_or_change_profile(self):
         root = Path(self.tmp.name)
@@ -248,6 +247,25 @@ class WebEnvironmentTests(unittest.TestCase):
             self.assertEqual(args[args.index("--tool-call-parser") + 1], "hermes")
             self.assertIn("--enable-auto-tool-choice", args)
             process._uaea_log_file.close()
+
+    def test_generation_diagnostic_launcher_keeps_identical_inference_options(self):
+        root = Path(self.tmp.name)
+        (root / "bin").mkdir()
+        (root / "bin" / "vllm").touch()
+        (root / "config.json").write_text("{}", encoding="utf-8")
+        with patch.dict(os.environ, {"SERPAPI_KEY": self.secret}), \
+                patch.object(context_probe.subprocess, "Popen") as spawn:
+            baseline = context_probe.start_vllm(32768, "http://127.0.0.1:8002", root / "baseline.log", root, root, 0.75)
+            baseline_command = spawn.call_args.args[0]
+            baseline._uaea_log_file.close()
+            diagnostic = context_probe.start_vllm(32768, "http://127.0.0.1:8002", root / "diagnostic.log", root, root, 0.75,
+                                                 generation_diagnostics_path=root / "generation.jsonl")
+            command = spawn.call_args.args[0]
+            self.assertEqual(command[command.index("serve"):], baseline_command[1:])
+            self.assertIn("h3_vllm_diagnostic_launcher.py", command[1])
+            self.assertEqual(command[command.index("--diagnostic-path") + 1], str(root / "generation.jsonl"))
+            self.assertNotIn("SERPAPI_KEY", spawn.call_args.kwargs["env"])
+            diagnostic._uaea_log_file.close()
 
 
 if __name__ == "__main__":

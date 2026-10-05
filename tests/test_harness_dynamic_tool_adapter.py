@@ -18,6 +18,7 @@ from harness.codex_dynamic_tools import (  # noqa: E402
     HarnessDynamicToolAdapter,
 )
 from harness.semantic_state_adapter import HarnessSemanticStateAdapter  # noqa: E402
+from harness.provider_history import project_provider_history  # noqa: E402
 from runtime.capability import CapabilityMetadata, ToolResult  # noqa: E402
 from runtime.ledger import LedgerStub  # noqa: E402
 from runtime.sandbox import Sandbox  # noqa: E402
@@ -27,6 +28,73 @@ from phase2.web_capability import WebSearchCapability, web_search_metadata  # no
 
 
 class HarnessDynamicToolAdapterTests(unittest.TestCase):
+    def test_missing_fallback_recovers_effective_constraints_through_both_projections(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            registry = ToolRegistry(Sandbox(root, root / "sandbox"), LedgerStub(root / "traces"))
+            web = WebAdapter(snapshot_root=root / "snapshots")
+            registry.register_capability(web_search_metadata(), WebSearchCapability(
+                db_path=root / "source.sqlite", adapter=web,
+            ))
+            semantic = HarnessSemanticStateAdapter()
+            semantic.prepare_turn("thread", "请你从google站点搜索", turn_id="policy")
+            adapter = HarnessDynamicToolAdapter(registry, [DynamicToolBinding.from_registry(
+                registry, "web.search", description="Search", input_schema={"type": "object"},
+            )])
+            adapter.bind_semantic_state_adapter(semantic)
+            with patch("phase2.web_adapter.google_search") as http:
+                dispatch = adapter.dispatch({"threadId": "thread", "turnId": "turn", "callId": "bad",
+                    "tool": "web_search", "arguments": {"query": "AI agent", "provider": "google"}})
+            http.assert_not_called()
+            self.assertFalse(dispatch.ok)
+            self.assertNotIn("recovery", dispatch.tool_result.data)
+            payload = json.loads(dispatch.to_app_server_response()["contentItems"][0]["text"])
+            recovery = payload["data"]["recovery"]
+            self.assertIn("web.provider=google", recovery["active_constraints"])
+            self.assertEqual(recovery["authorization"]["state"], "unknown")
+            self.assertEqual(recovery["legal_next_steps"][0]["argument_updates"],
+                             {"provider": "google", "allow_fallback": False})
+            projected = project_provider_history({"input": [
+                {"type": "function_call", "name": "web_search", "call_id": "bad",
+                 "arguments": '{"query":"AI agent","provider":"google"}'},
+                {"type": "function_call_output", "call_id": "bad", "output": json.dumps(payload)},
+            ]})
+            fact = json.loads(projected.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+            self.assertEqual(fact["observation"]["recovery"], recovery)
+
+    def test_recovery_projection_budget_never_truncates_surviving_constraints(self):
+        from harness.codex_dynamic_tools import _bounded_json_text
+        from harness.recovery_observation import recovery_observation
+        data = {"execution_status": "validation_failed", "execution_succeeded": False,
+            "retryable": True, "capability": "web.search", "requested_provider": "google",
+            "active_constraints": ["web.provider=google", "web.fallback=forbidden"],
+            "authorization": {"state": "denied"}, "diagnostic_padding": "x" * 20000,
+            "semantic_items": [{"diagnostic_padding": "x" * 20000}],
+        }
+        data["recovery"] = recovery_observation(data)
+        payload = {"ok": False, "status": "validation_failed", "capability": "web.search",
+                   "tool": "web_search", "message": "Rejected", "data": data}
+        text = _bounded_json_text(payload, 2000)
+        self.assertEqual(json.loads(text)["data"]["recovery"], data["recovery"])
+        with self.assertRaisesRegex(ValueError, "recovery contract"):
+            _bounded_json_text(payload, 100)
+
+    def test_historical_recovery_cannot_restore_revoked_authorization(self):
+        from harness.recovery_observation import recovery_observation
+        semantic = HarnessSemanticStateAdapter()
+        semantic.prepare_turn("thread", "Google 搜索 AI agent", turn_id="task")
+        semantic.prepare_turn("thread", "允许 fallback", turn_id="grant")
+        old = semantic.validate_tool_action("thread", "web.search", {"provider": "google", "allow_fallback": True})
+        self.assertTrue(old["valid"])
+        historical = recovery_observation({"capability": "web.search", "execution_status": "validation_failed",
+            "retryable": True, "active_constraints": old["active_constraints"], "authorization": old["authorization"]})
+        semantic.prepare_turn("thread", "不允许 fallback", turn_id="revoke")
+        semantic.consume_raw_event({"method": "item/completed", "params": {"threadId": "thread",
+            "turnId": "revoke", "item": {"type": "agentMessage", "id": "echo", "text": json.dumps(historical)}}})
+        current = semantic.validate_tool_action("thread", "web.search", {"provider": "google", "allow_fallback": True})
+        self.assertFalse(current["valid"])
+        self.assertEqual(current["authorization"]["state"], "denied")
+
     def test_failure_projection_does_not_expose_stale_relevance_or_raw_results(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

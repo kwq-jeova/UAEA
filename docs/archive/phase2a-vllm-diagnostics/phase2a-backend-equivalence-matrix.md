@@ -1,5 +1,14 @@
 # UAEA Phase-2A Backend Equivalence Matrix
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / layer matrix
+> Phase: Phase-2A早期；2026-08
+> Still valid: 历史差异矩阵；不是新benchmark backlog
+> Superseded: 后续artifact/Qwen结论
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 > 目的：先建立差异矩阵，不改代码，不改 frozen contract。
 
 说明：
@@ -41,4 +50,3 @@
 backend 可替换
 semantic output 仍需 AB 证明
 ```
-

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -32,7 +33,11 @@ from harness.io_contract import (  # noqa: E402
 )
 from harness.semantic_state_adapter import (  # noqa: E402
     HarnessSemanticStateAdapter,
+    SEMANTIC_STATE_SCHEMA,
 )
+from harness.responses_bridge import ProviderHistoryBridge  # noqa: E402
+from harness.semantic_promotion_audit import build_promotion_audit  # noqa: E402
+from harness.trajectory_writer import HarnessTrajectoryWriter  # noqa: E402
 from phase2.web_adapter import WebAdapter  # noqa: E402
 from phase2.web_capability import (  # noqa: E402
     WebFetchCapability,
@@ -273,17 +278,39 @@ class InteractiveAppServer:
         self._events_file: Any = None
         self._stderr_file: Any = None
         self._semantic_snapshots_file: Any = None
+        self._promotion_audit_file: Any = None
+        self._promotion_audit_sequence = 0
+        self._last_turn_context: dict[str, Any] | None = None
+        self._history_bridge: ProviderHistoryBridge | None = None
+        self._trajectory_writer: HarnessTrajectoryWriter | None = None
         self.semantic_state = HarnessSemanticStateAdapter()
         self.adapter.bind_semantic_state_adapter(self.semantic_state)
 
-    def start(self) -> None:
+    def start(self, *, resume_thread_id: str = "") -> None:
         self.events_path.parent.mkdir(parents=True, exist_ok=True)
         self.workspace.mkdir(parents=True, exist_ok=True)
-        self._events_file = self.events_path.open("w", encoding="utf-8")
-        self._stderr_file = self.stderr_path.open("w", encoding="utf-8")
+        self._events_file = self.events_path.open("a", encoding="utf-8")
+        self._stderr_file = self.stderr_path.open("a", encoding="utf-8")
         self._semantic_snapshots_file = self.events_path.with_name(
             "semantic-state-snapshots.jsonl"
-        ).open("w", encoding="utf-8")
+        ).open("a", encoding="utf-8")
+        self._trajectory_writer = HarnessTrajectoryWriter(
+            self.events_path.parent / "normalized-trajectories",
+            run_id=f"{self.events_path.parent.name}.{self.events_path.stem}.{uuid.uuid4().hex}",
+        )
+        try:
+            self._promotion_audit_file = self.events_path.with_name(
+                "semantic-promotion-audit.jsonl"
+            ).open("a", encoding="utf-8")
+        except OSError as exc:
+            print(f"[AUDIT] shadow journal unavailable: {type(exc).__name__}", flush=True)
+        self._history_bridge = ProviderHistoryBridge(
+            self.base_url,
+            journal_path=self.events_path.with_name("provider-history-decisions.jsonl"),
+            timeout=self.turn_timeout,
+            raw_events_path=self.events_path,
+        )
+        self._history_bridge.start()
         env = os.environ.copy()
         env["CODEX_HOME"] = str(self.codex_home)
         for name in (
@@ -300,7 +327,7 @@ class InteractiveAppServer:
                 "app-server",
                 "--stdio",
                 "-c",
-                f'model_providers.uaea_local_vllm.base_url="{self.base_url}/v1"',
+                f'model_providers.uaea_local_vllm.base_url="{self._history_bridge.base_url}/v1"',
             ],
             cwd=str(self.workspace),
             env=env,
@@ -346,17 +373,17 @@ class InteractiveAppServer:
             {
                 "jsonrpc": "2.0",
                 "id": thread_id,
-                "method": "thread/start",
+                "method": "thread/resume" if resume_thread_id else "thread/start",
                 "params": {
                     "model": DEFAULT_MODEL,
                     "modelProvider": "uaea_local_vllm",
                     "cwd": str(self.workspace),
-                    "ephemeral": True,
+                    **({"threadId": resume_thread_id} if resume_thread_id else {"ephemeral": False}),
                     "approvalPolicy": "never",
                     "sandbox": "read-only",
                     "personality": "none",
                     "experimentalRawEvents": True,
-                    "dynamicTools": self._dynamic_tools,
+                    **({} if resume_thread_id else {"dynamicTools": self._dynamic_tools}),
                 },
             },
             lambda message: message.get("id") == thread_id,
@@ -369,6 +396,10 @@ class InteractiveAppServer:
     def run_turn(self, text: str) -> None:
         request_id = self._next_id()
         semantic_projection = self.semantic_state.prepare_turn(self.thread_id, text)
+        self._last_turn_context = turn_context_payload(
+            self._dynamic_tools, semantic_projection=semantic_projection.payload,
+        )
+        self._write_promotion_audit("PRE_TURN")
         print("\n[HARNESS] turn/start", flush=True)
         print(f"[UAEA] runtime_facts injected: {RUNTIME_FACT_SUMMARY}", flush=True)
         print(
@@ -393,10 +424,7 @@ class InteractiveAppServer:
                     "input": [{"type": "text", "text": text}],
                     "effort": "none",
                     "model": DEFAULT_MODEL,
-                    "additionalContext": turn_context_payload(
-                        self._dynamic_tools,
-                        semantic_projection=semantic_projection.payload,
-                    ),
+                    "additionalContext": self._last_turn_context,
                 },
             },
             lambda message: (
@@ -441,13 +469,56 @@ class InteractiveAppServer:
                     self.process.wait(timeout=10)
             self.process = None
         for handle in (self._events_file, self._stderr_file):
-            if handle is not None:
+            if handle is not None and not handle.closed:
                 handle.flush()
                 handle.close()
+        self._events_file = None
+        self._stderr_file = None
+        if self._history_bridge is not None:
+            self._history_bridge.close()
+            self._history_bridge = None
+        if self._trajectory_writer is not None:
+            self._trajectory_writer.close()
+            self._trajectory_writer = None
         if self._semantic_snapshots_file is not None:
             self._semantic_snapshots_file.flush()
             self._semantic_snapshots_file.close()
             self._semantic_snapshots_file = None
+        if self._promotion_audit_file is not None:
+            try:
+                self._promotion_audit_file.close()
+            except OSError:
+                pass
+            self._promotion_audit_file = None
+
+    def _write_promotion_audit(
+        self, stage: str, *, snapshot: dict[str, Any] | None = None,
+    ) -> None:
+        if self._promotion_audit_file is None:
+            return
+        if snapshot is not None and snapshot.get("schema") != SEMANTIC_STATE_SCHEMA:
+            return
+        try:
+            report = build_promotion_audit(
+                snapshot if snapshot is not None else self.semantic_state.snapshot(self.thread_id),
+                stage=stage, additional_context=self._last_turn_context,
+            )
+            self._promotion_audit_sequence += 1
+            report.update({
+                "audit_sequence": self._promotion_audit_sequence,
+                "run_id": self._trajectory_writer.run_id if self._trajectory_writer else "",
+                "snapshot_reference": {
+                    "path": str(self.events_path.with_name("semantic-state-snapshots.jsonl")),
+                    "persisted_at_this_stage": (
+                        stage == "POST_TURN" and self._semantic_snapshots_file is not None
+                    ),
+                },
+                "raw_events_reference": str(self.events_path),
+            })
+            self._promotion_audit_file.write(json_line(report) + "\n")
+            self._promotion_audit_file.flush()
+        except Exception as exc:
+            print(f"[AUDIT] shadow record failed: {type(exc).__name__}", flush=True)
 
     def _next_id(self) -> int:
         value = self._request_id
@@ -457,6 +528,8 @@ class InteractiveAppServer:
     def _send(self, message: dict[str, Any]) -> None:
         if self.process is None or self.process.stdin is None:
             raise RuntimeError("app-server stdin is unavailable")
+        if self._trajectory_writer is not None:
+            self._trajectory_writer.write_raw_event({"direction": "client", "message": message})
         self.process.stdin.write(json_line(message) + "\n")
         self.process.stdin.flush()
 
@@ -500,11 +573,19 @@ class InteractiveAppServer:
                     json_line({"observed_at": observed_at, "message": message}) + "\n"
                 )
                 self._events_file.flush()
+                if self._trajectory_writer is not None:
+                    self._trajectory_writer.write_raw_event(
+                        {"observed_at": observed_at, "message": message},
+                        raw_event_reference={"path": str(self.events_path)},
+                    )
                 semantic_updates = self.semantic_state.consume_raw_event(
                     {"observed_at": observed_at, "message": message},
                     raw_event_reference={"path": str(self.events_path)},
                 )
                 for snapshot in semantic_updates:
+                    # Observation records remain in the trajectory, not terminal snapshots.
+                    if snapshot.get("schema") != SEMANTIC_STATE_SCHEMA:
+                        continue
                     if self._semantic_snapshots_file is not None:
                         self._semantic_snapshots_file.write(
                             json_line(
@@ -517,6 +598,7 @@ class InteractiveAppServer:
                             + "\n"
                         )
                         self._semantic_snapshots_file.flush()
+                    self._write_promotion_audit("POST_TURN", snapshot=snapshot)
             self._handle_message(message)
             if predicate(message):
                 return message
@@ -557,10 +639,37 @@ class InteractiveAppServer:
             f"[UAEA] tool_call tool={tool_name} arguments={json.dumps(params.get('arguments'), ensure_ascii=False)}",
             flush=True,
         )
-        dispatch = self.adapter.dispatch(
-            params,
-            objective="H3 interactive Harness bridge manual turn",
-        )
+        dispatch = None
+        try:
+            dispatch = self.adapter.dispatch(
+                params,
+                objective="H3 interactive Harness bridge manual turn",
+            )
+            response = dispatch.to_app_server_response()
+        except Exception as exc:
+            status = "validation_failed" if isinstance(exc, (ValueError, TypeError)) else "failed"
+            data = {"execution_status": status, "execution_succeeded": False,
+                    "reason": "tool_boundary_exception", "result_available": False}
+            if dispatch is not None:
+                status = "failed"
+                data.update({key: dispatch.tool_result.data[key] for key in (
+                    "execution_status", "execution_succeeded", "http_attempted",
+                    "requested_provider", "actual_provider", "fallback_occurred",
+                ) if key in dispatch.tool_result.data})
+                data.update({"reason": "result_projection_failed", "error_kind": "projection_failure",
+                             "retryable": False, "failure_stage": "result_projection"})
+            self._send({
+                "jsonrpc": "2.0", "id": message.get("id"),
+                "result": {"success": False, "contentItems": [{
+                    "type": "inputText", "text": json_line({
+                        "ok": False, "status": status,
+                        "message": f"Dynamic tool boundary raised {type(exc).__name__}",
+                        "data": data,
+                    }),
+                }]},
+            })
+            return
+        self._write_promotion_audit("POST_ACTION_VALIDATION")
         trace = dispatch.to_trace_metadata()
         print(
             "[UAEA] action_request "
@@ -573,7 +682,7 @@ class InteractiveAppServer:
             {
                 "jsonrpc": "2.0",
                 "id": message.get("id"),
-                "result": dispatch.to_app_server_response(),
+                "result": response,
             }
         )
 
@@ -668,7 +777,11 @@ def run(args: argparse.Namespace) -> int:
             args.vllm_root,
             args.model_root,
             args.gpu_memory_utilization,
+            generation_diagnostics_path=(result_dir / "generation-diagnostics.jsonl"
+                                         if args.generation_diagnostics else None),
         )
+        if args.generation_diagnostics:
+            print(f"[DIAGNOSTICS] bounded generation/parser evidence: {result_dir / 'generation-diagnostics.jsonl'}", flush=True)
         health_seconds = wait_for_health(base_url, vllm_process, args.health_timeout)
         print(f"[READY] vLLM health OK in {health_seconds}s", flush=True)
 
@@ -725,6 +838,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--health-timeout", type=int, default=DEFAULT_HEALTH_TIMEOUT)
     parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT)
+    parser.add_argument("--generation-diagnostics", action="store_true",
+                        help="Opt-in bounded pre-parser generation diagnostics; no parser behavior changes.")
     return parser.parse_args()
 
 

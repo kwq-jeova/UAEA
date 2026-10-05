@@ -1,5 +1,14 @@
 # Historical README Snapshot
 
+> Status: HISTORICAL
+> Role: HISTORICAL_EVIDENCE / 旧README snapshot
+> Phase: 2026-10-02归档；原Phase1–Harness
+> Still valid: 仅历史，不作为当前架构入口
+> Superseded: 当前主README + audit
+> Current reference: [Documentation Guide](../../README.md)
+> Governance reviewed: 2026-10-02（文档治理，不等于新实验验证）
+> 正文中的 current/下一步/待验证 均为当时 checkpoint，不是当前实施计划。
+
 这是 Boundary Integrity Audit 前的 README 原文，保存 Phase-1/Phase-2A 与早期 Harness 的历史描述。
 它不是当前主路径说明；现行入口为项目 README 和 `docs/boundary-integrity-audit-20261002.md`。
 原始内容完整保留如下，不删除研究历史。

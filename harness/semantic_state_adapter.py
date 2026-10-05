@@ -38,6 +38,9 @@ from .event_normalizer import (  # noqa: E402
     HarnessEventNormalizer,
 )
 from .scoped_semantics import EffectiveSemanticState, ScopedSemanticResolver  # noqa: E402
+from .semantic_authority import (  # noqa: E402
+    INTERPRETATION, SEMANTIC_AUTHORITY_SCHEMA, authority_level, user_directive_basis,
+)
 
 
 SEMANTIC_STATE_SCHEMA = "uaea.harness_semantic_state.v0"
@@ -292,7 +295,7 @@ class HarnessSemanticStateAdapter:
         authorization = {
             "state": "granted" if fallback_policy == "allowed" else
                      "denied" if fallback_policy == "forbidden" else "unknown",
-            "source_items": [deepcopy(item.to_dict()) for item in effective.items
+            "source_items": [deepcopy(item.to_dict()) for item in effective.execution_constraint_items
                              if item.metadata.get("key") == "web.fallback"],
             "model_proposal": arguments.get("allow_fallback"),
         }
@@ -322,8 +325,7 @@ class HarnessSemanticStateAdapter:
             "capability": normalized_capability,
             "active_constraints": effective.constraints,
             "effective_state_id": effective.resolution_id,
-            "semantic_items": [deepcopy(item.to_dict()) for item in effective.items
-                               if item.metadata["kind"] == "capability_constraint"],
+            "semantic_items": [deepcopy(item.to_dict()) for item in effective.execution_constraint_items],
             "proposed_action": proposed,
             "authorization": authorization if normalized_capability == "web.search" else {},
             "conflicts": conflicts,
@@ -344,17 +346,22 @@ class HarnessSemanticStateAdapter:
         effective = self._effective_state(state)
         return {
             "schema": SEMANTIC_STATE_SCHEMA,
+            "authority_contract": SEMANTIC_AUTHORITY_SCHEMA,
             "semantic_scope_id": state.semantic_scope_id,
             "thread_id": state.thread_id,
             "turn_count": state.turn_count,
             "completed_turn_count": state.completed_turn_count,
+            "last_turn_id": state.last_turn_id,
             "topic": state.topic,
             "source_preferences": list(state.source_preferences),
             "constraints": list(state.constraints),
             "task_id": state.current_task_id,
             "ownership_binding": dict(state.ownership_binding),
+            "current_input_id": state.current_input_id,
             "effective_state_id": effective.resolution_id,
             "semantic_items": [deepcopy(item.to_dict()) for item in ScopedSemanticResolver(state.runtime_objects).items()],
+            "effective_semantic_item_ids": [item.object_id for item in effective.items],
+            "execution_authority_item_ids": [item.object_id for item in effective.execution_constraint_items],
             "semantic_constraint_provenance": list(state.semantic_constraint_provenance),
             "task_evolution": list(state.task_evolution),
             "turn_relation": dict(state.last_relation),
@@ -514,6 +521,7 @@ class HarnessSemanticStateAdapter:
                 "thread_id": event.thread_id, "turn_id": event.turn_id,
                 "item_id": event.item_id, "event_id": event.event_id,
                 "sequence": event.sequence, "input_id": state.current_input_id,
+                "source_event_type": event.event_type,
                 "raw_event_reference": dict(event.raw_event_reference),
                 "native_provenance": dict(event.provenance)}
 
@@ -523,8 +531,8 @@ class HarnessSemanticStateAdapter:
             task_id=state.current_task_id, input_id=state.current_input_id,
         )
         state.constraints = effective.constraints
-        state.source_preferences = [value for value in effective.constraints
-                                    if value.startswith(("prefer:", "exclude:"))]
+        state.source_preferences = [str(item.metadata["value"]) for item in effective.interpretation_items
+                                    if str(item.metadata["value"]).startswith(("prefer:", "exclude:"))]
         state.references = effective.values("reference")
         state.open_questions = effective.values("open_question")
         topics = effective.values("topic")
@@ -533,7 +541,7 @@ class HarnessSemanticStateAdapter:
             {"constraint": item.metadata["value"], "owner": item.owner,
              "scope": item.metadata["scope"], "strength": item.metadata["strength"],
              **item.metadata["provenance"]}
-            for item in effective.items if item.metadata["kind"] == "capability_constraint"
+            for item in effective.execution_constraint_items
         ]
         summary = ""
         if state.semantic_observations:
@@ -625,9 +633,11 @@ class HarnessSemanticStateAdapter:
             resolver.revoke_constraints(owner=self._semantic_owner(state, scope),
                                         provenance=self._semantic_provenance(state, event, text))
         for key, value in _capability_constraints(text):
+            provenance = self._semantic_provenance(state, event, text)
             resolver.bind(kind="capability_constraint", key=key, value=value,
                           scope=scope, owner=self._semantic_owner(state, scope),
-                          provenance=self._semantic_provenance(state, event, text))
+                          provenance=provenance,
+                          promotion_basis=user_directive_basis(provenance, key=key, value=value))
 
     def _record_observation(
         self,
@@ -742,6 +752,7 @@ class HarnessSemanticStateAdapter:
         ]
         payload = {
             "schema": SEMANTIC_PROJECTION_SCHEMA,
+            "authority_contract": SEMANTIC_AUTHORITY_SCHEMA,
             "semantic_scope_id": state.semantic_scope_id,
             "topic": state.topic,
             "source_preferences": list(state.source_preferences[-MAX_LIST_ITEMS:]),
@@ -750,9 +761,18 @@ class HarnessSemanticStateAdapter:
             "effective_state_id": effective.resolution_id,
             "semantic_bindings": [
                 {"item_id": item.object_id, "kind": item.metadata["kind"],
+                 "key": item.metadata["key"], "value": item.metadata["value"],
                  "owner": item.owner, "scope": item.metadata["scope"],
-                 "strength": item.metadata["strength"]}
-                for item in effective.items if item.metadata["kind"] == "capability_constraint"
+                 "strength": item.metadata["strength"], "authority_level": authority_level(item.metadata),
+                 "promotion_basis": deepcopy(item.metadata["promotion_basis"]),
+                 "provenance": {key: item.metadata["provenance"][key]
+                                for key in ("input_id", "source_event_type")}}
+                for item in effective.execution_constraint_items
+            ],
+            "interpretations": [
+                {"item_id": item.object_id, "value": item.metadata["value"],
+                 "authority_level": INTERPRETATION}
+                for item in effective.interpretation_items
             ],
             "task_evolution": list(state.task_evolution[-3:]),
             "turn_relation": dict(relation),
@@ -772,6 +792,7 @@ class HarnessSemanticStateAdapter:
         bounded["references"] = list(payload.get("references", []))[-2:]
         bounded["open_questions"] = list(payload.get("open_questions", []))[-2:]
         bounded["relevant_observations"] = list(payload.get("relevant_observations", []))[-1:]
+        bounded["interpretations"] = list(payload.get("interpretations", []))[-2:]
         encoded = json.dumps(bounded, ensure_ascii=False, sort_keys=True)
         if len(encoded) > self.max_projection_chars:
             bounded["relevant_observations"] = []
@@ -781,6 +802,7 @@ class HarnessSemanticStateAdapter:
             bounded["references"] = []
             bounded["open_questions"] = []
             bounded["source_preferences"] = []
+            bounded["interpretations"] = []
             bounded["topic"] = _compact_text(bounded["topic"], 80)
         if len(json.dumps(bounded, ensure_ascii=False, sort_keys=True)) > self.max_projection_chars:
             raise ValueError("Effective semantic state exceeds projection budget; constraints were not dropped")
