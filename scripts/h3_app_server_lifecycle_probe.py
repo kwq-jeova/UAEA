@@ -36,6 +36,7 @@ from h3_context_characterization import (  # noqa: E402
     wait_for_health,
 )
 from harness.trajectory_writer import HarnessTrajectoryWriter  # noqa: E402
+from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest  # noqa: E402
 
 
 DEFAULT_CONTEXT_WINDOW = 32768
@@ -61,8 +62,6 @@ def write_lifecycle_config(home: Path, base_url: str, context_window: int) -> No
                 'model_reasoning_effort = "none"',
                 f"model_context_window = {context_window}",
                 "project_doc_max_bytes = 0",
-                "skip_host_skill_discovery = true",
-                "disable_response_storage = true",
                 "",
                 "[features]",
                 "skill_search = false",
@@ -114,15 +113,13 @@ class LifecycleAppServer:
         self.events_path.parent.mkdir(parents=True, exist_ok=True)
         self._events_file = self.events_path.open("w", encoding="utf-8")
         self._stderr_file = self.stderr_path.open("w", encoding="utf-8")
-        env = os.environ.copy()
-        env["CODEX_HOME"] = str(self.codex_home)
-        for name in (
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
-            "CODEX_API_KEY",
-            "CHATGPT_API_KEY",
-        ):
-            env.pop(name, None)
+        env = codex_process_environment(self.codex_home)
+        provenance = identify_harness(self.codex)
+        verify_binary_digest(self.codex, provenance)
+        provenance["reported_version"] = subprocess.check_output(
+            [str(self.codex), "--version"], text=True, timeout=30, env=env).strip()
+        with self.events_path.with_name("harness-versions.jsonl").open("a", encoding="utf-8") as journal:
+            journal.write(json_line(provenance) + "\n")
         self.process = subprocess.Popen(
             [
                 str(self.codex),
@@ -486,11 +483,37 @@ def run_probe(args: argparse.Namespace) -> int:
         file_turn = app.run_turn(
             thread_id=thread_id,
             prompt=(
-                "Using your native Codex workspace file capability, read README.md "
-                "from the current workspace and answer with the project title and "
-                "the first sentence. Do not call any dynamic tool."
+                "Call your native exec_command tool with cmd='head -n 8 README.md' "
+                "in the current workspace. Use a structured tool call, not JSON in "
+                "ordinary assistant text. Then answer with the project title and "
+                "first sentence actually returned. Do not call any dynamic tool."
             ),
         )
+
+        if getattr(args, "compaction_smoke", False):
+            start_index = len(app.events)
+            response = app.request("thread/compact/start", {"threadId": thread_id})
+            terminal = None
+            if response.get("error") is None:
+                terminal = app._wait_for(
+                    lambda message: message.get("method") == "turn/completed"
+                    and message.get("params", {}).get("threadId") == thread_id,
+                    args.turn_timeout,
+                )
+            summary = summarize_events(app.events[start_index:])
+            compacted = bool(summary["compaction_items"] or "thread/compacted" in summary["methods"])
+            completed = (terminal or {}).get("params", {}).get("turn", {}).get("status") == "completed"
+            report["explicit_compaction"] = {
+                "status": "PASS" if compacted and completed else "PARTIAL",
+                "response": response, "terminal": terminal, "summary": summary,
+                "raw_events_before_compaction": start_index,
+            }
+            if terminal is not None:
+                continuation = app.run_turn(
+                    thread_id=thread_id,
+                    prompt="Do not call tools. Briefly state what file was actually read, or state that no file execution was observed.",
+                )
+                report["post_compaction_turn"] = continuation["completion"]
 
         report.update(
             {
@@ -543,7 +566,12 @@ def classify_native_file_turn(summary: dict[str, Any]) -> str:
     item_types = set(summary.get("item_types", []))
     methods = set(summary.get("methods", []))
     command_items = summary.get("command_items", [])
-    if command_items and ("# UAEA" in text or "Unified Autonomous Evolution Architecture" in text):
+    successful_read = any(
+        item.get("status") == "completed" and item.get("exitCode") == 0
+        and "# UAEA" in (item.get("aggregatedOutput") or "")
+        for item in command_items
+    )
+    if successful_read and ("UAEA" in text or "Unified Autonomous Evolution Architecture" in text):
         return "PASS_VIA_HARNESS_COMMAND"
     if "commandExecution" in item_types:
         return "PARTIAL_COMMAND_USED"
@@ -567,6 +595,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-root", type=Path, default=DEFAULT_MODEL_ROOT)
     parser.add_argument("--health-timeout", type=int, default=DEFAULT_HEALTH_TIMEOUT)
     parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT)
+    parser.add_argument("--compaction-smoke", action="store_true")
     return parser.parse_args()
 
 

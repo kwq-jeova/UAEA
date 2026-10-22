@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from .semantic_authority import (
     SEMANTIC_AUTHORITY_SCHEMA, expand_semantic_binding, has_execution_authority,
 )
+from .version_manifest import selected_harness
 
 
 ADDITIONAL_CONTEXT_APPLICATION = "application"
@@ -15,8 +16,8 @@ ADDITIONAL_CONTEXT_KINDS = frozenset(
     {ADDITIONAL_CONTEXT_APPLICATION, ADDITIONAL_CONTEXT_UNTRUSTED}
 )
 
-CODEX_SOURCE_REVISION = "rust-v0.154.0"
-CODEX_SOURCE_COMMIT = "6b9826e3aa83b1a5947db50f4332cb9c65f1b340"
+CODEX_SOURCE_REVISION = selected_harness()["tag"]
+CODEX_SOURCE_COMMIT = selected_harness()["commit"]
 
 HARNESS_INPUT_SURFACES = (
     "turn/start.input",

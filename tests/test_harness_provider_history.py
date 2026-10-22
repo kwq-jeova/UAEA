@@ -346,6 +346,7 @@ class InteractiveToolBoundaryTests(unittest.TestCase):
             )
             replies = [{"result": {}}, {"result": {"thread": {"id": "thread"}}}] * 2
             with patch.object(repl.subprocess, "Popen"), \
+                    patch.object(repl.subprocess, "check_output", return_value="codex-cli test-double"), \
                     patch.object(repl, "ProviderHistoryBridge"), \
                     patch.object(repl.threading, "Thread"), \
                     patch.object(app, "_request", side_effect=replies):

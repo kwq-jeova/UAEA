@@ -45,6 +45,13 @@ REQUEST_TURNS = (
     "本轮不要再调用工具。总结实际获得的证据和尚未完成的工作，区分仅找到链接与确实获取网页内容。",
 )
 
+LOCAL_TURNS = (
+    "Call read_section with exactly path=/mnt/d/UAEA/README.md and section_index=1. This is an allowed project file, not README.md in the Harness cwd. Report its heading and one fact actually returned. Do not use Web tools.",
+    "Continue the same workflow. Call read_section with exactly path=/mnt/d/UAEA/README.md and section_index=2, then compare the responsibilities described in the two sections. Do not use Web tools.",
+    "Continue using only the observations already obtained. Separate documented facts from proposed changes and unfinished verification.",
+    "Do not call more tools. State which sections were actually read and which conclusions remain unverified. Turn completion does not imply the research is complete.",
+)
+
 def summarize(run_dir: Path, *, expected_turns: int = 3) -> dict:
     rows = [json.loads(line) for line in (run_dir / "semantic-state-snapshots.jsonl").read_text(
         encoding="utf-8").splitlines() if line.strip()]
@@ -98,10 +105,11 @@ def summarize(run_dir: Path, *, expected_turns: int = 3) -> dict:
 def run_probe(args) -> int:
     scenario = getattr(args, "scenario", "continuity")
     prefix = {"coverage": "workflow-source-coverage", "basis": "workflow-request-basis",
-              "request": "workflow-request-continuity"}.get(
+              "request": "workflow-request-continuity", "local": "workflow-local-upgrade"}.get(
         scenario, "workflow-continuity")
     root = args.result_root / f"{prefix}-{repl.utc_stamp()}"
-    turns = {"coverage": COVERAGE_TURNS, "basis": BASIS_TURNS, "request": REQUEST_TURNS}.get(scenario, TURNS)
+    turns = {"coverage": COVERAGE_TURNS, "basis": BASIS_TURNS, "request": REQUEST_TURNS,
+             "local": LOCAL_TURNS}.get(scenario, TURNS)
     answers = iter((*turns, "exit"))
 
     def scripted_input(prompt):
@@ -137,5 +145,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--turn-timeout", type=int, default=420)
     parser.add_argument("--result-root", type=Path, default=repl.DEFAULT_RESULT_ROOT)
-    parser.add_argument("--scenario", choices=("continuity", "coverage", "basis", "request"), default="continuity")
+    parser.add_argument("--scenario", choices=("continuity", "coverage", "basis", "request", "local"), default="continuity")
     raise SystemExit(run_probe(parser.parse_args()))

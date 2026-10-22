@@ -28,6 +28,7 @@ UAEA owns capability contracts、semantic ownership/scope/effective state、boun
 
 ## Runtime Baseline
 
+- [2026-10-22 Harness 版本升级](current/runtime/harness-upgrade-20261022.md)：默认 v0.163.0；保留 v0.154.0，双版本源码、构建、真实运行和回退证据。
 - [Harness baseline](current/runtime/harness-runtime-baseline-20260926.md)：本地 app-server、native sandbox、事件/hook、trajectory contract。
 - [当前环境与人工入口](current/environment/web-runtime-environment.md)：私有 env 与统一 wrapper。
 - [失败 attempt 隔离与恢复](implementation/harness/failed-attempt-recovery-20261003.md)：原始 history 保留，provider-facing 副本投影；同 thread 重启恢复证据。

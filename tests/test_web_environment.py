@@ -223,11 +223,13 @@ class WebEnvironmentTests(unittest.TestCase):
         )
         with patch.dict(os.environ, {"SERPAPI_KEY": self.secret}), \
                 patch.object(interactive_repl.subprocess, "Popen") as spawn, \
+                patch.object(interactive_repl.subprocess, "check_output", return_value="codex-cli test-double") as version_probe, \
                 patch.object(interactive_repl, "ProviderHistoryBridge"), \
                 patch.object(interactive_repl.threading, "Thread"), \
                 patch.object(app, "_request", side_effect=[{"result": {}}, {"result": {"thread": {"id": "test"}}}]):
             app.start()
             self.assertNotIn("SERPAPI_KEY", spawn.call_args.kwargs["env"])
+            self.assertNotIn("SERPAPI_KEY", version_probe.call_args.kwargs["env"])
             self.assertEqual(os.environ["SERPAPI_KEY"], self.secret)
         app.close()
 

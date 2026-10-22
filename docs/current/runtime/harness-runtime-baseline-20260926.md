@@ -11,6 +11,10 @@
 
 日期：2026-09-26
 
+2026-10-22 依赖更新：当前默认 Codex `rust-v0.163.0`，旧版 `rust-v0.154.0` 永久保留；
+本文件历史版本与测试记录不改写。当前版本、构建、回归及回退以 [双版本升级记录](harness-upgrade-20261022.md)
+和仓库 `harness/versions.json` 为准，generic ownership 冻结不变。
+
 本文件记录 generic Harness 集成的冻结结论。当前 UAEA semantic/Web 扩展状态以
 主 README 和 [Boundary Integrity Audit](../architecture/boundary-integrity-audit-20261002.md) 为准。
 阶段性审计、probe 和历史决策保留在 `docs/archive/harness/` 或本文历史章节，不删除。

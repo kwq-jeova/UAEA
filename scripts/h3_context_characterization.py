@@ -35,14 +35,13 @@ from runtime.capability import CapabilityMetadata, ToolResult  # noqa: E402
 from runtime.ledger import LedgerStub  # noqa: E402
 from runtime.sandbox import Sandbox  # noqa: E402
 from runtime.tools import ToolRegistry  # noqa: E402
+from harness.version_manifest import selected_harness  # noqa: E402
 
 
 DEFAULT_RESULT_ROOT = Path("/mnt/d/UAEA-runtime/h3-results")
-DEFAULT_CODEX_BIN = Path(
-    "/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex"
-)
-DEFAULT_CODEX_HOME_ROOT = Path("/mnt/d/UAEA-runtime/codex-home-h3")
-DEFAULT_WORKSPACE_ROOT = Path("/mnt/d/UAEA-runtime/codex-workspace-h3")
+DEFAULT_CODEX_BIN = Path(selected_harness()["binary"])
+DEFAULT_CODEX_HOME_ROOT = Path("/mnt/d/UAEA-runtime/codex-home-h3") / selected_harness()["tag"]
+DEFAULT_WORKSPACE_ROOT = Path("/mnt/d/UAEA-runtime/codex-workspace-h3") / selected_harness()["tag"]
 DEFAULT_VLLM_ROOT = Path("/opt/uaea/vllm_env")
 DEFAULT_MODEL_ROOT = Path("/opt/uaea-models/models/Qwen2.5-14B-Instruct-AWQ")
 DEFAULT_MODEL = "qwen25-14b-awq"
@@ -123,8 +122,6 @@ def write_config(home: Path, base_url: str, context_window: int) -> None:
                 'model_reasoning_effort = "none"',
                 f"model_context_window = {context_window}",
                 "project_doc_max_bytes = 0",
-                "skip_host_skill_discovery = true",
-                "disable_response_storage = true",
                 "",
                 "[features]",
                 "skill_search = false",

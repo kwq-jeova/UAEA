@@ -16,6 +16,8 @@ from typing import Any, Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PHASE1_ROOT = PROJECT_ROOT / "runtime" / "phase1-runtime"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 if str(PHASE1_ROOT) not in sys.path:
     sys.path.insert(0, str(PHASE1_ROOT))
 
@@ -23,13 +25,12 @@ from runtime.ledger import LedgerStub  # noqa: E402
 from runtime.sandbox import Sandbox  # noqa: E402
 from runtime.semantic_observation import ExecutionObservation  # noqa: E402
 from runtime.tools import ToolRegistry  # noqa: E402
+from harness.version_manifest import selected_harness  # noqa: E402
 
 
 DEFAULT_RESULT_ROOT = Path("/mnt/d/UAEA-runtime/h3-results")
-DEFAULT_CODEX_BIN = Path(
-    "/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex"
-)
-DEFAULT_CODEX_HOME_ROOT = Path("/mnt/d/UAEA-runtime/codex-home-h3-file-ab")
+DEFAULT_CODEX_BIN = Path(selected_harness()["binary"])
+DEFAULT_CODEX_HOME_ROOT = Path("/mnt/d/UAEA-runtime/codex-home-h3-file-ab") / selected_harness()["tag"]
 
 
 def utc_now() -> str:

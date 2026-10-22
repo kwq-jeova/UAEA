@@ -6,6 +6,10 @@ Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability co
 
 文档总入口：[Documentation Guide](docs/README.md)。按当前基线、研究基础、历史证据和维护说明阅读，不按 Phase 名称推断有效性。
 
+**2026-10-22 Harness 依赖升级：默认 `rust-v0.163.0`，保留 `rust-v0.154.0` 独立对照组。**
+版本清单、双版本验证与回退见 [升级记录](docs/current/runtime/harness-upgrade-20261022.md)；
+本轮不改变下述 semantic ownership、模型及冻结 `8001`，不将既有模型行为 PARTIAL 宣称为已修复。
+
 当前阶段与停止点：[2026-10-05 信息边界 Checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)。
 [2026-10-02 Boundary Audit](docs/current/architecture/boundary-integrity-audit-20261002.md) 保留此前修复依据，不能用旧测试或等待状态替代最新结论。
 **2026-10-18 最新进度：来源覆盖事实记录人工验收 PASS；单 Workflow 研究推理仍为 PARTIAL。**
@@ -37,7 +41,7 @@ projection 与 action validation 使用同一 effective view。详见 [阶段实
 User
   -> UAEA semantic extraction / scoped effective state
   -> bounded pre-turn additionalContext
-  -> source-owned local Codex app-server (rust-v0.154.0)
+  -> source-owned local Codex app-server (rust-v0.163.0; v0.154.0 retained)
   -> UAEA local provider-safe history projection
   -> local vLLM / Qwen2.5-14B-Instruct-AWQ
   -> model action proposal
@@ -83,6 +87,10 @@ vLLM
 cd /mnt/d/UAEA
 bash scripts/start_h3_harness_interactive.sh --turn-timeout 420
 ```
+
+`python3 scripts/harness_version.py --verify-binary` 查询实际锁定版本；
+在启动命令前加 `UAEA_CODEX_VERSION=rust-v0.154.0` 可单次回退，使用独立 `CODEX_HOME`。
+默认值只在 `harness/versions.json` 维护；启动 artifact 的 `harness-versions.jsonl` 记录实际 Tag/Commit。
 
 Web 代理和 `SERPAPI_KEY` 自动从仓库外 `~/.config/uaea/web.env` 加载；权限必须为 `600`。
 不要将真实 key 写入 repo、命令行或聊天；[私有环境配置](docs/current/environment/web-runtime-environment.md)。

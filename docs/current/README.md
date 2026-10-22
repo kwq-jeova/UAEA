@@ -8,6 +8,7 @@ Role: 当前基线导航；无独立新 contract
 | [2026-10-05 信息边界 Checkpoint](architecture/cognition-boundary-checkpoint-20261005.md) | 最新阶段状态、有限 authority contract、验证等级与停止点 | 最新 authority 人工 NOT TESTED；不是 Goal/Memory baseline |
 | [Boundary Integrity Audit](architecture/boundary-integrity-audit-20261002.md) | semantic state/authority/result/evidence/bounded identity | 不保证模型开放行为或长期 cognition 已验收 |
 | [Harness Runtime Baseline](runtime/harness-runtime-baseline-20260926.md) | generic execution/runtime CLOSED | 不恢复 Phase-1 generic runtime；末尾为历史 |
+| [2026-10-22 Harness 双版本升级](runtime/harness-upgrade-20261022.md) | 默认 v0.163.0、保留 v0.154.0，构建/回归/回退 | 不代表模型行为或 cognition 已闭环 |
 | [Web 私有环境](environment/web-runtime-environment.md) | 当前 proxy/secret/startup | smoke 不等于 model-mediated acceptance |
 | [SQLite Source/Evidence closure](evidence/sqlite-source-evidence-closure.md) | source history/EvidenceReference | 非 Memory Store，旧测试数量和 next slice 属 checkpoint |
 

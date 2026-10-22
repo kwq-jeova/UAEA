@@ -1,0 +1,40 @@
+{
+  "schema": "uaea.codex_harness_versions.v1",
+  "provider": "OpenAI Codex",
+  "upstream": "https://github.com/openai/codex",
+  "active_version": "rust-v0.163.0",
+  "baseline_version": "rust-v0.154.0",
+  "versions": {
+    "rust-v0.154.0": {
+      "commit": "6b9826e3aa83b1a5947db50f4332cb9c65f1b340",
+      "source_location": "D:/UAEA-deps/codex/rust-v0.154.0",
+      "binary": "/mnt/d/UAEA-runtime/codex/source-rust-v0.154.0-wsl-x86_64/codex",
+      "build_target": "x86_64-unknown-linux-gnu",
+      "build_profile": "dev",
+      "build_verification": "existing_baseline",
+      "binary_sha256": "14cbd07db472b3a79aca95dfb4490a385c85be2116b3ca8631bc938b4e48e0fe",
+      "uaea_regression": "PASS",
+      "regression_summary": {"tests_run": 395, "passed": 393, "failed": 0, "skipped": 2},
+      "model_behavior": "PARTIAL"
+    },
+    "rust-v0.163.0": {
+      "commit": "83086188ae0614bd882818ff1aa23f3194962012",
+      "tag_object": "129b8ec7ee6f4511557a4856279f529025c25af4",
+      "source_location": "D:/UAEA-deps/codex/rust-v0.163.0",
+      "build_source": "/home/wqkan/.cache/uaea/codex-build-src/rust-v0.163.0",
+      "binary": "/mnt/d/UAEA-runtime/codex/source-rust-v0.163.0-wsl-x86_64/codex",
+      "build_target": "x86_64-unknown-linux-gnu",
+      "build_profile": "dev-small",
+      "build_verification": "PASS",
+      "binary_sha256": "ed7ff56a95b9b3cce1870f01404bd899e06783709e09d736856807f9d61cf9ca",
+      "bwrap_sha256": "4dd122db8530b2ae8ac0b67e2ee1752310d661d38d5875b7bbc24d0427b634ed",
+      "uaea_regression": "PASS",
+      "regression_summary": {"tests_run": 395, "passed": 393, "failed": 0, "skipped": 2},
+      "model_behavior": "PARTIAL",
+      "verification_date": "2026-10-22",
+      "verification_record": "docs/current/runtime/harness-upgrade-20261022.md",
+      "official_release": "https://github.com/openai/codex/releases/tag/rust-v0.163.0",
+      "prerelease": false
+    }
+  }
+}

@@ -4,6 +4,7 @@ import argparse
 import http.client
 import json
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -62,6 +63,7 @@ def run(args: argparse.Namespace) -> int:
     bad_http_count = 0
     file_execution_count = 0
     web_http_count = 0
+    cancellation_admitted = threading.Event()
     def reject_web_http(*args: Any, **kwargs: Any) -> Any:
         nonlocal web_http_count
         web_http_count += 1
@@ -86,6 +88,9 @@ def run(args: argparse.Namespace) -> int:
                         return
             requests.append(payload)
             text = last_user_text(payload.get("input", []))
+            if "RECOVERY_CANCEL" in text:
+                cancellation_admitted.set()
+                time.sleep(2)
             if "RECOVERY_BAD" in text and not any(
                 "uaea.terminal_attempt_fact" in json.dumps(i) for i in payload.get("input", [])
             ):
@@ -116,11 +121,16 @@ def run(args: argparse.Namespace) -> int:
                 return
             else:
                 item = {"type": "message", "id": f"recovery-message-{len(requests)}",
-                        "role": "assistant", "content": [{"type": "output_text", "text": "RECOVERY_OK"}]}
+                        "role": "assistant", "content": [{"type": "output_text", "text": (
+                            '{"name":"web_search","arguments":{"query":"text only"}}'
+                            if "RECOVERY_TEXT" in text else "RECOVERY_OK")}]}
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.end_headers()
-            self.wfile.write(sse(item, f"recovery-response-{len(requests)}"))
+            try:
+                self.wfile.write(sse(item, f"recovery-response-{len(requests)}"))
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # Expected when a real Harness interrupt closes the fixture stream.
 
     upstream = ThreadingHTTPServer(("127.0.0.1", 0), Upstream)
     thread = threading.Thread(target=upstream.serve_forever, daemon=True)
@@ -148,6 +158,35 @@ def run(args: argparse.Namespace) -> int:
         app.run_turn("RECOVERY_BAD: exercise a rejected tool attempt.")
         app.run_turn("RECOVERY_CHAT: reply briefly that conversation can continue; do not use tools.")
         app.run_turn("RECOVERY_FILE: read README section 1 and give a brief answer.")
+        interrupt_smoke = getattr(args, "interrupt_smoke", False)
+        if interrupt_smoke:
+            previous_turn = app.semantic_state.snapshot(thread_id)["last_turn_id"]
+            interrupt_errors = []
+
+            def interrupt():
+                try:
+                    if not cancellation_admitted.wait(30):
+                        raise RuntimeError("No provider request for interrupt probe")
+                    deadline = time.monotonic() + 5
+                    while time.monotonic() < deadline:
+                        turn_id = app.semantic_state.snapshot(thread_id)["last_turn_id"]
+                        if turn_id and turn_id != previous_turn:
+                            app._send({"jsonrpc": "2.0", "id": "upgrade-interrupt", "method": "turn/interrupt",
+                                       "params": {"threadId": thread_id, "turnId": turn_id}})
+                            return
+                        time.sleep(0.01)
+                    raise RuntimeError("No new native turn identity for interrupt")
+                except Exception as exc:
+                    interrupt_errors.append(str(exc))
+
+            interrupter = threading.Thread(target=interrupt)
+            interrupter.start()
+            app.run_turn("RECOVERY_CANCEL: interrupt this in-flight provider response.")
+            interrupter.join(35)
+            if interrupt_errors:
+                raise RuntimeError(interrupt_errors[0])
+            app.run_turn("RECOVERY_CHAT: continue after interrupt.")
+            app.run_turn("RECOVERY_TEXT: print JSON as ordinary assistant text, not a tool call.")
         app.close()
         app = InteractiveAppServer(
             codex=DEFAULT_CODEX_BIN, codex_home=home, workspace=workspace,
@@ -186,10 +225,14 @@ def run(args: argparse.Namespace) -> int:
             "persisted_rollout_keeps_malformed": any("BROKEN_ATTEMPT" in t for t in rollout_texts),
             "trajectory_validation": trajectory_checks,
             "provider_request_count": len(requests),
+            "interrupt_smoke": interrupt_smoke,
+            "assistant_json_not_dispatched": not any(c["arguments"] == {"query": "text only"} for c in tool_calls),
         }
+        expected_statuses = (["completed"] * 3 + ["interrupted", "completed", "completed", "completed"]
+                             if interrupt_smoke else ["completed"] * 4)
         passed = (
-            report["same_thread"] and len(completions) == 4
-            and all(t["status"] == "completed" for t in completions)
+            report["same_thread"] and report["turn_statuses"] == expected_statuses
+            and report["assistant_json_not_dispatched"]
             and not report["malformed_call_dispatched_to_uaea"] and web_http_count == 0
             and file_execution_count == 1 and bad_http_count == 0
             and report["raw_malformed_preserved"] and report["persisted_rollout_keeps_malformed"]
@@ -212,5 +255,6 @@ def run(args: argparse.Namespace) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Failed-attempt isolation on pinned local Harness.")
     parser.add_argument("--live-vllm", action="store_true")
+    parser.add_argument("--interrupt-smoke", action="store_true")
     parser.add_argument("--result-root", type=Path, default=DEFAULT_RESULT_ROOT)
     raise SystemExit(run(parser.parse_args()))

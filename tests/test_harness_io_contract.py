@@ -115,10 +115,11 @@ class HarnessIoContractTests(unittest.TestCase):
         self.assertIn("web_available=True", effective_capability_summary([{"name": "web_search"}, {"name": "web_fetch"}]))
 
     def test_contract_surfaces_are_explicitly_scoped(self):
-        self.assertEqual(CODEX_SOURCE_REVISION, "rust-v0.154.0")
+        from harness.version_manifest import selected_harness
+        self.assertEqual(CODEX_SOURCE_REVISION, selected_harness()["tag"])
         self.assertEqual(
             CODEX_SOURCE_COMMIT,
-            "6b9826e3aa83b1a5947db50f4332cb9c65f1b340",
+            selected_harness()["commit"],
         )
         self.assertIn("turn/start.additionalContext", HARNESS_INPUT_SURFACES)
         self.assertIn("turn/steer.additionalContext", HARNESS_INPUT_SURFACES)

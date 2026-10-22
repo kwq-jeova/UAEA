@@ -288,7 +288,21 @@ class InteractiveAppServer:
         self.adapter.bind_semantic_state_adapter(self.semantic_state)
 
     def start(self, *, resume_thread_id: str = "") -> None:
+        from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest
+
+        env = codex_process_environment(self.codex_home)
+        provenance = identify_harness(self.codex)
+        verify_binary_digest(self.codex, provenance)
+        provenance["reported_version"] = subprocess.check_output(
+            [str(self.codex), "--version"], text=True, timeout=30, env=env).strip()
+        if (provenance["tag"] != "explicit_binary_override"
+                and provenance["tag"].removeprefix("rust-v") not in provenance["reported_version"]):
+            raise RuntimeError("Harness binary version does not match the selected manifest entry")
+        print(f"[HARNESS VERSION] tag={provenance['tag']} commit={provenance['commit']} "
+              f"binary={self.codex}", flush=True)
         self.events_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.events_path.with_name("harness-versions.jsonl").open("a", encoding="utf-8") as journal:
+            journal.write(json_line(provenance) + "\n")
         self.workspace.mkdir(parents=True, exist_ok=True)
         self._events_file = self.events_path.open("a", encoding="utf-8")
         self._stderr_file = self.stderr_path.open("a", encoding="utf-8")
@@ -312,16 +326,6 @@ class InteractiveAppServer:
             raw_events_path=self.events_path,
         )
         self._history_bridge.start()
-        env = os.environ.copy()
-        env["CODEX_HOME"] = str(self.codex_home)
-        for name in (
-            "OPENAI_API_KEY",
-            "OPENAI_BASE_URL",
-            "CODEX_API_KEY",
-            "CHATGPT_API_KEY",
-            "SERPAPI_KEY",
-        ):
-            env.pop(name, None)
         self.process = subprocess.Popen(
             [
                 str(self.codex),
