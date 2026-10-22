@@ -38,8 +38,15 @@ from .event_normalizer import (  # noqa: E402
     HarnessEventNormalizer,
 )
 from .scoped_semantics import EffectiveSemanticState, ScopedSemanticResolver  # noqa: E402
+from .request_continuity import (  # noqa: E402
+    REQUEST_OPERATIONS, request_inputs, request_snapshot, retain_request_input,
+)
+from .workflow_continuity import (  # noqa: E402
+    execution_projection, record_attempt, record_outcome, turn_receipt, workflow_snapshot,
+)
 from .semantic_authority import (  # noqa: E402
-    INTERPRETATION, SEMANTIC_AUTHORITY_SCHEMA, authority_level, user_directive_basis,
+    INTERPRETATION, SEMANTIC_AUTHORITY_SCHEMA, authority_level, compact_semantic_bindings,
+    user_directive_basis,
 )
 
 
@@ -48,6 +55,15 @@ SEMANTIC_PROJECTION_SCHEMA = "uaea.semantic_projection.v0"
 MAX_TEXT_CHARS = 240
 MAX_LIST_ITEMS = 6
 MAX_OBSERVATIONS = 6
+
+
+class ProjectionCapacityError(ValueError):
+    """No complete authority-preserving projection fits the configured budget."""
+
+    def __init__(self, *, required_chars: int, budget_chars: int) -> None:
+        super().__init__("Effective semantic state exceeds projection budget; constraints were not dropped")
+        self.required_chars = required_chars
+        self.budget_chars = budget_chars
 
 
 @dataclass(frozen=True)
@@ -60,7 +76,7 @@ class SemanticProjection:
     projection_id: str = ""
 
     def to_context_value(self) -> str:
-        return json.dumps(self.payload, ensure_ascii=False, sort_keys=True)
+        return _projection_json(self.payload)
 
 
 @dataclass
@@ -104,6 +120,8 @@ class _SemanticState:
     current_task_id: str = ""
     prepared_input_applied: bool = False
     ownership_binding: dict[str, str] = field(default_factory=dict)
+    turn_receipts: list[dict[str, Any]] = field(default_factory=list)
+    request_operation: str = "retain"
 
 
 class HarnessSemanticStateAdapter:
@@ -136,8 +154,12 @@ class HarnessSemanticStateAdapter:
         user_input: str,
         *,
         turn_id: str = "",
+        request_operation: str = "retain",
     ) -> SemanticProjection:
+        if request_operation not in REQUEST_OPERATIONS:
+            raise ValueError("Unsupported request operation")
         state = self._state_for(thread_id)
+        state.request_operation = request_operation
         text = _compact_text(user_input, 500)
         relation = self._classify_relation(state, text)
         state.pending_user_input = text
@@ -238,6 +260,7 @@ class HarnessSemanticStateAdapter:
                 "event_id": event.event_id,
                 "sequence": event.sequence,
             }
+            self._record_attempt(state, event, item, arguments)
             return None
         if event.event_type in {TOOL_RESULT, OBSERVATION, COMMAND_EXECUTION}:
             if (
@@ -245,6 +268,9 @@ class HarnessSemanticStateAdapter:
                 and (not isinstance(event.payload.get("item"), Mapping)
                      or event.payload.get("method") == "item/started")
             ):
+                if event.payload.get("method") == "item/started":
+                    item = event.payload.get("item") or {}
+                    self._record_attempt(state, event, item, {"command": item.get("command")})
                 return None
             if self._has_observation_event(state, event):
                 return None
@@ -266,6 +292,15 @@ class HarnessSemanticStateAdapter:
             self._finalize_pending_input(state, event)
             state.completed_turn_count += 1
             state.last_terminal_state = _turn_terminal_state(event)
+            if not any(receipt["turn_id"] == event.turn_id for receipt in state.turn_receipts):
+                for step in state.runtime_objects.step_runs:
+                    if (step.action.get("harness", {}).get("turn_id") == event.turn_id
+                            and step.status == "proposed"):
+                        step.status = ("cancelled" if state.last_terminal_state in
+                                       {"cancelled", "canceled", "interrupted"} else "outcome_missing")
+                state.turn_receipts.append(turn_receipt(
+                    state.runtime_objects, state.current_task_id, event.turn_id, state.last_terminal_state,
+                ))
             ScopedSemanticResolver(state.runtime_objects).expire_turn(state.current_input_id)
             return self.snapshot(event.thread_id)
         return None
@@ -339,6 +374,14 @@ class HarnessSemanticStateAdapter:
         }
         state.action_decisions.append(dict(decision))
         state.action_decisions = state.action_decisions[-MAX_OBSERVATIONS:]
+        for step in state.runtime_objects.step_runs:
+            if (step.workflow_id == state.current_task_id
+                    and step.action.get("harness", {}).get("call_id") == call_id):
+                step.action["validation"] = {"valid": decision["valid"],
+                                            "effective_state_id": effective.resolution_id,
+                                            "conflicts": list(conflicts)}
+                if not decision["valid"] and "outcome" not in step.action:
+                    step.status = "rejected"
         return decision
 
     def snapshot(self, thread_id: str) -> dict[str, Any]:
@@ -381,6 +424,9 @@ class HarnessSemanticStateAdapter:
             "action_decisions": list(state.action_decisions),
             "projection_ids": list(state.projection_ids),
             "last_projection": dict(state.last_projection),
+            "workflow_continuity": workflow_snapshot(
+                state.runtime_objects, state.current_task_id, state.turn_receipts,
+            ),
             "phase1_projection_count": len(state.runtime_objects.projections),
             "phase1_runtime_snapshot": state.runtime_objects.snapshot(),
             "phase1_context": {
@@ -458,9 +504,13 @@ class HarnessSemanticStateAdapter:
 
         resolver = ScopedSemanticResolver(state.runtime_objects)
         provenance = self._semantic_provenance(state, event, text)
+        retain_request_input(state.runtime_objects, state.current_task_id,
+                             input_id=state.current_input_id, text=text,
+                             provenance=provenance, operation=state.request_operation)
+        state.request_operation = "retain"
         scope = _semantic_scope(text)
         owner = self._semantic_owner(state, scope)
-        if (relation["relation"] == "new_task" or not state.topic
+        if (not state.topic
                 or state.ownership_binding["reason"] == "explicit_task_boundary"):
             resolver.bind(kind="topic", key="topic", value=_topic_from_input(text),
                           scope="task", owner=state.current_task_id, provenance=provenance,
@@ -556,7 +606,8 @@ class HarnessSemanticStateAdapter:
         if event.turn_id:
             state.pending_turn_id = event.turn_id
             state.input_turn_ids.add(event.turn_id)
-        for item in ScopedSemanticResolver(state.runtime_objects).items():
+        for item in (ScopedSemanticResolver(state.runtime_objects).items()
+                     + request_inputs(state.runtime_objects, state.current_task_id)):
             provenance = item.metadata["provenance"]
             if provenance.get("input_id") != state.current_input_id:
                 continue
@@ -713,21 +764,46 @@ class HarnessSemanticStateAdapter:
                 "raw_event_reference": dict(event.raw_event_reference),
             },
         }
+        step = self._record_attempt(state, event, item_map, item_map.get("arguments", {}), result)
+        if step is not None:
+            record["provenance"]["call_id"] = step.action["harness"]["call_id"]
+            record_outcome(step, record["execution_observation"], result)
         state.semantic_observations.append(record)
         state.semantic_observations = state.semantic_observations[-MAX_OBSERVATIONS:]
         return record
 
     def _has_observation_event(self, state: _SemanticState, event: TrajectoryEvent) -> bool:
-        return any(
+        item = event.payload.get("item") or event.payload.get("raw_response_item") or event.payload
+        call_id = _call_identity(event, item, _tool_result_payload(item))
+        existing = next((record for record in state.semantic_observations if
             (
                 record.get("provenance", {}).get("event_id") == event.event_id
+                or (call_id and record.get("provenance", {}).get("call_id") == call_id
+                    and record["provenance"].get("thread_id") == event.thread_id
+                    and record["provenance"].get("turn_id") == event.turn_id)
                 or (
                     record.get("provenance", {}).get("thread_id") == event.thread_id
                     and record.get("provenance", {}).get("turn_id") == event.turn_id
                     and record.get("provenance", {}).get("item_id") == event.item_id
                 )
             )
-            for record in state.semantic_observations
+        ), None)
+        if existing is not None:
+            self._record_attempt(state, event, item, item.get("arguments", {}), _tool_result_payload(item))
+        return existing is not None
+
+    @staticmethod
+    def _record_attempt(state, event, item, arguments, result=None):
+        return record_attempt(
+            state.runtime_objects, state.current_task_id,
+            call_id=_call_identity(event, item, result or {}), turn_id=event.turn_id,
+            tool=str(item.get("tool") or item.get("name") or item.get("command") or "harness.execution"),
+            arguments=arguments,
+            user_request=state.last_user_input, input_id=state.current_input_id,
+            provenance={"thread_id": event.thread_id, "turn_id": event.turn_id,
+                        "item_id": event.item_id, "event_id": event.event_id,
+                        "sequence": event.sequence, "event_type": event.event_type,
+                        "raw_event_reference": dict(event.raw_event_reference)},
         )
 
     def _projection_payload(
@@ -779,33 +855,145 @@ class HarnessSemanticStateAdapter:
             "references": list(state.references[-MAX_LIST_ITEMS:]),
             "open_questions": list(state.open_questions[-MAX_LIST_ITEMS:]),
             "relevant_observations": observations,
+            "workflow_continuation": {
+                "initial_request": _compact_text(state.runtime_objects.active_workflow().source_user_intent, 140),
+                "request_history": [text for text in state.task_evolution[-2:-1]
+                                    if text != _compact_text(state.runtime_objects.active_workflow().source_user_intent, 180)],
+                "assistant_proposal": _compact_text(state.last_agent_output, 200),
+                "assistant_output_is_execution_evidence": False,
+            },
+            "workflow_execution": execution_projection(workflow_snapshot(
+                state.runtime_objects, state.current_task_id, state.turn_receipts,
+            )),
         }
+        workflow = workflow_snapshot(state.runtime_objects, state.current_task_id, state.turn_receipts)
+        action_request = workflow["last_action_request"].get("user_request")
+        if (action_request and action_request != workflow["initial_request"]
+                and _compact_text(action_request, 180) not in payload["workflow_continuation"]["request_history"]):
+            payload["workflow_continuation"]["last_action_request"] = _compact_text(action_request, 100)
+        origin = workflow["action_request_origin"].get("user_request")
+        if origin and origin != action_request:
+            # Keep history as history: an earlier action-bearing request is not an active Goal.
+            history = payload["workflow_continuation"]["request_history"]
+            payload["workflow_continuation"]["request_history"] = list(dict.fromkeys(
+                [_compact_text(origin, 180), *history]))
+        requests = workflow["request_continuity"]
+        if requests["inputs"]:
+            retained = [item for item in requests["inputs"] if item["status"] == "retained"]
+            continuation = payload["workflow_continuation"]
+            active_ids = set(requests["retained_input_ids"])
+            if workflow["last_action_request"].get("input_id") not in active_ids:
+                continuation.pop("last_action_request", None)
+            continuation["initial_request"] = _compact_text(retained[0]["metadata"]["text"], 140) if retained else ""
+            previous = [item for item in retained[1:] if item["object_id"] != state.current_input_id]
+            history = [previous[0], previous[-1]] if previous else []
+            # These are ordered user contributions, not independently inferred active tasks.
+            continuation["request_history"] = list(dict.fromkeys(
+                _compact_text(item["metadata"]["text"], 180) for item in history
+                if item["metadata"]["text"] != action_request
+                or "last_action_request" not in continuation))
+            if requests["state"] == "cancelled":
+                payload["workflow_continuation"] = {"request_state": "cancelled", "initial_request": "",
+                                                     "request_history": []}
+                for key in ("topic", "task_evolution", "references", "open_questions", "interpretations"):
+                    payload[key] = "" if key == "topic" else []
+            elif retained and retained[0]["metadata"]["operation"] in {"replace", "append"}:
+                payload["topic"] = continuation["initial_request"]
+                payload["task_evolution"] = [_compact_text(item["metadata"]["text"], 180) for item in retained[-3:]]
+                continuation.pop("assistant_proposal", None)
         return payload
 
     def _bounded_projection(self, projection: SemanticProjection) -> SemanticProjection:
         payload = projection.payload
-        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True)
-        if len(encoded) <= self.max_projection_chars:
+        if _projection_size(payload) <= self.max_projection_chars:
             return projection
-        bounded = dict(payload)
+        bounded = deepcopy(payload)
+        bindings, shared = compact_semantic_bindings(payload.get("semantic_bindings", []))
+        if shared:
+            bounded["semantic_bindings"] = bindings
+            bounded["semantic_binding_defaults"] = shared
+        if _projection_size(bounded) <= self.max_projection_chars:
+            return SemanticProjection(
+                semantic_scope_id=projection.semantic_scope_id,
+                thread_id=projection.thread_id,
+                payload=bounded,
+                projection_id=projection.projection_id,
+            )
         bounded["task_evolution"] = list(payload.get("task_evolution", []))[-1:]
         bounded["references"] = list(payload.get("references", []))[-2:]
         bounded["open_questions"] = list(payload.get("open_questions", []))[-2:]
         bounded["relevant_observations"] = list(payload.get("relevant_observations", []))[-1:]
         bounded["interpretations"] = list(payload.get("interpretations", []))[-2:]
-        encoded = json.dumps(bounded, ensure_ascii=False, sort_keys=True)
-        if len(encoded) > self.max_projection_chars:
+        if _projection_size(bounded) > self.max_projection_chars:
             bounded["relevant_observations"] = []
-            encoded = json.dumps(bounded, ensure_ascii=False, sort_keys=True)
-        if len(encoded) > self.max_projection_chars:
+        if _projection_size(bounded) > self.max_projection_chars:
             bounded["task_evolution"] = []
             bounded["references"] = []
             bounded["open_questions"] = []
             bounded["source_preferences"] = []
             bounded["interpretations"] = []
             bounded["topic"] = _compact_text(bounded["topic"], 80)
-        if len(json.dumps(bounded, ensure_ascii=False, sort_keys=True)) > self.max_projection_chars:
-            raise ValueError("Effective semantic state exceeds projection budget; constraints were not dropped")
+        if _projection_size(bounded) > self.max_projection_chars:
+            bounded["compact_wire"] = True
+            for key in ("task_evolution", "references", "open_questions", "source_preferences",
+                        "interpretations", "relevant_observations", "topic"):
+                if not bounded.get(key):
+                    bounded.pop(key, None)
+        coverage = bounded["workflow_execution"].get("source_coverage")
+        search = bounded["workflow_execution"].get("last_search_action")
+        if search and _projection_size(bounded) > self.max_projection_chars:
+            search["query"] = _compact_text(search["query"], 100)
+        if coverage and _projection_size(bounded) > self.max_projection_chars:
+            continuation = bounded["workflow_continuation"]
+            continuation.pop("assistant_proposal", None)
+            continuation.pop("assistant_output_is_execution_evidence", None)
+            bounded["workflow_execution"].pop("candidate", None)
+            while coverage["sources"] and _projection_size(bounded) > self.max_projection_chars:
+                coverage["sources"].pop()
+                coverage["omitted_sources"] += 1
+        # Retain the minimal continuation and factual receipt before optional prose.
+        for excerpt_size in (120, 100, 80):
+            if _projection_size(bounded) <= self.max_projection_chars:
+                break
+            continuation = bounded["workflow_continuation"]
+            continuation.pop("assistant_proposal", None)
+            continuation.pop("assistant_output_is_execution_evidence", None)
+            continuation["initial_request"] = _compact_text(continuation["initial_request"], excerpt_size)
+            continuation["request_history"] = [_compact_text(text, excerpt_size)
+                                               for text in continuation["request_history"]]
+            if continuation.get("last_action_request"):
+                continuation["last_action_request"] = _compact_text(continuation["last_action_request"], excerpt_size)
+            bounded["workflow_execution"].pop("candidate", None)
+            bounded.pop("topic", None)
+            bounded["turn_relation"] = {"relation": payload["turn_relation"]["relation"]}
+        if _projection_size(bounded) > self.max_projection_chars:
+            # The envelope and binding owners retain scope identity; this header duplicates it.
+            bounded.pop("semantic_scope_id", None)
+        if coverage and _projection_size(bounded) > self.max_projection_chars:
+            for key in ("failed", "pending"):
+                if coverage.get(key) == 0:
+                    coverage.pop(key, None)
+            # Outcome status already states success/failure; retain all original facts in snapshot.
+            attempt = bounded["workflow_execution"].get("last_attempt", {})
+            if attempt.get("execution_status"):
+                attempt.pop("state", None)
+            if attempt.get("execution_succeeded") is True and attempt.get("http_attempted") is True:
+                attempt.pop("http_attempted", None)
+            receipt = bounded["workflow_execution"].get("previous_turn", {})
+            if receipt.get("terminal") == "completed":
+                receipt.pop("terminal", None)
+            if _projection_size(bounded) > self.max_projection_chars:
+                # This surface always counts distinct URLs; snapshot retains the explicit unit.
+                coverage.pop("unit", None)
+        required_chars = _projection_size(bounded)
+        if required_chars > self.max_projection_chars and search:
+            # Diagnostic action text is optional; effective constraints never are.
+            bounded["workflow_execution"].pop("last_search_action", None)
+            required_chars = _projection_size(bounded)
+        if required_chars > self.max_projection_chars:
+            raise ProjectionCapacityError(
+                required_chars=required_chars, budget_chars=self.max_projection_chars,
+            )
         return SemanticProjection(
             semantic_scope_id=projection.semantic_scope_id,
             thread_id=projection.thread_id,
@@ -814,7 +1002,8 @@ class HarnessSemanticStateAdapter:
         )
 
     def _projection_source_ids(self, state: _SemanticState) -> list[str]:
-        return [item.object_id for item in self._effective_state(state).items] + [
+        return ([item.object_id for item in self._effective_state(state).items]
+                + request_snapshot(state.runtime_objects, state.current_task_id)["retained_input_ids"]) + [
             f"semantic_observation:{item['execution_observation']['observation_id']}"
             for item in state.semantic_observations[-3:]
         ]
@@ -882,6 +1071,28 @@ def semantic_projection_context(
             "value": json.dumps(payload, ensure_ascii=False, sort_keys=True),
         }
     }
+
+
+def _projection_json(payload: Mapping[str, Any]) -> str:
+    if payload.get("compact_wire"):
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _projection_size(payload: Mapping[str, Any]) -> int:
+    from .io_contract import turn_context_payload
+
+    context = turn_context_payload((), semantic_projection=payload)
+    wire_chars = sum(len(context[key]["value"]) for key in
+                     ("uaea.semantic_state_projection", "uaea.semantic_interpretations"))
+    return max(len(_projection_json(payload)), wire_chars)
+
+
+def _call_identity(event: TrajectoryEvent, item: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+    identity = result.get("identity") if isinstance(result.get("identity"), Mapping) else {}
+    return str(identity.get("call_id") or item.get("call_id") or item.get("callId")
+               or (event.item_id if item.get("type") in {"dynamicToolCall", "commandExecution"}
+                   or event.event_type == TOOL_CALL else ""))
 
 
 def _event_text(value: Any) -> str:

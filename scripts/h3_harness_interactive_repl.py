@@ -33,6 +33,7 @@ from harness.io_contract import (  # noqa: E402
 )
 from harness.semantic_state_adapter import (  # noqa: E402
     HarnessSemanticStateAdapter,
+    ProjectionCapacityError,
     SEMANTIC_STATE_SCHEMA,
 )
 from harness.responses_bridge import ProviderHistoryBridge  # noqa: E402
@@ -394,8 +395,49 @@ class InteractiveAppServer:
         self.thread_id = str(thread["result"]["thread"]["id"])
 
     def run_turn(self, text: str) -> None:
+        from harness.request_continuity import parse_request_operation
+
+        try:
+            request_operation = parse_request_operation(text)
+        except ValueError as exc:
+            print(f"[UAEA] {exc}", flush=True)
+            return
         request_id = self._next_id()
-        semantic_projection = self.semantic_state.prepare_turn(self.thread_id, text)
+        try:
+            semantic_projection = self.semantic_state.prepare_turn(
+                self.thread_id, text, request_operation=request_operation)
+        except ProjectionCapacityError as exc:
+            self._last_turn_context = {}
+            print(
+                "[UAEA] pre-turn projection rejected: "
+                f"required_chars={exc.required_chars} budget_chars={exc.budget_chars}; "
+                "constraints retained, no Harness request sent; session remains open. "
+                "Explicitly revise constraints before retrying, or use a new thread.",
+                flush=True,
+            )
+            # This is a local pre-turn fact, not a Harness terminal event or a sent projection.
+            if self._semantic_snapshots_file is not None:
+                try:
+                    snapshot = self.semantic_state.snapshot(self.thread_id)
+                    self._semantic_snapshots_file.write(json_line({
+                        "observed_at": datetime.utcnow().isoformat(),
+                        "event": "PRE_TURN_REJECTED",
+                        "thread_id": self.thread_id,
+                        "turn_id": "",
+                        "input_id": snapshot["current_input_id"],
+                        "prior_turn_id": snapshot["last_turn_id"],
+                        "projection_failure": {
+                            "required_chars": exc.required_chars,
+                            "budget_chars": exc.budget_chars,
+                            "app_server_requested": False,
+                            "last_projection_is_previous": True,
+                        },
+                        "snapshot": snapshot,
+                    }) + "\n")
+                    self._semantic_snapshots_file.flush()
+                except Exception as diagnostic_exc:
+                    print(f"[UAEA] capacity diagnostic failed: {type(diagnostic_exc).__name__}", flush=True)
+            return
         self._last_turn_context = turn_context_payload(
             self._dynamic_tools, semantic_projection=semantic_projection.payload,
         )

@@ -4,7 +4,9 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .semantic_authority import SEMANTIC_AUTHORITY_SCHEMA, has_execution_authority
+from .semantic_authority import (
+    SEMANTIC_AUTHORITY_SCHEMA, expand_semantic_binding, has_execution_authority,
+)
 
 
 ADDITIONAL_CONTEXT_APPLICATION = "application"
@@ -225,26 +227,36 @@ def turn_context_payload(
         projection = dict(semantic_projection)
         if projection.get("authority_contract") == SEMANTIC_AUTHORITY_SCHEMA:
             authority_keys = {"schema", "authority_contract", "semantic_scope_id", "task_id",
-                              "effective_state_id", "constraints", "semantic_bindings"}
+                              "effective_state_id", "constraints", "semantic_bindings",
+                              "semantic_binding_defaults", "workflow_execution"}
             authority = {key: value for key, value in projection.items() if key in authority_keys}
             context = {key: value for key, value in projection.items() if key not in authority_keys}
+            context.pop("compact_wire", None)
+            separators = (",", ":") if projection.get("compact_wire") else None
             bindings = projection.get("semantic_bindings") or []
+            shared = projection.get("semantic_binding_defaults")
             valid_bindings = [binding for binding in bindings
-                              if isinstance(binding, Mapping) and has_execution_authority(binding)]
+                              if isinstance(binding, Mapping)
+                              and has_execution_authority(expand_semantic_binding(binding, shared))]
             eligible = {binding["value"] for binding in valid_bindings}
             proposed_constraints = projection.get("constraints") or []
             authority["constraints"] = [value for value in proposed_constraints if value in eligible]
             authority["semantic_bindings"] = valid_bindings
+            if not valid_bindings:
+                authority.pop("semantic_binding_defaults", None)
             unqualified = [value for value in proposed_constraints if value not in eligible]
             if unqualified:
                 context["unqualified_constraints"] = unqualified
             context.update({"effective_state_id": projection.get("effective_state_id"),
                             "authority_level": "interpretation"})
+            if projection.get("compact_wire"):
+                # The application entry already carries this same projection identity.
+                context.pop("effective_state_id", None)
             payload["uaea.semantic_state_projection"] = application_context(
-                json.dumps(authority, ensure_ascii=False, sort_keys=True)
+                json.dumps(authority, ensure_ascii=False, sort_keys=True, separators=separators)
             ).to_app_server()
             payload["uaea.semantic_interpretations"] = untrusted_context(
-                json.dumps(context, ensure_ascii=False, sort_keys=True)
+                json.dumps(context, ensure_ascii=False, sort_keys=True, separators=separators)
             ).to_app_server()
         else:
             payload["uaea.semantic_state_projection"] = untrusted_context(

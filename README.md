@@ -8,8 +8,10 @@ Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability co
 
 当前阶段与停止点：[2026-10-05 信息边界 Checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)。
 [2026-10-02 Boundary Audit](docs/current/architecture/boundary-integrity-audit-20261002.md) 保留此前修复依据，不能用旧测试或等待状态替代最新结论。
-**最新 semantic authority 迭代：实现/自动验证 PASS，人工测试未进行，阶段整体 PARTIAL。**
-今天仅整理并保存当前集成 checkpoint，不继续开发，不把模型自然语言行为或完整 Web acceptance 写成 PASS。
+**2026-10-18 最新进度：来源覆盖事实记录人工验收 PASS；单 Workflow 研究推理仍为 PARTIAL。**
+032826 人工验收为 PARTIAL：后续请求没有 Action 时仍缺少持续投影，模型误称已阅读页面。
+当前只补 [不依赖 Step 的请求保留](docs/implementation/harness/workflow-request-continuity-20261018.md)，
+等待新一轮人工验收；不进入 Goal/Memory，不把成功取得页面等同于取得充分证据。
 
 ## 当前信息边界阶段
 
@@ -18,7 +20,10 @@ Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability co
 | Harness Runtime Baseline | CLOSED，保持既有 ownership 与物理边界 | 不继续扩建 generic runtime |
 | Failed-attempt / recovery / observation | 恢复与结构边界已有验证；模型行为仍有残余风险 | 保留逐轮证据，不增加错误分类或网络补丁 |
 | Semantic Promotion Shadow Audit | 最新人工 run 已验证 audit/terminal snapshot 边界 PASS | 诊断不授予权威 |
-| Retained interpretation / execution authority | 实现与自动验证 PASS，人工 NOT TESTED | 等两轮新进程人工 probe |
+| Retained interpretation / execution authority | 结构与回归 PASS；整体语义正确性仍为 PARTIAL | 保留既有权威边界，按人工记录核验 |
+| 单 Workflow 来源覆盖 | 030440 人工 run：6 个发现来源、3 个已获取、3 个未尝试，事实计数 PASS | 保留来源与调用身份，不据此宣布研究完成 |
+| 请求与行动依据续接 | 032826 人工验收 PARTIAL；Step 前置依赖已确认 | 作为历史依据保留，不据此扩大认知架构 |
+| 不依赖 Step 的请求保留 | 自动/原 artifact 重放与真实四轮执行链 PASS；模型行为 PARTIAL，人工待验 | 核对请求、调用、结果及未完成事实，不以流畅回答判断通过 |
 | Goal Hypothesis / Memory / Episode | 尚未实现新的 cognition engine | 不在本 checkpoint 自动启动 |
 
 当前只把有独立依据的有限 Web directive 投影成 execution constraint；topic/source preference
@@ -91,7 +96,7 @@ Web 代理和 `SERPAPI_KEY` 自动从仓库外 `~/.config/uaea/web.env` 加载�
 - Phase-1 semantic architecture：通过 `harness/semantic_state_adapter.py` 复用
   `ContextManager`、`TurnRelationRecord`、`ExecutionObservation`、`SemanticObservation`、
   `RuntimeObjectRecord/Store`、`WorkflowRunRecord` 与 `ProjectionRecord`。
-- workflow record 在 bridge 中只提供 task identity/ownership，不启动旧 planner、step 或 execution loop。
+- Workflow/Step records 在 bridge 中提供 task identity/ownership 和行动事实记录，不启动旧 planner 或 execution loop。
 - ActiveGoal anchor 代码保留，但当前 Harness bridge 不激活；`ActiveGoal != future longitudinal Goal Hypothesis`。
 - 当前有限 relation/extraction surface 不是完整 intent arbitration，也不保证任意多 topic/隐含任务切换。
 - Goal Hypothesis / Working Memory / Episode / Experience engine：本轮均未实现。
