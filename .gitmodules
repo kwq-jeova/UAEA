@@ -1,4 +1,4 @@
 [submodule "runtime/phase1-runtime"]
 	path = runtime/phase1-runtime
-	url = D:\\UAEA-phase1-runtime-v1.0
+	url = https://github.com/kwq-jeova/UAEA-phase1-runtime.git
 	branch = phase1-freeze
