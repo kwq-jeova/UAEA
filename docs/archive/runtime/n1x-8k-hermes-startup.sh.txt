@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Separate tool-parser experiment; the saved N1X 8K baseline is never edited.
+set -euo pipefail
+ROOT="${UAEA_N1X_ROOT:-$HOME/uaea-n1x}"
+BASELINE="$ROOT/baseline-8k-20261023"
+(cd "$BASELINE" && sha256sum --check SHA256SUMS)
+cmp -- "$BASELINE/mem_utils.n1x-patched.py" \
+  "$ROOT/vllm_env/lib/python3.12/site-packages/vllm/utils/mem_utils.py"
+export VLLM_WSL2_ENABLE_PIN_MEMORY=1
+export VLLM_USE_FLASHINFER_SAMPLER=0
+unset SERPAPI_KEY
+exec "$ROOT/vllm_env/bin/vllm" serve \
+  "$ROOT/models/Qwen2.5-14B-Instruct-AWQ" \
+  --served-model-name Qwen2.5-14B-Instruct-AWQ \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --dtype half \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.35 \
+  --max-num-seqs 1 \
+  --enforce-eager \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes

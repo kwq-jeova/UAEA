@@ -1,0 +1,26 @@
+{
+  "schema": "uaea.n1x_runtime_profile.v1",
+  "status": "CURRENT",
+  "profile": "n1x",
+  "context_window": 32768,
+  "vllm_mode": "external",
+  "base_url": "http://127.0.0.1:8000",
+  "model": "Qwen2.5-14B-Instruct-AWQ",
+  "model_path": "models/Qwen2.5-14B-Instruct-AWQ",
+  "venv": "vllm_env",
+  "dtype": "half",
+  "gpu_memory_utilization": 0.35,
+  "max_num_seqs": 1,
+  "enforce_eager": true,
+  "enable_auto_tool_choice": true,
+  "tool_call_parser": "hermes",
+  "environment": {
+    "VLLM_WSL2_ENABLE_PIN_MEMORY": "1",
+    "VLLM_USE_FLASHINFER_SAMPLER": "0"
+  },
+  "uma_patch": {
+    "path": "vllm_env/lib/python3.12/site-packages/vllm/utils/mem_utils.py",
+    "sha256": "54772815cecb6445485ff41bfeecf85082da6120c8e4615eff7066ddc544610e"
+  },
+  "verification_record": "docs/current/runtime/n1x-runtime-baseline-20261027.md"
+}

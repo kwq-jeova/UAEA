@@ -68,6 +68,7 @@ from h3_context_characterization import (  # noqa: E402
     start_vllm,
     stop_process,
     wait_for_health,
+    wait_for_external_health,
     write_config,
 )
 
@@ -261,6 +262,7 @@ class InteractiveAppServer:
         events_path: Path,
         stderr_path: Path,
         turn_timeout: int,
+        model: str = DEFAULT_MODEL,
     ) -> None:
         self.codex = codex
         self.codex_home = codex_home
@@ -270,6 +272,7 @@ class InteractiveAppServer:
         self.events_path = events_path
         self.stderr_path = stderr_path
         self.turn_timeout = turn_timeout
+        self.model = model
         self._dynamic_tools: list[dict[str, Any]] = []
         self.process: subprocess.Popen[str] | None = None
         self.thread_id = ""
@@ -380,7 +383,7 @@ class InteractiveAppServer:
                 "id": thread_id,
                 "method": "thread/resume" if resume_thread_id else "thread/start",
                 "params": {
-                    "model": DEFAULT_MODEL,
+                    "model": self.model,
                     "modelProvider": "uaea_local_vllm",
                     "cwd": str(self.workspace),
                     **({"threadId": resume_thread_id} if resume_thread_id else {"ephemeral": False}),
@@ -443,11 +446,11 @@ class InteractiveAppServer:
                     print(f"[UAEA] capacity diagnostic failed: {type(diagnostic_exc).__name__}", flush=True)
             return
         self._last_turn_context = turn_context_payload(
-            self._dynamic_tools, semantic_projection=semantic_projection.payload,
+            self._dynamic_tools, model=self.model, semantic_projection=semantic_projection.payload,
         )
         self._write_promotion_audit("PRE_TURN")
         print("\n[HARNESS] turn/start", flush=True)
-        print(f"[UAEA] runtime_facts injected: {RUNTIME_FACT_SUMMARY}", flush=True)
+        print(f"[UAEA] runtime_facts injected: {runtime_fact_summary(model=self.model)}", flush=True)
         print(
             "[UAEA] effective_capability_state injected: "
             f"{effective_capability_summary(self._dynamic_tools)}",
@@ -469,7 +472,7 @@ class InteractiveAppServer:
                     "threadId": self.thread_id,
                     "input": [{"type": "text", "text": text}],
                     "effort": "none",
-                    "model": DEFAULT_MODEL,
+                    "model": self.model,
                     "additionalContext": self._last_turn_context,
                 },
             },
@@ -798,37 +801,50 @@ def run(args: argparse.Namespace) -> int:
         return 2
     os.environ.setdefault("UAEA_REPL_INPUT_MODE", "raw")
     context_window = args.context
-    base_url = f"http://127.0.0.1:{DEFAULT_PORT}"
+    base_url = getattr(args, "base_url", f"http://127.0.0.1:{DEFAULT_PORT}").rstrip("/")
+    model = getattr(args, "model", DEFAULT_MODEL)
+    external = getattr(args, "vllm_mode", "managed") == "external"
+    if external and args.generation_diagnostics:
+        raise ValueError("Generation diagnostics cannot modify a caller-owned external service")
     stamp = utc_stamp()
     result_dir = args.result_root / f"interactive-{context_window}-{stamp}"
     codex_home = args.codex_home_root / f"interactive-{context_window}-{stamp}"
     workspace = args.workspace_root / f"interactive-{context_window}-{stamp}"
     result_dir.mkdir(parents=True, exist_ok=True)
     workspace.mkdir(parents=True, exist_ok=True)
-    write_config(codex_home, base_url, context_window)
+    write_config(codex_home, base_url, context_window, model=model, n1x=getattr(args, "profile", "") == "n1x")
+    (result_dir / "connection.json").write_text(json_line({
+        "vllm_mode": "external" if external else "managed",
+        "endpoint": base_url, "model": model, "context_window": context_window,
+        "codex_binary": str(args.codex_bin),
+    }) + "\n", encoding="utf-8")
 
     vllm_process: subprocess.Popen[Any] | None = None
     app: InteractiveAppServer | None = None
     try:
-        ensure_endpoint_not_serving(base_url)
-        print(
-            "[START] vLLM 32K diagnostic "
-            f"endpoint={base_url}/v1 gpu_memory_utilization={args.gpu_memory_utilization}",
-            flush=True,
-        )
-        vllm_process = start_vllm(
-            context_window,
-            base_url,
-            result_dir / "vllm.log",
-            args.vllm_root,
-            args.model_root,
-            args.gpu_memory_utilization,
-            generation_diagnostics_path=(result_dir / "generation-diagnostics.jsonl"
-                                         if args.generation_diagnostics else None),
-        )
-        if args.generation_diagnostics:
-            print(f"[DIAGNOSTICS] bounded generation/parser evidence: {result_dir / 'generation-diagnostics.jsonl'}", flush=True)
-        health_seconds = wait_for_health(base_url, vllm_process, args.health_timeout)
+        if external:
+            print(f"[CONNECT] caller-owned vLLM endpoint={base_url}/v1 model={model}", flush=True)
+            health_seconds = wait_for_external_health(base_url, model, context_window, args.health_timeout)
+        else:
+            ensure_endpoint_not_serving(base_url)
+            print(
+                "[START] vLLM 32K diagnostic "
+                f"endpoint={base_url}/v1 gpu_memory_utilization={args.gpu_memory_utilization}",
+                flush=True,
+            )
+            vllm_process = start_vllm(
+                context_window,
+                base_url,
+                result_dir / "vllm.log",
+                args.vllm_root,
+                args.model_root,
+                args.gpu_memory_utilization,
+                generation_diagnostics_path=(result_dir / "generation-diagnostics.jsonl"
+                                             if args.generation_diagnostics else None),
+            )
+            if args.generation_diagnostics:
+                print(f"[DIAGNOSTICS] bounded generation/parser evidence: {result_dir / 'generation-diagnostics.jsonl'}", flush=True)
+            health_seconds = wait_for_health(base_url, vllm_process, args.health_timeout)
         print(f"[READY] vLLM health OK in {health_seconds}s", flush=True)
 
         adapter = build_interactive_adapter(result_dir / "adapter")
@@ -841,11 +857,13 @@ def run(args: argparse.Namespace) -> int:
             events_path=result_dir / "app-server-events.jsonl",
             stderr_path=result_dir / "app-server-stderr.log",
             turn_timeout=args.turn_timeout,
+            model=model,
         )
         app.start()
         print(f"[READY] source-built Codex app-server thread={app.thread_id}", flush=True)
         print(f"[ARTIFACTS] {result_dir}", flush=True)
-        print("Type exit or quit to stop 8002 and app-server.\n", flush=True)
+        print("Type exit or quit to stop app-server"
+              + ("; external vLLM remains running.\n" if external else " and managed vLLM.\n"), flush=True)
         while True:
             try:
                 user_input = read_user_input("[USER] ").strip()
@@ -861,32 +879,73 @@ def run(args: argparse.Namespace) -> int:
     finally:
         if app is not None:
             app.close()
-        returncode = stop_process(vllm_process)
-        print(f"[STOP] app-server stopped; vLLM returncode={returncode}", flush=True)
+        if external:
+            print("[STOP] app-server stopped; external vLLM left running", flush=True)
+        else:
+            returncode = stop_process(vllm_process)
+            print(f"[STOP] app-server stopped; managed vLLM returncode={returncode}", flush=True)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Interactive UAEA H3 Harness bridge REPL on diagnostic 32K vLLM."
-    )
-    parser.add_argument("--context", type=int, default=DEFAULT_CONTEXT_WINDOW, choices=(32768,))
-    parser.add_argument("--result-root", type=Path, default=DEFAULT_RESULT_ROOT)
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    from urllib.parse import urlsplit
+    from harness.version_manifest import current_platform, selected_harness
+
+    parser = argparse.ArgumentParser(description="Interactive UAEA H3 Harness bridge REPL.")
+    parser.add_argument("--profile", choices=("h3", "n1x"),
+                        default="n1x" if current_platform() == "linux-aarch64" else "h3")
+    parser.add_argument("--context", type=int, choices=(32768,))
+    parser.add_argument("--vllm-mode", choices=("managed", "external"))
+    parser.add_argument("--base-url", help="Loopback server root URL, without /v1")
+    parser.add_argument("--model", help="Exact served model name")
+    parser.add_argument("--result-root", type=Path)
     parser.add_argument("--codex-bin", type=Path, default=DEFAULT_CODEX_BIN)
-    parser.add_argument("--codex-home-root", type=Path, default=DEFAULT_CODEX_HOME_ROOT)
-    parser.add_argument("--workspace-root", type=Path, default=DEFAULT_WORKSPACE_ROOT)
+    parser.add_argument("--codex-home-root", type=Path)
+    parser.add_argument("--workspace-root", type=Path)
     parser.add_argument("--vllm-root", type=Path, default=DEFAULT_VLLM_ROOT)
     parser.add_argument("--model-root", type=Path, default=DEFAULT_MODEL_ROOT)
-    parser.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=0.75,
-        help="H3-A2 validated value for 32K manual interaction.",
-    )
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.75,
+                        help="Managed H3 profile only; external service is not reconfigured.")
     parser.add_argument("--health-timeout", type=int, default=DEFAULT_HEALTH_TIMEOUT)
     parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT)
     parser.add_argument("--generation-diagnostics", action="store_true",
-                        help="Opt-in bounded pre-parser generation diagnostics; no parser behavior changes.")
-    return parser.parse_args()
+                        help="Managed service only; no parser behavior changes.")
+    args = parser.parse_args(argv)
+    n1x = args.profile == "n1x"
+    n1x_profile = (json.loads((PROJECT_ROOT / "harness/n1x_profile.json").read_text())
+                    if n1x else {})
+    local = Path.home() / "uaea-n1x" / "runs"
+    tag = selected_harness()["tag"]
+    defaults = {
+        "context": n1x_profile["context_window"] if n1x else DEFAULT_CONTEXT_WINDOW,
+        "vllm_mode": n1x_profile["vllm_mode"] if n1x else "managed",
+        "base_url": n1x_profile["base_url"] if n1x else f"http://127.0.0.1:{DEFAULT_PORT}",
+        "model": n1x_profile["model"] if n1x else DEFAULT_MODEL,
+        "result_root": local / "h3-results" if n1x else DEFAULT_RESULT_ROOT,
+        "codex_home_root": local / "codex-home" / tag if n1x else DEFAULT_CODEX_HOME_ROOT,
+        "workspace_root": local / "codex-workspace" / tag if n1x else DEFAULT_WORKSPACE_ROOT,
+    }
+    for name, value in defaults.items():
+        if getattr(args, name) is None:
+            setattr(args, name, value)
+    args.base_url = args.base_url.rstrip("/")
+    parsed = urlsplit(args.base_url)
+    try:
+        port = parsed.port
+    except ValueError:
+        parser.error("Invalid endpoint port")
+    if (parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost")
+            or not port or port == 8001 or parsed.path or parsed.username or parsed.password
+            or parsed.query or parsed.fragment):
+        parser.error("Use a loopback HTTP server root with an explicit port, excluding frozen 8001")
+    if not args.model.strip():
+        parser.error("Model name cannot be empty")
+    if args.vllm_mode == "managed" and (args.base_url != f"http://127.0.0.1:{DEFAULT_PORT}" or args.model != DEFAULT_MODEL):
+        parser.error("Managed H3 keeps its validated endpoint/model; use external mode for overrides")
+    if n1x and (args.vllm_mode != "external" or args.context != 32768):
+        parser.error("N1X requires the formal external 32768-context service")
+    if args.vllm_mode == "external" and args.generation_diagnostics:
+        parser.error("Generation diagnostics require a managed service")
+    return args
 
 
 if __name__ == "__main__":

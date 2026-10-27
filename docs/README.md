@@ -91,3 +91,5 @@ archive 表示不处于当前实施主线，不表示内容全部错误；研究
 顶层旧文件和 `phase2b-memory/` 入口只做 redirect，canonical 正文在分类目录。
 完整逐份分类、迁移清单、conflicts 和 unresolved research 见 [治理审计](document-governance-audit-20261002.md)。
 治理日期不等于重新验证全部历史模型、环境、外链或运行 artifact。
+
+N1X ARM64 的当前启动配置与版本证据见 [32K + Hermes 正式运行基线](current/runtime/n1x-runtime-baseline-20261027.md)；8K Bring-up 已归档。

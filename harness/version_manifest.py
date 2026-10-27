@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import platform
 from pathlib import Path
 from typing import Any
 
@@ -21,13 +22,30 @@ def selected_harness(version: str | None = None) -> dict[str, Any]:
     tag = version or os.environ.get("UAEA_CODEX_VERSION") or manifest["active_version"]
     if tag not in manifest["versions"]:
         raise ValueError(f"Unknown Harness version: {tag}; no fallback performed")
-    return {"tag": tag, **manifest["versions"][tag]}
+    return _platform_record(tag, manifest["versions"][tag], current_platform())
+
+
+def current_platform() -> str:
+    machine = platform.machine().lower()
+    machine = {"arm64": "aarch64", "amd64": "x86_64"}.get(machine, machine)
+    return f"{platform.system().lower()}-{machine}"
+
+
+def _platform_record(tag: str, record: dict[str, Any], platform_key: str | None) -> dict[str, Any]:
+    result = {key: value for key, value in record.items() if key != "platforms"}
+    override = record.get("platforms", {}).get(platform_key, {})
+    if any(key in override for key in ("commit", "tag")):
+        raise ValueError("Platform records cannot change the pinned source identity")
+    result.update(override)
+    return {"tag": tag, **result, **({"platform": platform_key} if override else {})}
 
 
 def identify_harness(binary: Path) -> dict[str, Any]:
     for tag, record in load_manifest()["versions"].items():
-        if binary == Path(record["binary"]):
-            return {"tag": tag, **record}
+        for platform_key in (None, *record.get("platforms", {})):
+            candidate = _platform_record(tag, record, platform_key)
+            if binary == Path(candidate["binary"]):
+                return candidate
     return {"tag": "explicit_binary_override", "commit": "unknown", "binary": str(binary)}
 
 
@@ -50,3 +68,11 @@ def verify_binary_digest(binary: Path, record: dict[str, Any]) -> None:
         if digest.hexdigest() != expected:
             raise RuntimeError("Harness binary checksum does not match the pinned manifest")
         record["binary_digest_verified"] = True
+
+    expected_bwrap = record.get("bwrap_sha256")
+    if expected_bwrap:
+        bwrap = binary.parent / "codex-resources" / "bwrap"
+        digest = hashlib.sha256(bwrap.read_bytes()).hexdigest()
+        if digest != expected_bwrap:
+            raise RuntimeError("Bundled bwrap checksum does not match the pinned manifest")
+        record["bwrap_digest_verified"] = True

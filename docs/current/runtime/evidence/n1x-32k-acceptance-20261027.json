@@ -1,0 +1,109 @@
+{
+  "schema": "uaea.n1x_32k_acceptance.v1",
+  "date": "2026-10-27",
+  "status": "PASS_SINGLE_TOOL_AND_QUOTE",
+  "profile": "harness/n1x_profile.json",
+  "versions": {
+    "vllm": "0.26.0",
+    "torch": "2.11.0",
+    "transformers": "5.14.1"
+  },
+  "harness": {
+    "tag": "rust-v0.163.0",
+    "commit": "83086188ae0614bd882818ff1aa23f3194962012",
+    "build_target": "aarch64-unknown-linux-gnu",
+    "binary": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/package/codex",
+    "binary_sha256": "a46cb75c1882238234f66c2fa78705dcea6fffbba3e5331c99afd7117c7d90d4",
+    "bwrap_sha256": "cf387d7ee855eb5a87b2a257a3204e3872ec35dff0f09a54dcf96cf9585532da"
+  },
+  "runtime_commit": "1f311291df027baceca40779643e5107b9eb6fb3",
+  "uma_patch": {
+    "path": "vllm_env/lib/python3.12/site-packages/vllm/utils/mem_utils.py",
+    "sha256": "54772815cecb6445485ff41bfeecf85082da6120c8e4615eff7066ddc544610e"
+  },
+  "identity": {
+    "thread_id": "01a17d4c-b91d-7120-b595-6777caeeef9e",
+    "turn_id": "01a17d4c-b943-73e3-bcb3-925587637143",
+    "call_id": "call_9a71022a6e255775",
+    "tool_name": "read_section"
+  },
+  "read": {
+    "resolved_path": "/home/wqkan_wsl/uaea-n1x/UAEA/README.md",
+    "section": "历史与下一步",
+    "section_index": 7,
+    "line_start": 159,
+    "line_end": 172,
+    "size_chars": 821,
+    "source_hash": "f2d60a940c3c0fc644037ae4596eaea8af0c57be0d15273ef36037d7ef225120",
+    "content_hash": "a6b85b87eb56f805d9955a263cf4b8716fff964d51f2b06adc84dd374a2ba335"
+  },
+  "execution_result": "PASS",
+  "answer_grounding_result": "PASS",
+  "quote_comparison_policy": "Only CR/LF line breaks are ignored. No other text normalization.",
+  "model_answer": "## 历史与下一步\n\n该部分提到：“下一研究方向仍是 UAEA Episode / Goal Hypothesis / Working Memory / associative relation；但当前先等待 retained interpretation / execution authority 的人工结果，不直接启动认知引擎。”",
+  "workflow": {
+    "workflow_id": "39e37c73-8867-4528-9fb2-b944eaddba1f",
+    "status": "active",
+    "completion_established": false,
+    "step_status": "completed",
+    "turn_receipt": {
+      "workflow_id": "39e37c73-8867-4528-9fb2-b944eaddba1f",
+      "turn_id": "01a17d4c-b943-73e3-bcb3-925587637143",
+      "terminal": "completed",
+      "attempts": 1,
+      "successful": 1,
+      "outcomes_observed": 1
+    },
+    "unresolved": []
+  },
+  "automatic_compaction_count": 0,
+  "token_usage_updates": [
+    {
+      "total": {
+        "totalTokens": 7172,
+        "inputTokens": 7128,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 44,
+        "reasoningOutputTokens": 0
+      },
+      "last": {
+        "totalTokens": 7172,
+        "inputTokens": 7128,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 44,
+        "reasoningOutputTokens": 0
+      },
+      "modelContextWindow": 31129
+    },
+    {
+      "total": {
+        "totalTokens": 15306,
+        "inputTokens": 15211,
+        "cachedInputTokens": 7168,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 95,
+        "reasoningOutputTokens": 0
+      },
+      "last": {
+        "totalTokens": 8134,
+        "inputTokens": 8083,
+        "cachedInputTokens": 7168,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 51,
+        "reasoningOutputTokens": 0
+      },
+      "modelContextWindow": 31129
+    }
+  ],
+  "original_evidence_directory": "/home/wqkan_wsl/uaea-n1x/audit/w2c-32k-hermes-20261027T121726Z",
+  "frozen_baseline_directory": "/home/wqkan_wsl/uaea-n1x/baseline-32k-hermes-20261027",
+  "artifacts": {
+    "/home/wqkan_wsl/uaea-n1x/audit/w2c-32k-hermes-20261027T121726Z/w2c-result.json": "c8c07113a873066ceb540e87a976206a34f8323ed17c5b0dd2a4010e1f1117fa",
+    "/home/wqkan_wsl/uaea-n1x/audit/w2c-32k-hermes-20261027T121726Z/h3/interactive-32768-20261027-121901/app-server-events.jsonl": "1c2c26527a119867c8ce83ed166ea9dc9fe75471ef1c3a829e6a27c4012ab5c4",
+    "/home/wqkan_wsl/uaea-n1x/audit/w2c-32k-hermes-20261027T121726Z/h3/interactive-32768-20261027-121901/normalized-trajectories/interactive-32768-20261027-121901.app-server-events.c41728d35b5a4fb9aa78716ec35525ed.trajectory.jsonl": "2179fb965cfcb9fa2a55174ed0ead98b639ebe191e8198fe103da98c6dc9a887",
+    "/home/wqkan_wsl/uaea-n1x/audit/w2c-32k-hermes-20261027T121726Z/dispatch-trace.jsonl": "5a1d5cf0ba8949c27c8251e129ce3f706d6fd71dd5f48ea3318acd5d2d7d0e05"
+  },
+  "scope": "One user workflow input with one real tool call. No multi-turn or general factuality claim. Global workflow completion is not established."
+}

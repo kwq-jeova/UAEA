@@ -1,0 +1,30 @@
+{
+  "status": "ARCHIVED_NOT_MAINTAINED",
+  "context_window": 8192,
+  "model": "Qwen2.5-14B-Instruct-AWQ",
+  "versions": {
+    "vllm": "0.26.0",
+    "torch": "2.11.0",
+    "codex": "rust-v0.163.0"
+  },
+  "directory": "/home/wqkan_wsl/uaea-n1x/archive/baseline-8k-20261023",
+  "historical_path": "/home/wqkan_wsl/uaea-n1x/baseline-8k-20261023",
+  "files_sha256": {
+    "mem_utils.original.py": "937834bb0201970ee9697ba708ff6918494f076206ab4bf49123288e4c927d17",
+    "start-vllm-8k.sh": "d5e7325d48b1afd88f2e9dabeb69ae26e4e31afe6636b27f8cbb2e8bc0d8f561",
+    "mem_utils.n1x-patched.py": "54772815cecb6445485ff41bfeecf85082da6120c8e4615eff7066ddc544610e",
+    "n1x-wsl-memory.patch": "b022c09d4543b0649963a2688d3a3a13d5cde2581124d3998c7693a1d3ccf590",
+    "SHA256SUMS": "5d05c8054679aba4a48360e3572e1d47cb94adfd1db747be7f3a15264a67e076",
+    "README.md": "8c16d49c2d037ccbb1a01dd9b2fdedf7e0507ee4105b4dcf721083b4a3881d3b",
+    "requirements.txt": "32b2c5e40e68dd4b467fb992b2ab9e104c049333275ff4439cc781eae28f9514"
+  },
+  "evidence": {
+    "bringup": "engine and real inference PASS",
+    "w2b": "/home/wqkan_wsl/uaea-n1x/audit/w2-b-20261026T232218Z",
+    "w2c": "/home/wqkan_wsl/uaea-n1x/audit/w2-c-single-tool-20261026T235158Z",
+    "w2c_execution": "PASS",
+    "w2c_answer_fidelity": "FAIL",
+    "w2c_compaction_count": 1
+  },
+  "replacement": "harness/n1x_profile.json"
+}

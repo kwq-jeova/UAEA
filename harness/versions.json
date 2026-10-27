@@ -14,7 +14,12 @@
       "build_verification": "existing_baseline",
       "binary_sha256": "14cbd07db472b3a79aca95dfb4490a385c85be2116b3ca8631bc938b4e48e0fe",
       "uaea_regression": "PASS",
-      "regression_summary": {"tests_run": 395, "passed": 393, "failed": 0, "skipped": 2},
+      "regression_summary": {
+        "tests_run": 395,
+        "passed": 393,
+        "failed": 0,
+        "skipped": 2
+      },
       "model_behavior": "PARTIAL"
     },
     "rust-v0.163.0": {
@@ -29,12 +34,44 @@
       "binary_sha256": "ed7ff56a95b9b3cce1870f01404bd899e06783709e09d736856807f9d61cf9ca",
       "bwrap_sha256": "4dd122db8530b2ae8ac0b67e2ee1752310d661d38d5875b7bbc24d0427b634ed",
       "uaea_regression": "PASS",
-      "regression_summary": {"tests_run": 395, "passed": 393, "failed": 0, "skipped": 2},
+      "regression_summary": {
+        "tests_run": 395,
+        "passed": 393,
+        "failed": 0,
+        "skipped": 2
+      },
       "model_behavior": "PARTIAL",
       "verification_date": "2026-10-22",
       "verification_record": "docs/current/runtime/harness-upgrade-20261022.md",
       "official_release": "https://github.com/openai/codex/releases/tag/rust-v0.163.0",
-      "prerelease": false
+      "prerelease": false,
+      "platforms": {
+        "linux-aarch64": {
+          "source_location": "/home/wqkan_wsl/uaea-n1x/deps/codex-rust-v0.163.0-source",
+          "build_source": "/home/wqkan_wsl/uaea-n1x/build/codex-rust-v0.163.0-arm64/src",
+          "binary": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/package/codex",
+          "build_target": "aarch64-unknown-linux-gnu",
+          "build_profile": "dev-small",
+          "build_verification": "PASS_W2A",
+          "binary_sha256": "a46cb75c1882238234f66c2fa78705dcea6fffbba3e5331c99afd7117c7d90d4",
+          "bwrap_sha256": "cf387d7ee855eb5a87b2a257a3204e3872ec35dff0f09a54dcf96cf9585532da",
+          "uaea_regression": "PASS_HARNESS_SCOPE",
+          "regression_summary": {
+            "tests_run": 237,
+            "passed": 235,
+            "failed": 0,
+            "skipped": 2
+          },
+          "model_behavior": "W2C_32K_SINGLE_TOOL_AND_QUOTE_PASS",
+          "integration_verification_date": "2026-10-27",
+          "integration_record": "docs/current/runtime/n1x-runtime-baseline-20261027.md",
+          "full_suite_status": "BLOCKED_MISSING_PRIVATE_MEMORY_FIXTURES",
+          "verification_date": "2026-10-26",
+          "verification_record": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/evidence/REPORT.md",
+          "integration_evidence": "docs/current/runtime/evidence/n1x-32k-acceptance-20261027.json",
+          "runtime_profile": "harness/n1x_profile.json"
+        }
+      }
     }
   }
 }

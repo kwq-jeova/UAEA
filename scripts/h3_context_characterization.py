@@ -112,18 +112,21 @@ def json_line(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
-def write_config(home: Path, base_url: str, context_window: int) -> None:
+def write_config(home: Path, base_url: str, context_window: int, *, model: str = DEFAULT_MODEL, n1x: bool = False) -> None:
     home.mkdir(parents=True, exist_ok=True)
     (home / "config.toml").write_text(
         "\n".join(
             [
                 'model_provider = "uaea_local_vllm"',
-                f'model = "{DEFAULT_MODEL}"',
+                f"model = {json.dumps(model)}",
                 'model_reasoning_effort = "none"',
                 f"model_context_window = {context_window}",
                 "project_doc_max_bytes = 0",
+                *(['web_search = "disabled"'] if n1x else []),
                 "",
                 "[features]",
+                *(["multi_agent = false", "multi_agent_v2 = false", "goals = false",
+                   "memories = false", "view_image = false"] if n1x else []),
                 "skill_search = false",
                 "plugins = false",
                 "shell_tool = false",
@@ -838,6 +841,30 @@ def wait_for_health(base_url: str, process: subprocess.Popen[Any], timeout: int)
         except (OSError, urllib.error.URLError):
             time.sleep(2)
     raise RuntimeError(f"vLLM health timeout after {timeout}s: {endpoint}")
+
+
+def wait_for_external_health(base_url: str, model: str, context_window: int, timeout: int) -> float:
+    """Validate a caller-owned service without starting or stopping any process."""
+    started = time.monotonic()
+    deadline = started + timeout
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(f"{base_url}/v1/models", timeout=5) as response:
+                data = json.load(response)
+            models = {item["id"]: item for item in data.get("data", [])}
+            if model not in models:
+                raise RuntimeError(f"External vLLM does not serve the configured model: {model}")
+            maximum = models[model].get("max_model_len")
+            if maximum is not None and context_window > int(maximum):
+                raise RuntimeError(f"Harness context {context_window} exceeds service limit {maximum}")
+            return round(time.monotonic() - started, 3)
+        except urllib.error.HTTPError as exc:
+            if exc.code < 500:
+                raise RuntimeError(f"External vLLM health returned HTTP {exc.code}") from exc
+        except (OSError, urllib.error.URLError):
+            pass
+        time.sleep(2)
+    raise RuntimeError(f"External vLLM health timeout after {timeout}s: {base_url}/v1/models")
 
 
 def ensure_endpoint_not_serving(base_url: str) -> None:

@@ -10,6 +10,9 @@ Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability co
 版本清单、双版本验证与回退见 [升级记录](docs/current/runtime/harness-upgrade-20261022.md)；
 本轮不改变下述 semantic ownership、模型及冻结 `8001`，不将既有模型行为 PARTIAL 宣称为已修复。
 
+**2026-10-27 N1X 正式运行配置：32K + Hermes，与 5090D 统一 Context 规格。**
+N1X 启动、固定版本、单工具验收及 8K 归档见 [N1X 运行基线](docs/current/runtime/n1x-runtime-baseline-20261027.md)。
+
 当前阶段与停止点：[2026-10-05 信息边界 Checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)。
 [2026-10-02 Boundary Audit](docs/current/architecture/boundary-integrity-audit-20261002.md) 保留此前修复依据，不能用旧测试或等待状态替代最新结论。
 **2026-10-18 最新进度：来源覆盖事实记录人工验收 PASS；单 Workflow 研究推理仍为 PARTIAL。**
