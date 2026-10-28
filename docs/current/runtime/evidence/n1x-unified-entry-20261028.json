@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-28",
+  "verdict": "PASS",
+  "launcher": {
+    "argv": [
+      "bash",
+      "/home/wqkan_wsl/uaea-n1x/UAEA/scripts/start_h3_harness_interactive.sh",
+      "--profile",
+      "n1x",
+      "--result-root",
+      "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/h3",
+      "--codex-home-root",
+      "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/codex-home",
+      "--workspace-root",
+      "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/workspace",
+      "--turn-timeout",
+      "420",
+      "--health-timeout",
+      "30"
+    ],
+    "entrypoint": "scripts/start_h3_harness_interactive.sh",
+    "input_source": "user-request.txt followed by exit",
+    "monkeypatches": false,
+    "context_override": false
+  },
+  "original_source_commit": "903175f8443fe4a475de0291997fe47ea4e6b054",
+  "harness_provenance": {
+    "tag": "rust-v0.163.0",
+    "commit": "83086188ae0614bd882818ff1aa23f3194962012",
+    "tag_object": "129b8ec7ee6f4511557a4856279f529025c25af4",
+    "source_location": "/home/wqkan_wsl/uaea-n1x/deps/codex-rust-v0.163.0-source",
+    "build_source": "/home/wqkan_wsl/uaea-n1x/build/codex-rust-v0.163.0-arm64/src",
+    "binary": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/package/codex",
+    "build_target": "aarch64-unknown-linux-gnu",
+    "build_profile": "dev-small",
+    "build_verification": "PASS_W2A",
+    "binary_sha256": "a46cb75c1882238234f66c2fa78705dcea6fffbba3e5331c99afd7117c7d90d4",
+    "bwrap_sha256": "cf387d7ee855eb5a87b2a257a3204e3872ec35dff0f09a54dcf96cf9585532da",
+    "uaea_regression": "PASS_HARNESS_SCOPE",
+    "regression_summary": {
+      "tests_run": 237,
+      "passed": 235,
+      "failed": 0,
+      "skipped": 2
+    },
+    "model_behavior": "W2C_32K_SINGLE_TOOL_AND_QUOTE_PASS",
+    "verification_date": "2026-10-26",
+    "verification_record": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/evidence/REPORT.md",
+    "official_release": "https://github.com/openai/codex/releases/tag/rust-v0.163.0",
+    "prerelease": false,
+    "integration_verification_date": "2026-10-27",
+    "integration_record": "docs/current/runtime/n1x-runtime-baseline-20261027.md",
+    "full_suite_status": "BLOCKED_MISSING_PRIVATE_MEMORY_FIXTURES",
+    "integration_evidence": "docs/current/runtime/evidence/n1x-32k-acceptance-20261027.json",
+    "runtime_profile": "harness/n1x_profile.json",
+    "platform": "linux-aarch64",
+    "binary_digest_verified": true,
+    "bwrap_digest_verified": true,
+    "reported_version": "codex-cli 0.163.0"
+  },
+  "identity": {
+    "thread_id": "01a17fe3-7cda-7dc1-a835-bb8143bad605",
+    "turn_id": "01a17fe3-7cfa-7c03-9b86-708410dbc8b5",
+    "call_id": "call_90f3adb15f5695fa",
+    "observation_id": "f96cf778-0bf1-49fe-be81-21be91fbdf62"
+  },
+  "read": {
+    "resolved_path": "/home/wqkan_wsl/uaea-n1x/UAEA/README.md",
+    "section": "历史与下一步",
+    "line_start": 162,
+    "line_end": 175,
+    "size_chars": 821,
+    "content_hash": "a6b85b87eb56f805d9955a263cf4b8716fff964d51f2b06adc84dd374a2ba335",
+    "source_hash": "49e55fc0f94a83d9956415c981c085d0a9fd813dee4af72fba5e7a583ce5b533"
+  },
+  "quoted_text": "历史不删除；[原 README](docs/archive/harness/readme-before-boundary-audit-20261002.md) 保存此前 Phase-1/Phase-2A、LMF 和早期 Harness 的完整描述。",
+  "quote_comparison_policy": "Fold whitespace only; punctuation, Markdown link and text must match verbatim.",
+  "token_usage_updates": [
+    {
+      "total": {
+        "totalTokens": 7152,
+        "inputTokens": 7108,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 44,
+        "reasoningOutputTokens": 0
+      },
+      "last": {
+        "totalTokens": 7152,
+        "inputTokens": 7108,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 44,
+        "reasoningOutputTokens": 0
+      },
+      "modelContextWindow": 31129
+    },
+    {
+      "total": {
+        "totalTokens": 15277,
+        "inputTokens": 15166,
+        "cachedInputTokens": 7136,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 111,
+        "reasoningOutputTokens": 0
+      },
+      "last": {
+        "totalTokens": 8125,
+        "inputTokens": 8058,
+        "cachedInputTokens": 7136,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 67,
+        "reasoningOutputTokens": 0
+      },
+      "modelContextWindow": 31129
+    }
+  ],
+  "automatic_compaction_count": 0,
+  "turn_status": "completed",
+  "workflow": {
+    "workflow_id": "828dba11-91fb-45a1-aaf5-e477cdbd4754",
+    "status": "active",
+    "completion_established": false,
+    "turn_receipts": [
+      {
+        "workflow_id": "828dba11-91fb-45a1-aaf5-e477cdbd4754",
+        "turn_id": "01a17fe3-7cfa-7c03-9b86-708410dbc8b5",
+        "terminal": "completed",
+        "attempts": 1,
+        "successful": 1,
+        "outcomes_observed": 1
+      }
+    ],
+    "unresolved": []
+  },
+  "raw_events": "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/h3/interactive-32768-20261028-002255/app-server-events.jsonl",
+  "trajectory": "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/h3/interactive-32768-20261028-002255/normalized-trajectories/interactive-32768-20261028-002255.app-server-events.d13038a5709c4af4b3f5b7b5237b042b.trajectory.jsonl",
+  "semantic_snapshots": "/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z/h3/interactive-32768-20261028-002255/semantic-state-snapshots.jsonl",
+  "inference_workflow_runs": 1,
+  "model_retries_by_driver": 0,
+  "checks_at_acceptance": {
+    "actual_unified_shell_entry": true,
+    "no_runtime_monkeypatches_or_context_override": true,
+    "exactly_one_structured_read_section_call": true,
+    "one_successful_dynamic_tool_result": true,
+    "tool_call_result_identity_match": true,
+    "correct_capability": true,
+    "returned_content_matches_independent_slice": true,
+    "content_sha256_matches": true,
+    "source_path_sha256_matches": true,
+    "one_real_successful_file_execution_in_ledger": true,
+    "one_real_successful_tool_execution_in_ledger": true,
+    "execution_observation_success_and_result_identity": true,
+    "one_completed_step": true,
+    "turn_receipt_one_success_observed": true,
+    "one_completed_turn": true,
+    "exact_heading": true,
+    "quote_verbatim_after_whitespace_folding": true,
+    "no_compaction": true,
+    "effective_context_31129": true,
+    "trajectory_valid": true,
+    "trajectory_call_result_observation": true,
+    "projections_in_budget": true,
+    "harness_version_unchanged": true,
+    "harness_binary_sha256_matches": true,
+    "runtime_clean": true,
+    "all_test_time_source_files_unchanged": true,
+    "all_protected_files_unchanged": true,
+    "baseline-harness-arm64-w2a-20261026_unchanged": true,
+    "baseline-32k-hermes-20261027_unchanged": true,
+    "h3_exit_preserves_external_service": true,
+    "owned_service_pid_still_alive": true,
+    "exactly_one_user_turn_sent": true
+  },
+  "scope": "One actual unified shell-entry turn; no monkeypatches, no Context override. Global workflow completion is not established."
+}

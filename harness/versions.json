@@ -62,14 +62,15 @@
             "failed": 0,
             "skipped": 2
           },
-          "model_behavior": "W2C_32K_SINGLE_TOOL_AND_QUOTE_PASS",
-          "integration_verification_date": "2026-10-27",
+          "model_behavior": "UNIFIED_ENTRY_W2C_32K_SINGLE_TOOL_AND_QUOTE_PASS",
+          "integration_verification_date": "2026-10-28",
           "integration_record": "docs/current/runtime/n1x-runtime-baseline-20261027.md",
           "full_suite_status": "BLOCKED_MISSING_PRIVATE_MEMORY_FIXTURES",
           "verification_date": "2026-10-26",
           "verification_record": "/home/wqkan_wsl/uaea-n1x/baseline-harness-arm64-w2a-20261026/evidence/REPORT.md",
-          "integration_evidence": "docs/current/runtime/evidence/n1x-32k-acceptance-20261027.json",
-          "runtime_profile": "harness/n1x_profile.json"
+          "integration_evidence": "docs/current/runtime/evidence/n1x-unified-entry-20261028.json",
+          "runtime_profile": "harness/n1x_profile.json",
+          "integration_entrypoint": "scripts/start_h3_harness_interactive.sh"
         }
       }
     }

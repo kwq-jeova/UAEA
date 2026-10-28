@@ -1,9 +1,11 @@
 # N1X 正式运行基线：32K + Hermes
 
 Status: CURRENT
-日期：2026-10-27
+正式化日期：2026-10-27
+统一入口验收日期：2026-10-28
 配置来源：harness/n1x_profile.json
-验收记录：evidence/n1x-32k-acceptance-20261027.json
+首次 32K 验收记录：evidence/n1x-32k-acceptance-20261027.json
+统一入口验收记录：evidence/n1x-unified-entry-20261028.json
 
 ## 正式运行配置
 
@@ -52,6 +54,28 @@ bash scripts/start_h3_harness_interactive.sh --profile n1x --turn-timeout 420
 Linux aarch64 默认选择 n1x；H3 只连接现有 vLLM，exit 只关闭自己的 app-server。
 显式 --context 8192 被拒绝。实验副本 h3_harness_interactive_repl_n1x32k.py 已并入共同入口；
 验收时的原始副本保存在本地冻结基线 accepted-entrypoints 中，不再并行维护。
+
+## 统一 Harness 入口验收（2026-10-28）
+
+两台设备统一使用 scripts/start_h3_harness_interactive.sh：
+
+| Profile | 默认选择条件 | Context | 模型服务与生命周期 |
+| --- | --- | --- | --- |
+| n1x | Linux aarch64 | 32768 | 外部 8000；H3 退出不停止 vLLM |
+| h3 | 原有非 N1X 默认；5090D 可显式指定 | 32768 | 原有 8002 managed、model/path/GPU 参数不变 |
+
+本次实际以 Bash 执行统一入口 --profile n1x，stdin 仅提供一个原始验收请求及 exit。
+没有导入替代 REPL，没有 monkeypatch，没有 --context 覆盖，也没有重试模型工作流。
+一次结构化 read_section、一次真实文件执行、Tool Result 和 Execution Observation 均 PASS；
+章节原文及 SHA256 与独立读取一致。最终摘录仅合并排版空白，标点、链接及文字一致。
+两次输入 7108、8058 Tokens，输出 44、67；有效窗口 31129，无 Compaction。
+Turn 与步骤 completed；Workflow 仍 active、completion_established=false、unresolved 为空。
+
+原始事件、Trajectory、语义快照、实际启动 argv 和逐项检查保存在：
+/home/wqkan_wsl/uaea-n1x/audit/unified-entry-20261028-002155Z。
+H3 退出后先确认外部服务仍存活，再停止本轮检查自行启动的模型服务；
+原 frozen 32K 与 W2-A 快照、8K 归档、UMA 文件及 Runtime 保持不变。
+既有 16 项 N1X startup / Harness manifest 回归通过，不新增测试用例或其它模型工作流。
 
 ## 固定版本与验收
 
