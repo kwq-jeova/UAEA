@@ -51,7 +51,9 @@ class N1XHarnessStartupTests(TestCase):
                          (32768, "http://127.0.0.1:8000", "external"))
         self.assertEqual(n1x.model, "Qwen2.5-14B-Instruct-AWQ")
         self.assertNotIn("/mnt/", str(n1x.result_root))
-        h3 = repl.parse_args(["--profile", "h3"])
+        with patch("harness.version_manifest.current_platform", return_value="linux-x86_64"):
+            h3 = repl.parse_args(["--profile", "h3"])
+            self.assertEqual(h3.codex_bin, Path(load_manifest()["versions"]["rust-v0.163.0"]["binary"]))
         self.assertEqual((h3.context, h3.base_url, h3.vllm_mode),
                          (32768, "http://127.0.0.1:8002", "managed"))
         self.assertEqual(h3.model, context.DEFAULT_MODEL)
@@ -118,3 +120,42 @@ class N1XHarnessStartupTests(TestCase):
             self.assertNotIn("web_search", h3)
             self.assertNotIn("multi_agent", h3["features"])
             self.assertNotIn("goals", h3["features"])
+
+    def test_wrong_platform_profiles_are_rejected(self):
+        for host, profile in [("linux-x86_64", "n1x"), ("linux-aarch64", "h3")]:
+            with self.subTest(host=host), patch("harness.version_manifest.current_platform", return_value=host), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    repl.parse_args(["--profile", profile])
+
+    def test_missing_arm_version_never_falls_back_to_x86(self):
+        with patch("harness.version_manifest.current_platform", return_value="linux-aarch64"):
+            with self.assertRaisesRegex(ValueError, "no fallback"):
+                selected_harness("rust-v0.154.0")
+
+    def test_elf_architecture_guard_includes_explicit_binary_overrides(self):
+        from harness.version_manifest import verify_binary_platform
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "codex"
+            for machine, host in [(183, "linux-aarch64"), (62, "linux-x86_64")]:
+                header = bytearray(20)
+                header[:6] = bytes((127, 69, 76, 70, 2, 1))
+                header[18:20] = machine.to_bytes(2, "little")
+                binary.write_bytes(header)
+                with patch("harness.version_manifest.current_platform", return_value=host):
+                    record = {"tag": "explicit_binary_override"}
+                    verify_binary_platform(binary, record)
+                    self.assertTrue(record["binary_platform_verified"])
+                other = "linux-x86_64" if host == "linux-aarch64" else "linux-aarch64"
+                with patch("harness.version_manifest.current_platform", return_value=other):
+                    with self.assertRaisesRegex(RuntimeError, "native 64-bit ELF"):
+                        verify_binary_platform(binary, {"tag": "explicit_binary_override"})
+
+    def test_registered_binary_override_cannot_cross_platforms(self):
+        manifest = load_manifest()["versions"]["rust-v0.163.0"]
+        for host, profile, binary in [
+            ("linux-x86_64", "h3", manifest["platforms"]["linux-aarch64"]["binary"]),
+            ("linux-aarch64", "n1x", manifest["binary"]),
+        ]:
+            with self.subTest(host=host), patch("harness.version_manifest.current_platform", return_value=host), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    repl.parse_args(["--profile", profile, "--codex-bin", binary])

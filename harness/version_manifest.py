@@ -22,7 +22,13 @@ def selected_harness(version: str | None = None) -> dict[str, Any]:
     tag = version or os.environ.get("UAEA_CODEX_VERSION") or manifest["active_version"]
     if tag not in manifest["versions"]:
         raise ValueError(f"Unknown Harness version: {tag}; no fallback performed")
-    return _platform_record(tag, manifest["versions"][tag], current_platform())
+    host = current_platform()
+    record = _platform_record(tag, manifest["versions"][tag], host)
+    expected = {"linux-aarch64": "aarch64-unknown-linux-gnu",
+                "linux-x86_64": "x86_64-unknown-linux-gnu"}.get(host)
+    if expected is None or record.get("build_target") != expected:
+        raise ValueError(f"No compatible Harness build for {tag} on {host}; no fallback performed")
+    return record
 
 
 def current_platform() -> str:
@@ -76,3 +82,21 @@ def verify_binary_digest(binary: Path, record: dict[str, Any]) -> None:
         if digest != expected_bwrap:
             raise RuntimeError("Bundled bwrap checksum does not match the pinned manifest")
         record["bwrap_digest_verified"] = True
+
+def verify_binary_platform(binary: Path, record: dict[str, Any]) -> None:
+    """Reject incompatible registered or explicitly overridden executables before launch."""
+    host = current_platform()
+    targets = {"linux-aarch64": ("aarch64-unknown-linux-gnu", 183),
+               "linux-x86_64": ("x86_64-unknown-linux-gnu", 62)}
+    if host not in targets:
+        raise RuntimeError(f"Unsupported Harness execution platform: {host}")
+    target, machine = targets[host]
+    if record.get("build_target") not in (None, target):
+        raise RuntimeError(f"Harness platform mismatch: {record['build_target']} on {host}")
+    with binary.open("rb") as stream:
+        header = stream.read(20)
+    if (len(header) < 20 or header[:4] != b"\x7fELF"
+            or header[4:6] != bytes((2, 1))
+            or int.from_bytes(header[18:20], "little") != machine):
+        raise RuntimeError(f"Harness binary must be a native 64-bit ELF for {host}: {binary}")
+    record["binary_platform_verified"] = True

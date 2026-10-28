@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from harness.version_manifest import codex_process_environment, selected_harness, verify_binary_digest  # noqa: E402
+from harness.version_manifest import codex_process_environment, selected_harness, verify_binary_digest, verify_binary_platform  # noqa: E402
 
 
 def main() -> int:
@@ -19,6 +19,7 @@ def main() -> int:
     args = parser.parse_args()
     record = selected_harness(args.version)
     if args.verify_binary:
+        verify_binary_platform(Path(record["binary"]), record)
         verify_binary_digest(Path(record["binary"]), record)
         record["binary_reported_version"] = subprocess.check_output(
             [record["binary"], "--version"], text=True, timeout=30,

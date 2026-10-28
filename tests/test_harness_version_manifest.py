@@ -14,6 +14,12 @@ from harness.version_manifest import codex_process_environment, identify_harness
 
 
 class HarnessVersionManifestTests(unittest.TestCase):
+    def setUp(self):
+        # This suite compares the two retained x86 versions; ARM availability is checked separately.
+        host = patch("harness.version_manifest.current_platform", return_value="linux-x86_64")
+        host.start()
+        self.addCleanup(host.stop)
+
     def test_exact_pinned_commits_are_distinct(self):
         self.assertEqual(selected_harness("rust-v0.154.0")["commit"],
                          "6b9826e3aa83b1a5947db50f4332cb9c65f1b340")

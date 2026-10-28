@@ -13,9 +13,12 @@ from pathlib import Path
 import hashlib
 import json
 import os
+import platform
 import sys
 from urllib.parse import urlsplit
 
+if platform.system() != "Linux" or platform.machine().lower() not in ("aarch64", "arm64"):
+    raise SystemExit("N1X vLLM requires Linux aarch64; no platform fallback.")
 root, profile_path = Path(sys.argv[1]), Path(sys.argv[2])
 profile = json.loads(profile_path.read_text())
 if (profile["profile"] != "n1x" or profile["context_window"] != 32768

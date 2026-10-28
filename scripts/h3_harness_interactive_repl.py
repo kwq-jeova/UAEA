@@ -291,10 +291,11 @@ class InteractiveAppServer:
         self.adapter.bind_semantic_state_adapter(self.semantic_state)
 
     def start(self, *, resume_thread_id: str = "") -> None:
-        from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest
+        from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest, verify_binary_platform
 
         env = codex_process_environment(self.codex_home)
         provenance = identify_harness(self.codex)
+        verify_binary_platform(self.codex, provenance)
         verify_binary_digest(self.codex, provenance)
         provenance["reported_version"] = subprocess.check_output(
             [str(self.codex), "--version"], text=True, timeout=30, env=env).strip()
@@ -898,7 +899,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--base-url", help="Loopback server root URL, without /v1")
     parser.add_argument("--model", help="Exact served model name")
     parser.add_argument("--result-root", type=Path)
-    parser.add_argument("--codex-bin", type=Path, default=DEFAULT_CODEX_BIN)
+    parser.add_argument("--codex-bin", type=Path)
     parser.add_argument("--codex-home-root", type=Path)
     parser.add_argument("--workspace-root", type=Path)
     parser.add_argument("--vllm-root", type=Path, default=DEFAULT_VLLM_ROOT)
@@ -911,6 +912,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Managed service only; no parser behavior changes.")
     args = parser.parse_args(argv)
     n1x = args.profile == "n1x"
+    host = current_platform()
+    required_host = "linux-aarch64" if n1x else "linux-x86_64"
+    if host != required_host:
+        parser.error(f"Profile {args.profile} requires {required_host}; current platform is {host}")
+    if args.codex_bin is None:
+        args.codex_bin = Path(selected_harness()["binary"])
+    from harness.version_manifest import identify_harness
+    selected_target = identify_harness(args.codex_bin).get("build_target")
+    expected_target = "aarch64-unknown-linux-gnu" if n1x else "x86_64-unknown-linux-gnu"
+    if selected_target not in (None, expected_target):
+        parser.error(f"Harness binary target {selected_target} is incompatible with profile {args.profile}")
     n1x_profile = (json.loads((PROJECT_ROOT / "harness/n1x_profile.json").read_text())
                     if n1x else {})
     local = Path.home() / "uaea-n1x" / "runs"

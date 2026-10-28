@@ -62,7 +62,7 @@ Linux aarch64 默认选择 n1x；H3 只连接现有 vLLM，exit 只关闭自己�
 | Profile | 默认选择条件 | Context | 模型服务与生命周期 |
 | --- | --- | --- | --- |
 | n1x | Linux aarch64 | 32768 | 外部 8000；H3 退出不停止 vLLM |
-| h3 | 原有非 N1X 默认；5090D 可显式指定 | 32768 | 原有 8002 managed、model/path/GPU 参数不变 |
+| h3 | Linux x86_64 默认；5090D 可显式指定 | 32768 | 原有 8002 managed、model/path/GPU 参数不变 |
 
 本次实际以 Bash 执行统一入口 --profile n1x，stdin 仅提供一个原始验收请求及 exit。
 没有导入替代 REPL，没有 monkeypatch，没有 --context 覆盖，也没有重试模型工作流。
@@ -119,3 +119,23 @@ f2d60a940c3c0fc644037ae4596eaea8af0c57be0d15273ef36037d7ef225120。
 本次只做启动配置收敛、既有入口检查、版本/摘要核对与本地提交。
 沿用现有 N1X startup / Harness manifest 检查，不增加模型推理或工作流测试。
 Phase-1 Runtime、Codex 二进制、vLLM 环境及 UMA 补丁保持原状态。
+
+## 双平台同步前隔离检查（2026-10-28）
+
+- n1x Profile 仅接受 Linux aarch64；h3 Profile 仅接受 Linux x86_64，错误平台在参数解析阶段报错。
+- 每次解析参数时按实际平台选择对应 Codex 路径。缺少该平台产物的版本直接失败；
+  ARM64 不允许静默使用仅有 x86_64 产物的 rust-v0.154.0。
+- 已注册的显式 --codex-bin 覆盖会核对 build_target；
+  所有实际执行的二进制（含未知显式路径）在 app-server 启动前检查 ELF 架构，再核验固定 SHA256。
+- N1X vLLM 启动器在访问 UMA 文件前拒绝非 ARM64 Linux；5090D 的 h3 不读取 N1X profile 或启动器。
+- 5090D 的 x86 二进制/构建记录、Managed vLLM、8002、qwen25-14b-awq、
+  原模型与 venv 路径以及 GPU 参数保持原值。
+- 最小入口/版本回归包含双平台参数模拟和反向二进制拒绝；在 N1X 校验实际 ARM64 ELF 与 SHA256。
+  5090D GPU 启动、x86 二进制实机运行及真实推理仍须在 5090D 本机执行，不视为本次实机 PASS。
+
+5090D 在其既有 WSL 仓库 /mnt/d/UAEA 内先确认工作区干净，再执行 git pull --ff-only，
+git submodule sync --recursive 和 git submodule update --init --recursive。
+随后运行 python3 -B scripts/harness_version.py --verify-binary，
+再运行 bash scripts/start_h3_harness_interactive.sh --profile h3 --turn-timeout 420；
+核对原有 x86 路径与版本、8002/Managed/32768/Hermes，完成一次真实 read_section 检查。
+不复制 N1X 的 ARM64 产物、venv 或 UMA 补丁到 5090D。
