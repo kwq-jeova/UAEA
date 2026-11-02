@@ -176,5 +176,62 @@ class RequestContinuityTests(unittest.TestCase):
                 parse_request_operation(text)
 
 
+    def test_new_search_input_is_independent_of_successful_historical_search(self):
+        self.start("Search agent development with Google; no fallback", "t1")
+        self.adapter.consume_raw_event(event("item/tool/call", turnId="t1",
+            callId="search1", tool="web_search", arguments={"query": "agent development"}))
+        raw = result_event(output("search1", eligibility="relevant"))
+        raw["params"]["turnId"] = "t1"
+        self.adapter.consume_raw_event(raw)
+        self.finish("t1")
+        request = "最好翻译为英文搜索 agent cognitive research and shared LLM communication"
+        projection = self.start(request, "t2").payload
+        self.assertEqual(projection["workflow_continuation"]["current_request"], request)
+        self.assertEqual(projection["workflow_execution"]["current_request"],
+                         {"attempts": 0, "outcomes_observed": 0})
+        self.assertEqual(projection["workflow_execution"]["last_attempt"]["call_id"], "search1")
+        self.adapter.consume_raw_event(event("item/completed", turnId="t2",
+            item={"type": "agentMessage", "id": "claim", "text": "I searched and read three papers."}))
+        self.finish("t2")
+        item = self.workflow()["request_continuity"]["inputs"][-1]
+        self.assertEqual(item["metadata"]["text"], request)
+        self.assertEqual(item["execution"]["attempts"], 0)
+        self.assertEqual(item["execution"]["fulfillment"], "not_established")
+        followup = self.start("请逐个阅读前三个链接，并总结研究判断", "t3").payload
+        self.assertIn(request, str(followup["workflow_continuation"]))
+        self.assertNotIn("last_action_request", followup["workflow_continuation"])
+        wire = turn_context_payload([], semantic_projection=followup)
+        self.assertNotIn(request, wire["uaea.semantic_state_projection"]["value"])
+        self.assertIn("逐个阅读", wire["uaea.semantic_interpretations"]["value"])
+
+    def test_reading_three_sources_counts_only_actual_outcomes(self):
+        self.start("Search research", "t1")
+        self.finish("t1")
+        self.start("Read each of three links and compare", "t2")
+        for index in range(2):
+            call = f"read-{index}"
+            self.adapter.consume_raw_event(event("item/tool/call", turnId="t2",
+                callId=call, tool="web_fetch", arguments={"url": f"https://example.test/{index}"}))
+            payload = output(call)
+            payload.update(capability="web.fetch", tool="web_fetch")
+            payload["data"].update(url=f"https://example.test/{index}")
+            raw = result_event(payload); raw["params"]["turnId"] = "t2"
+            self.adapter.consume_raw_event(raw)
+        self.finish("t2")
+        record = self.workflow()["request_continuity"]["inputs"][-1]
+        self.assertEqual(record["execution"], {"attempts": 2, "successful": 2,
+            "outcomes_observed": 2, "fulfillment": "not_established"})
+        self.assertFalse(self.workflow()["completion_established"])
+
+    def test_ordinary_question_does_not_require_an_action(self):
+        self.start("What is an execution observation?", "t1")
+        self.finish("t1")
+        self.assertEqual(self.workflow()["attempts"], [])
+        self.assertEqual(self.workflow()["request_continuity"]["inputs"][0]["execution"]["attempts"], 0)
+        context = turn_context_payload([])
+        self.assertIn("Ordinary questions do not require tools", context["uaea.runtime_facts.execution"]["value"])
+        self.assertIn("say so", context["uaea.runtime_facts.execution"]["value"])
+
+
 if __name__ == "__main__":
     unittest.main()

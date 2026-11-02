@@ -3,16 +3,23 @@ from __future__ import annotations
 import codecs
 import os
 import sys
+import time
+from typing import Callable
 
 
-def read_user_input(prompt: str) -> str:
+def read_user_input(prompt: str, *, on_idle: Callable[[], None] | None = None,
+                    timeout: float | None = None) -> str:
     """Read one REPL line using the terminal's native editor by default."""
 
     mode = os.environ.get("UAEA_REPL_INPUT_MODE", "basic").strip().lower()
     if mode in {"raw", "utf8-raw"}:
         if os.name == "posix" and sys.stdin.isatty() and sys.stdout.isatty():
-            return _read_raw_utf8_line(prompt)
+            return _read_raw_utf8_line(prompt, on_idle=on_idle, timeout=timeout)
+        if on_idle is not None or timeout is not None:
+            return _read_polled_line(prompt, on_idle, timeout)
         return input(prompt)
+    if on_idle is not None or timeout is not None:
+        return _read_polled_line(prompt, on_idle, timeout)
     _enable_readline_if_available()
     return input(prompt)
 
@@ -26,19 +33,45 @@ def _enable_readline_if_available() -> None:
         return
 
 
-def _read_raw_utf8_line(prompt: str) -> str:
+def _wait_readable(fd, deadline, on_idle):
+    import select
+    while True:
+        if on_idle:
+            on_idle()
+        remaining = None if deadline is None else deadline - time.monotonic()
+        if remaining is not None and remaining <= 0:
+            raise TimeoutError("User input timed out")
+        if select.select([fd], [], [], min(0.2, remaining) if remaining is not None else 0.2)[0]:
+            return
+
+
+def _read_polled_line(prompt, on_idle, timeout):
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+    deadline = None if timeout is None else time.monotonic() + timeout
+    _wait_readable(sys.stdin.fileno(), deadline, on_idle)
+    value = sys.stdin.readline()
+    if not value:
+        raise EOFError
+    return value.rstrip("\r\n")
+
+
+def _read_raw_utf8_line(prompt: str, *, on_idle=None, timeout=None) -> str:
     import termios
     import tty
 
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     state = _Utf8LineState()
+    deadline = None if timeout is None else time.monotonic() + timeout
     sys.stdout.write(prompt)
     sys.stdout.flush()
     try:
         tty.setraw(fd)
         while True:
-            data = sys.stdin.buffer.read(1)
+            if on_idle is not None or timeout is not None:
+                _wait_readable(fd, deadline, on_idle)
+            data = os.read(fd, 1)
             action = state.feed(data)
             if action == "submit":
                 sys.stdout.write("\n")

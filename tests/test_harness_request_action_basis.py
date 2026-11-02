@@ -34,7 +34,7 @@ class RequestActionBasisTests(unittest.TestCase):
         context = turn_context_payload([], semantic_projection=projection.payload)
         interpretation = json.loads(context["uaea.semantic_interpretations"]["value"])
         authority = context["uaea.semantic_state_projection"]["value"]
-        self.assertIn("Explore these six links", interpretation["workflow_continuation"]["request_history"][0])
+        self.assertIn("Explore these six links", interpretation["background"]["user_inputs"][0])
         self.assertNotIn("Explore these six links", authority)
         self.assertEqual(context["uaea.semantic_interpretations"]["kind"], "untrusted")
         self.assertFalse(snapshot["completion_established"])

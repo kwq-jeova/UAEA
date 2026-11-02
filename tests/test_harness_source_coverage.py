@@ -146,7 +146,7 @@ class SourceCoverageTests(unittest.TestCase):
         projection = self.adapter.prepare_turn("thread", "How does this help the project?", turn_id="turn4")
         context = turn_context_payload([], semantic_projection=projection.payload)
         interpretations = json.loads(context["uaea.semantic_interpretations"]["value"])
-        self.assertIn("Explore these six links", interpretations["workflow_continuation"]["last_action_request"])
+        self.assertIn("Explore these six links", interpretations["workflow_continuation"]["historical_action_request"])
         authority = json.loads(context["uaea.semantic_state_projection"]["value"])
         self.assertNotIn("last_action_request", context["uaea.semantic_state_projection"]["value"])
         self.assertEqual(context["uaea.semantic_interpretations"]["kind"], "untrusted")
@@ -220,7 +220,7 @@ class SourceCoverageTests(unittest.TestCase):
                 coverage = projection.payload["workflow_execution"]["source_coverage"]
                 self.assertEqual((coverage["discovered"], coverage["fetched"], coverage["failed"]), (6, 0, 1))
                 self.assertEqual(len(projection.payload["constraints"]), 4)
-                self.assertIn("Explore all discovered sources", projection.payload["workflow_continuation"]["last_action_request"])
+                self.assertIn("Explore all discovered sources", projection.payload["workflow_continuation"]["historical_action_request"])
                 self.assertEqual(projection.payload["workflow_execution"]["last_attempt"]["execution_status"], status)
 
 

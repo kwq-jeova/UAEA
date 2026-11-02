@@ -112,19 +112,22 @@ def json_line(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
-def write_config(home: Path, base_url: str, context_window: int, *, model: str = DEFAULT_MODEL, n1x: bool = False) -> None:
+def write_config(home: Path, base_url: str, context_window: int, *, model: str = DEFAULT_MODEL, n1x: bool = False, reasoning_effort: str = "none") -> None:
+    if reasoning_effort not in {"none", "low", "medium", "high"}:
+        raise ValueError("Unsupported Harness reasoning effort")
     home.mkdir(parents=True, exist_ok=True)
     (home / "config.toml").write_text(
         "\n".join(
             [
                 'model_provider = "uaea_local_vllm"',
                 f"model = {json.dumps(model)}",
-                'model_reasoning_effort = "none"',
+                f"model_reasoning_effort = {json.dumps(reasoning_effort)}",
                 f"model_context_window = {context_window}",
                 "project_doc_max_bytes = 0",
                 *(['web_search = "disabled"'] if n1x else []),
                 "",
                 "[features]",
+                "default_mode_request_user_input = true",
                 *(["multi_agent = false", "multi_agent_v2 = false", "goals = false",
                    "memories = false", "view_image = false"] if n1x else []),
                 "skill_search = false",

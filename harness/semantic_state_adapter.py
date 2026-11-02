@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hashlib import sha256
+
 import json
 import re
 import sys
@@ -16,7 +18,7 @@ if str(PHASE1_ROOT) not in sys.path:
     sys.path.insert(0, str(PHASE1_ROOT))
 
 from runtime.context_manager import ContextManager  # noqa: E402
-from runtime.runtime_objects import RuntimeObjectStore, WorkflowRunRecord  # noqa: E402
+from runtime.runtime_objects import RuntimeObjectStore, WorkflowRunRecord, RuntimeObjectRecord  # noqa: E402
 from runtime.semantic_observation import (  # noqa: E402
     ExecutionObservation,
     SemanticObservation,
@@ -37,6 +39,7 @@ from .event_normalizer import (  # noqa: E402
     TrajectoryEvent,
     HarnessEventNormalizer,
 )
+from .evidence_provenance import record_model_output, provenance_snapshot
 from .scoped_semantics import EffectiveSemanticState, ScopedSemanticResolver  # noqa: E402
 from .request_continuity import (  # noqa: E402
     REQUEST_OPERATIONS, request_inputs, request_snapshot, retain_request_input,
@@ -109,6 +112,7 @@ class _SemanticState:
     semantic_observations: list[dict[str, Any]] = field(default_factory=list)
     projection_ids: list[str] = field(default_factory=list)
     last_projection: dict[str, Any] = field(default_factory=dict)
+    last_projection_manifest: dict[str, Any] = field(default_factory=dict)
     last_terminal_state: str = ""
     last_error: str = ""
     pending_user_input: str = ""
@@ -122,6 +126,7 @@ class _SemanticState:
     ownership_binding: dict[str, str] = field(default_factory=dict)
     turn_receipts: list[dict[str, Any]] = field(default_factory=list)
     request_operation: str = "retain"
+    interaction_calls: set[str] = field(default_factory=set)
 
 
 class HarnessSemanticStateAdapter:
@@ -176,7 +181,7 @@ class HarnessSemanticStateAdapter:
         self._apply_user_input(state, TrajectoryEvent(
             sequence=0, event_type=USER_INPUT, thread_id=state.thread_id,
             turn_id=str(turn_id), event_id=state.current_input_id,
-            payload={"text": text},
+            payload={"text": user_input},
             provenance={"source": "harness.semantic_state_adapter.pre_turn_input"},
         ))
         state.pending_user_input = text
@@ -202,6 +207,20 @@ class HarnessSemanticStateAdapter:
             projection_id=projection_record.projection_id,
         )
         state.projection_ids = state.projection_ids[-MAX_LIST_ITEMS:]
+        state.last_projection_manifest = {
+            "schema": "uaea.context_projection_manifest.v1",
+            "input_id": state.current_input_id,
+            "effective_state_id": payload.get("effective_state_id"),
+            "raw_input_sha256": sha256(user_input.encode()).hexdigest(),
+            "source_object_ids": self._projection_source_ids(state),
+            "included_fields": sorted(projection.payload),
+            "omitted_fields": sorted(set(payload) - set(projection.payload)),
+            "changed_fields": sorted(key for key in projection.payload
+                                     if projection.payload[key] != payload.get(key)),
+            "chars_before": _projection_size(payload),
+            "chars_after": _projection_size(projection.payload),
+            "authority_from_projection": False,
+        }
         state.last_projection = dict(projection.payload)
         return projection
 
@@ -238,6 +257,11 @@ class HarnessSemanticStateAdapter:
             self._apply_user_input(state, event)
             return None
         if event.event_type == AGENT_OUTPUT:
+            output_text = _event_text(event.payload)
+            if not event.payload.get("is_delta") and output_text:
+                record_model_output(state.runtime_objects, state.current_task_id,
+                                    text=output_text, event_id=event.event_id,
+                                    turn_id=event.turn_id, raw_reference=event.raw_event_reference)
             state.last_agent_output = _compact_text(
                 _event_text(event.payload),
                 600,
@@ -251,6 +275,9 @@ class HarnessSemanticStateAdapter:
                     arguments = json.loads(arguments)
                 except ValueError:
                     arguments = {"unparsed_arguments": arguments}
+            if str(item.get("tool") or item.get("name") or "") == "request_user_input":
+                state.interaction_calls.add(_call_identity(event, item, {}))
+                return None
             state.last_tool_call = {
                 "tool": str(item.get("tool") or item.get("name") or ""),
                 "arguments": _bounded_value(arguments, 500),
@@ -263,6 +290,9 @@ class HarnessSemanticStateAdapter:
             self._record_attempt(state, event, item, arguments)
             return None
         if event.event_type in {TOOL_RESULT, OBSERVATION, COMMAND_EXECUTION}:
+            item = event.payload.get("item") or event.payload.get("raw_response_item") or event.payload
+            if _call_identity(event, item, _tool_result_payload(item)) in state.interaction_calls:
+                return None
             if (
                 event.event_type == COMMAND_EXECUTION
                 and (not isinstance(event.payload.get("item"), Mapping)
@@ -424,9 +454,12 @@ class HarnessSemanticStateAdapter:
             "action_decisions": list(state.action_decisions),
             "projection_ids": list(state.projection_ids),
             "last_projection": dict(state.last_projection),
+            "projection_manifest": deepcopy(state.last_projection_manifest),
             "workflow_continuity": workflow_snapshot(
                 state.runtime_objects, state.current_task_id, state.turn_receipts,
             ),
+            "evidence_provenance": provenance_snapshot(
+                state.runtime_objects, state.current_task_id)["summary"],
             "phase1_projection_count": len(state.runtime_objects.projections),
             "phase1_runtime_snapshot": state.runtime_objects.snapshot(),
             "phase1_context": {
@@ -456,6 +489,73 @@ class HarnessSemanticStateAdapter:
             },
         }
 
+    def record_interaction(self, thread_id: str, identity: str, *, status: str,
+                           questions: list[dict], answers: dict | None = None) -> dict:
+        """Normalized host facts; answers are retained inputs, never automatic grants."""
+        state = self._state_for(thread_id)
+        record_id = f"interaction:{identity}"
+        record = next((x for x in state.runtime_objects.objects if x.object_id == record_id), None)
+        if record is None:
+            record = RuntimeObjectRecord(
+                object_type="user_interaction", object_id=record_id,
+                owner=state.current_task_id, status=status,
+                source_event_ids=[identity],
+                metadata={"questions": deepcopy(questions), "answer_source": "stdin",
+                          "authority_level": "interpretation"},
+            )
+            state.runtime_objects.objects.append(record)
+        record.status = status
+        if answers is not None:
+            record.metadata["answers"] = deepcopy(answers)
+        if status == "answered":
+            retain_request_input(
+                state.runtime_objects, state.current_task_id,
+                input_id=f"reply:{identity}", text=json.dumps(answers, ensure_ascii=False),
+                provenance={"source_event_type": "USER_REPLY", "event_id": identity,
+                            "interaction_id": record_id, "source": "host.stdin"},
+            )
+        return deepcopy(record.to_dict())
+
+    def current_projection(self, thread_id: str) -> SemanticProjection:
+        state = self._state_for(thread_id)
+        return self._bounded_projection(SemanticProjection(
+            semantic_scope_id=state.semantic_scope_id, thread_id=state.thread_id,
+            payload=self._projection_payload(state, relation=state.last_relation)))
+
+    def recovery_sources(self, thread_id: str) -> list[dict[str, Any]]:
+        """Bounded acquired excerpts from existing Runtime records, never assistant text."""
+        import hashlib
+        state = self._state_for(thread_id)
+        sources = []
+        for step in state.runtime_objects.step_runs:
+            if step.workflow_id != state.current_task_id:
+                continue
+            outcome = step.action.get("outcome", {})
+            excerpt = outcome.get("source_excerpt") or {}
+            text = excerpt.get("text")
+            if (outcome.get("execution_succeeded") is not True or not isinstance(text, str)
+                    or not text or hashlib.sha256(text.encode()).hexdigest() != excerpt.get("text_sha256")
+                    or excerpt.get("source_event_id") != outcome.get("access_event_id")
+                    or not outcome.get("content_sha256")
+                    or excerpt.get("content_sha256") != outcome.get("content_sha256")):
+                continue
+            supplied = text[:300]
+            sources.append({
+                "source_event_id": outcome["access_event_id"], "url": outcome.get("source_url"),
+                "content_sha256": outcome["content_sha256"],
+                "temporal_facts": deepcopy(outcome.get("temporal_facts")),
+                "text": supplied, "text_sha256": hashlib.sha256(supplied.encode()).hexdigest(),
+                "recorded_excerpt_sha256": excerpt["text_sha256"],
+                "scope": "acquired_excerpt_prefix_not_full_page", "content_support": "not_assessed",
+                "execution_basis": "host_receipt" if "host_execution_receipt" in step.action else "legacy_outcome",
+            })
+        return sources[-3:]
+
+    def retained_requests(self, thread_id: str) -> dict[str, Any]:
+        from .request_continuity import retained_request_view
+        state = self._state_for(thread_id)
+        return retained_request_view(state.runtime_objects, state.current_task_id)
+
     def state_for(self, thread_id: str) -> dict[str, Any]:
         return self.snapshot(thread_id)
 
@@ -477,7 +577,10 @@ class HarnessSemanticStateAdapter:
         return state
 
     def _apply_user_input(self, state: _SemanticState, event: TrajectoryEvent) -> None:
-        text = _compact_text(_event_text(event.payload), 500)
+        original_text = event.payload.get("text")
+        if not isinstance(original_text, str):
+            original_text = _event_text(event.payload)
+        text = _compact_text(original_text, 500)
         if not text:
             return
         if state.prepared_input_applied and text == state.pending_user_input:
@@ -505,7 +608,7 @@ class HarnessSemanticStateAdapter:
         resolver = ScopedSemanticResolver(state.runtime_objects)
         provenance = self._semantic_provenance(state, event, text)
         retain_request_input(state.runtime_objects, state.current_task_id,
-                             input_id=state.current_input_id, text=text,
+                             input_id=state.current_input_id, text=original_text,
                              provenance=provenance, operation=state.request_operation)
         state.request_operation = "retain"
         scope = _semantic_scope(text)
@@ -698,6 +801,15 @@ class HarnessSemanticStateAdapter:
         item = event.payload.get("item") or event.payload.get("raw_response_item")
         item_map = dict(item) if isinstance(item, Mapping) else dict(event.payload)
         result = _tool_result_payload(item_map)
+        call_id = _call_identity(event, item_map, result)
+        host_step = next((step for step in state.runtime_objects.step_runs
+                          if step.workflow_id == state.current_task_id
+                          and step.action.get("harness", {}).get("call_id") == call_id
+                          and step.action["harness"].get("turn_id") == event.turn_id
+                          and "host_execution_receipt" in step.action), None)
+        receipt = host_step.action["host_execution_receipt"] if host_step is not None else None
+        if receipt is not None:
+            result = deepcopy(receipt["result"])
         tool_name = str(
             result.get("tool")
             or item_map.get("tool")
@@ -727,6 +839,8 @@ class HarnessSemanticStateAdapter:
                                          if key not in {"contentItems", "output"}}, 1400),
                   "result": result} if result else _bounded_value(item_map, 1400),
         )
+        if receipt is not None:
+            observation = ExecutionObservation(**deepcopy(receipt["execution_observation"]))
         state.last_execution_observation = observation
         state.context_manager.set_execution_context(
             observation.capability,
@@ -767,7 +881,8 @@ class HarnessSemanticStateAdapter:
         step = self._record_attempt(state, event, item_map, item_map.get("arguments", {}), result)
         if step is not None:
             record["provenance"]["call_id"] = step.action["harness"]["call_id"]
-            record_outcome(step, record["execution_observation"], result)
+            if "host_execution_receipt" not in step.action:
+                record_outcome(step, record["execution_observation"], result)
         state.semantic_observations.append(record)
         state.semantic_observations = state.semantic_observations[-MAX_OBSERVATIONS:]
         return record
@@ -859,7 +974,6 @@ class HarnessSemanticStateAdapter:
                 "initial_request": _compact_text(state.runtime_objects.active_workflow().source_user_intent, 140),
                 "request_history": [text for text in state.task_evolution[-2:-1]
                                     if text != _compact_text(state.runtime_objects.active_workflow().source_user_intent, 180)],
-                "assistant_proposal": _compact_text(state.last_agent_output, 200),
                 "assistant_output_is_execution_evidence": False,
             },
             "workflow_execution": execution_projection(workflow_snapshot(
@@ -901,6 +1015,22 @@ class HarnessSemanticStateAdapter:
                 payload["topic"] = continuation["initial_request"]
                 payload["task_evolution"] = [_compact_text(item["metadata"]["text"], 180) for item in retained[-3:]]
                 continuation.pop("assistant_proposal", None)
+        # Current input is factual even when the model never proposes an Action.
+        # Text remains untrusted; execution counters come only from linked Step outcomes.
+        retained = [item for item in requests["inputs"] if item["status"] == "retained"]
+        current = next((item for item in retained if item["object_id"] == state.current_input_id), None)
+        if current:
+            continuation["current_request"] = _compact_text(current["metadata"]["text"], 180)
+            payload["workflow_execution"]["current_request"] = {
+                **{key: current["execution"][key] for key in ("attempts", "outcomes_observed")},
+            }
+        prior_unattempted = [item for item in retained if item is not current
+                             and item["execution"]["attempts"] == 0]
+        if prior_unattempted:
+            continuation["prior_inputs_without_actions"] = [
+                _compact_text(item["metadata"]["text"], 120) for item in prior_unattempted[-1:]]
+        if continuation.get("last_action_request"):
+            continuation["historical_action_request"] = continuation.pop("last_action_request")
         return payload
 
     def _bounded_projection(self, projection: SemanticProjection) -> SemanticProjection:
@@ -963,6 +1093,13 @@ class HarnessSemanticStateAdapter:
                                                for text in continuation["request_history"]]
             if continuation.get("last_action_request"):
                 continuation["last_action_request"] = _compact_text(continuation["last_action_request"], excerpt_size)
+            if continuation.get("current_request"):
+                continuation["current_request"] = _compact_text(continuation["current_request"], excerpt_size)
+            if continuation.get("prior_inputs_without_actions"):
+                continuation["prior_inputs_without_actions"] = [
+                    _compact_text(text, excerpt_size) for text in continuation["prior_inputs_without_actions"]]
+            if continuation.get("historical_action_request"):
+                continuation["historical_action_request"] = _compact_text(continuation["historical_action_request"], excerpt_size)
             bounded["workflow_execution"].pop("candidate", None)
             bounded.pop("topic", None)
             bounded["turn_relation"] = {"relation": payload["turn_relation"]["relation"]}
@@ -985,10 +1122,32 @@ class HarnessSemanticStateAdapter:
             if _projection_size(bounded) > self.max_projection_chars:
                 # This surface always counts distinct URLs; snapshot retains the explicit unit.
                 coverage.pop("unit", None)
+        if _projection_size(bounded) > self.max_projection_chars:
+            continuation = bounded["workflow_continuation"]
+            # The full current text is already on turn/start.input; its identity remains in snapshot/projection provenance.
+            if continuation.get("current_request"):
+                continuation["current_request"] = "See turn/start.input"
+            if continuation.get("prior_inputs_without_actions"):
+                # Full per-input facts remain in the snapshot; bounded history retains prior text.
+                continuation.pop("prior_inputs_without_actions")
         required_chars = _projection_size(bounded)
         if required_chars > self.max_projection_chars and search:
             # Diagnostic action text is optional; effective constraints never are.
             bounded["workflow_execution"].pop("last_search_action", None)
+            required_chars = _projection_size(bounded)
+        if required_chars > self.max_projection_chars:
+            # Current text is losslessly supplied in turn/start.input; counters stay protected.
+            bounded["workflow_continuation"].pop("current_request", None)
+            required_chars = _projection_size(bounded)
+        if required_chars > self.max_projection_chars:
+            # Prior turn identity remains in snapshot; retain its attempt count on the wire.
+            bounded["workflow_execution"].get("previous_turn", {}).pop("turn_id", None)
+            required_chars = _projection_size(bounded)
+        if required_chars > self.max_projection_chars:
+            current = bounded["workflow_execution"].get("current_request", {})
+            if current.get("attempts") == 0:
+                # No attempt also means no observed outcome; avoid encoding the same zero twice.
+                current.pop("outcomes_observed", None)
             required_chars = _projection_size(bounded)
         if required_chars > self.max_projection_chars:
             raise ProjectionCapacityError(

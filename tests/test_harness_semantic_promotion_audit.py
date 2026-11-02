@@ -201,7 +201,13 @@ class InteractivePromotionAuditTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             app.run_turn("研究商业化方向，可以看看商业发布论坛")
         sent = app._request.call_args.args[0]
-        expected = turn_context_payload([], semantic_projection=app.semantic_state.snapshot("thread")["last_projection"])
+        expected = turn_context_payload(
+            [], model=app.model,
+            semantic_projection=app.semantic_state.snapshot("thread")["last_projection"],
+            evidence_provenance=app.semantic_state.snapshot("thread")["evidence_provenance"],
+            retained_requests=app.semantic_state.retained_requests("thread"),
+            filesystem_root=str(PROJECT_ROOT),
+        )
         self.assertEqual(sent["params"]["additionalContext"], expected)
         self.assertNotIn("uaea.semantic_promotion_shadow_audit", sent["params"]["additionalContext"])
         app._write_promotion_audit("POST_ACTION_VALIDATION")

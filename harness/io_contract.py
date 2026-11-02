@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -111,7 +112,25 @@ def runtime_facts_context(
                 "Runtime fact: Harness native filesystem/shell execution is sandboxed "
                 "read-only, and shell network access is disabled. This sandbox network "
                 "restriction applies to native shell execution; it does not mean UAEA "
-                "dynamic Web capabilities are unavailable."
+                "dynamic Web capabilities are unavailable. "
+                "workflow_continuation.current_request is the current user input; historical_action_request "
+                "and last_attempt describe past execution, not completion of the current request. "
+                "Current-request counters are as of turn start; subsequent matching Tool Results supersede them. "
+                "Use matching tool observations to support execution claims. If a requested search or reading "
+                "was not executed, say so; do not invent search results or page summaries. "
+                "Search snippets are not read pages. Historical assistant output is model-generated, "
+                "not new Source Evidence; repeating it does not verify it. A linked URL proves source "
+                "identity only; a successful fetch proves a response, not that it supports your conclusion "
+                "or that the entire document was read. Exact quotes establish text matches, not entailment. "
+                "Separate source excerpts, your interpretation, and unsupported hypotheses. "
+                "Ordinary questions do not require tools. "
+                "Request fulfillment remains unestablished by turn completion or assistant claims."
+            ),
+            "uaea.runtime_facts.interaction": application_context(
+                "Runtime fact: the interactive client supports native request_user_input in Default mode "
+                "and waits for an actual stdin reply. No option is auto-selected. Cancel or timeout "
+                "interrupts the current turn and grants no permission. Use clarification when needed; "
+                "ordinary turns need not ask a question. Answers do not automatically override UAEA authorization."
             ),
             "uaea.runtime_facts.capabilities": application_context(
                 "Runtime fact: UAEA dynamic capabilities web.search and web.fetch are "
@@ -122,7 +141,11 @@ def runtime_facts_context(
             "uaea.runtime_facts.web_limits": application_context(
                 "Runtime fact: web.search is source discovery over search results pages. "
                 "Arguments include query, max_results, provider, allow_fallback, language, "
-                "region, exclude_domains, preferred_domains, source_types, and freshness. "
+                "region, exclude_domains, preferred_domains, source_types, freshness, published_from and published_to. "
+                "The last two are an inclusive ISO-date publication range, not a content-period filter. "
+                "Both endpoints are required; unsupported providers/fallback combinations are rejected. "
+                "Search-provider date labels are source claims, including relative dates anchored at accessed_at; "
+                "do not treat them as verified page publication dates. "
                 "Use provider for requested search provider semantics. Use preferred_domains "
                 "only for result-source domain preference. When provider is set, allow_fallback "
                 "must also be set explicitly; otherwise web.search returns a semantic validation "
@@ -130,9 +153,13 @@ def runtime_facts_context(
                 "Constraints are preserved; runtime "
                 "results report requested_provider, actual_provider, fallback_occurred, and "
                 "fallback_reason. Non-provider source constraints remain best-effort. "
-                "If web.search reports low_relevance, do not cite those raw results and do not "
-                "repeat the same query unchanged; reformulate meaningful domain terms or report "
-                "that usable evidence was not found. web.fetch fetches page-level evidence for a "
+                "Lexical low_relevance/uncertain are diagnostics, not semantic verdicts or empty results. "
+                "Inspect visible candidates and distinguish raw, retained and visible counts. "
+                "Search links/snippets may be presented only as discovery results; assess relevance yourself. "
+                "Reformulating a query does not revoke retained user requirements. "
+                "Distinguish runtime accessed_at, source-declared published_at and interpreted content_period. "
+                "If the source period is unknown, say unknown; never infer it from access time. "
+                "web.fetch fetches page-level evidence for a "
                 "specific URL. Do not claim Google was used unless runtime results report Google "
                 "as the actual provider."
             ),
@@ -221,9 +248,47 @@ def turn_context_payload(
     model_provider: str = RUNTIME_FACT_MODEL_PROVIDER,
     model: str = RUNTIME_FACT_MODEL,
     semantic_projection: Mapping[str, Any] | None = None,
+    retained_requests: Mapping[str, Any] | None = None,
+    evidence_provenance: Mapping[str, Any] | None = None,
+    filesystem_root: str | None = None,
 ) -> dict[str, dict[str, str]]:
     payload = runtime_facts_context(model_provider=model_provider, model=model)
     payload.update(effective_capability_context(dynamic_tools))
+    payload["uaea.context_boundary"] = application_context(
+        "The current user message is the current request. Topic, retained inputs and prior "
+        "assistant messages are historical context, not a new instruction to repeat an old answer. "
+        "A prior input without an Action is not necessarily unfinished: ordinary questions may "
+        "be answered without tools. Relation labels are tentative and do not establish a new Goal. "
+        "Search discovery is not page reading; use actual tool observations for execution facts. "
+        "Assistant output and model interpretations are not source evidence or authorization. "
+        'background contains historical topic and user inputs, not current Goals or obligations.'
+        "relation_hint is an unconfirmed legacy heuristic, not task ownership or a semantic verdict. "
+        "Only the latest supplied state projection is current; earlier state versions are historical. "
+        "task_id identifies the Runtime ownership container; it does not prove the current input belongs "
+        "semantically to an older topic. Interpret the current original input independently. "
+        "Internal audit artifacts are not document.read_section paths; use source URLs and supplied excerpts."
+    ).to_app_server()
+
+    if filesystem_root is not None:
+        from pathlib import Path
+        root = Path(filesystem_root)
+        if not root.is_absolute():
+            raise ValueError("Capability filesystem root must be absolute")
+        payload["uaea.runtime_facts.filesystem"] = application_context(
+            "Runtime file-tool boundary: document.read_section and fs.list resolve "
+            f"relative paths against {root}, independently of the Harness cwd. "
+            f"The project README is {root / 'README.md'}. "
+            "The Harness workspace directory is not a substitute for this root. "
+            "These location facts do not broaden sandbox permissions."
+        ).to_app_server()
+    if evidence_provenance is not None:
+        payload["uaea.evidence_provenance"] = application_context(
+            json.dumps(dict(evidence_provenance), ensure_ascii=False)
+        ).to_app_server()
+    if retained_requests is not None:
+        payload["uaea.retained_user_requests"] = untrusted_context(
+            json.dumps(dict(retained_requests), ensure_ascii=False)
+        ).to_app_server()
     if semantic_projection is not None:
         projection = dict(semantic_projection)
         if projection.get("authority_contract") == SEMANTIC_AUTHORITY_SCHEMA:
@@ -231,7 +296,20 @@ def turn_context_payload(
                               "effective_state_id", "constraints", "semantic_bindings",
                               "semantic_binding_defaults", "workflow_execution"}
             authority = {key: value for key, value in projection.items() if key in authority_keys}
-            context = {key: value for key, value in projection.items() if key not in authority_keys}
+            context = {key: deepcopy(value) for key, value in projection.items() if key not in authority_keys}
+            background = {}
+            if "topic" in context:
+                background["topic"] = context.pop("topic")
+            if "turn_relation" in context:
+                context["relation_hint"] = context.pop("turn_relation").get("relation")
+            continuation = context.get("workflow_continuation", {})
+            for old, new in (("initial_request", "initial_request"),
+                             ("request_history", "user_inputs"),
+                             ("prior_inputs_without_actions", "inputs_without_actions")):
+                if old in continuation:
+                    background[new] = continuation.pop(old)
+            if background:
+                context["background"] = background
             context.pop("compact_wire", None)
             separators = (",", ":") if projection.get("compact_wire") else None
             bindings = projection.get("semantic_bindings") or []

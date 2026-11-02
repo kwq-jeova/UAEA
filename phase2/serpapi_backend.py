@@ -28,6 +28,23 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+
+def google_language_parameters(language: str) -> dict[str, str]:
+    """Translate language codes, not user intent or authorization.
+
+    hl controls interface localization; lr controls result-language restriction.
+    Generic Chinese does not imply a specific script or country.
+    https://serpapi.com/google-languages
+    https://serpapi.com/google-lr-languages
+    """
+    code = language.lower()
+    if code == "zh":
+        return {"lr": "lang_zh-CN|lang_zh-TW"}
+    if code in {"zh-cn", "zh-tw"}:
+        return {"hl": code, "lr": "lang_zh-" + code.split("-")[1].upper()}
+    return {"hl": code, "lr": "lang_" + code.split("-")[0]}
+
+
 def google_search(parameters: dict[str, Any], *, timeout: int, max_bytes: int,
                   user_agent: str) -> dict[str, Any]:
     key = os.environ.get("SERPAPI_KEY", "").strip()

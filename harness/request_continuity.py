@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import sha256
 from typing import Any, Mapping
 
 
@@ -50,7 +51,8 @@ def retain_request_input(store, workflow_id: str, *, input_id: str, text: str,
     item = RuntimeObjectRecord(
         object_type="workflow_request_input", object_id=input_id, owner=workflow_id,
         status=status, source_event_ids=[str(provenance.get("event_id") or input_id)],
-        metadata={"text": text, "input_id": input_id, "operation": operation,
+        metadata={"text": text, "raw_text_sha256": sha256(text.encode("utf-8")).hexdigest(),
+                  "input_id": input_id, "operation": operation,
                   "authority_level": "interpretation", "provenance": deepcopy(dict(provenance))},
     )
     store.objects.append(item)
@@ -68,3 +70,28 @@ def request_snapshot(store, workflow_id: str) -> dict[str, Any]:
         "inputs": [item.to_dict() for item in inputs],
         "retained_input_ids": [item.object_id for item in retained],
     }
+
+
+def retained_request_view(store, workflow_id: str, *, max_chars: int = 3000) -> dict[str, Any]:
+    """Bounded untrusted display of original inputs, not a temporal/NLU classifier."""
+    import json
+    records = [x for x in request_inputs(store, workflow_id) if x.status == "retained"]
+    view = {"workflow_id": workflow_id, "retained_count": len(records),
+            "authority_level": "interpretation", "fulfillment": "not_established",
+            "requests": [], "omitted_count": 0,
+            "latest_retained_input_id": records[-1].object_id if records else None,
+            "note": "Latest retained input first; earlier inputs are background, not proven pending actions. Query rewrites do not cancel records."}
+    # Always supply the latest retained input before optional older background.
+    # Ordering is a projection choice, not cancellation or an execution obligation.
+    ordered = records[-1:] + records[:-1]
+    for index, record in enumerate(ordered):
+        text = record.metadata["text"]
+        item = {"input_id": record.object_id, "text": text[:240],
+                "text_truncated": len(text) > 240,
+                "raw_text_sha256": record.metadata["raw_text_sha256"]}
+        view["requests"].append(item)
+        if len(json.dumps(view, ensure_ascii=False)) > max_chars:
+            view["requests"].pop()
+            view["omitted_count"] = len(records) - index
+            break
+    return view

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
 from .recovery_observation import recovery_observation
-from .observation_boundary import factual_web_message, observation_boundary
+from .observation_boundary import factual_web_message, observation_boundary, model_web_artifacts
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -76,6 +78,7 @@ class HarnessToolDispatch:
     observation: ExecutionObservation
     semantic_validation: dict[str, Any] | None = None
     max_output_chars: int = 4000
+    execution_decision: dict[str, Any] | None = None
 
     @property
     def ok(self) -> bool:
@@ -86,7 +89,9 @@ class HarnessToolDispatch:
             self.observation.capability,
             self.tool_result.data,
         )
-        if data.get("execution_status") == "validation_failed":
+        if self.execution_decision is not None:
+            data["execution_decision"] = deepcopy(self.execution_decision)
+        if data.get("execution_status") == "validation_failed" and self.execution_decision is None:
             if self.semantic_validation is not None:
                 for key in ("active_constraints", "effective_state_id", "authorization"):
                     data[key] = self.semantic_validation[key]
@@ -129,6 +134,8 @@ class HarnessToolDispatch:
             "action_request": self.action_request.to_dict(),
             "execution_observation": self.observation.to_event_metadata(),
             "semantic_validation": dict(self.semantic_validation or {}),
+            **({"execution_decision": deepcopy(self.execution_decision)}
+               if self.execution_decision is not None else {}),
         }
 
 
@@ -141,8 +148,10 @@ class HarnessDynamicToolAdapter:
         bindings: list[DynamicToolBinding] | tuple[DynamicToolBinding, ...],
         *,
         max_output_chars: int = 4000,
+        execution_boundary: Any | None = None,
     ) -> None:
         self.registry = registry
+        self.execution_boundary = execution_boundary
         self.bindings = tuple(bindings)
         self.max_output_chars = max(1, int(max_output_chars))
         self._bindings_by_tool = {binding.tool_name: binding for binding in self.bindings}
@@ -154,7 +163,15 @@ class HarnessDynamicToolAdapter:
         self._semantic_state_adapter = adapter
 
     def dynamic_tools(self) -> list[dict[str, Any]]:
-        return [binding.to_app_server_spec() for binding in self.bindings]
+        specs = [deepcopy(binding.to_app_server_spec()) for binding in self.bindings]
+        if self.execution_boundary is not None:
+            from .semantic_interpretation import INTERPRETATION_SCHEMA
+            for spec in specs:
+                properties = spec["inputSchema"].setdefault("properties", {})
+                if "_uaea_interpretation" in properties:
+                    raise ValueError("Reserved interpretation transport field")
+                properties["_uaea_interpretation"] = deepcopy(INTERPRETATION_SCHEMA)
+        return specs
 
     def dispatch(
         self,
@@ -169,6 +186,28 @@ class HarnessDynamicToolAdapter:
         arguments = _arguments(params.get("arguments"))
         binding = self._bindings_by_tool.get(tool_name)
         semantic_validation: dict[str, Any] | None = None
+
+        if binding is not None and self.execution_boundary is not None:
+            boundary = (self.execution_boundary.for_context(thread_id, turn_id)
+                        if hasattr(self.execution_boundary, "for_context")
+                        else self.execution_boundary)
+            # Decode only. Interpretation never becomes authority via Codex metadata.
+            from .semantic_interpretation import record_interpretation
+            interpretation = arguments.pop("_uaea_interpretation", None)
+            if interpretation is not None:
+                contract = boundary.resolve_contract()
+                record_interpretation(
+                    boundary.store, contract.workflow_id, contract.input_id,
+                    interpretation, model_event_id=f"action:{contract.workflow_id}:{call_id}",
+                )
+            proposal = ActionRequest(binding.capability, arguments, request_id=call_id)
+            outcome = boundary.execute(proposal, objective=objective, turn_id=turn_id)
+            return HarnessToolDispatch(
+                thread_id=thread_id, turn_id=turn_id, call_id=call_id, tool_name=tool_name,
+                action_request=outcome.action, tool_result=outcome.result,
+                observation=outcome.observation, max_output_chars=self.max_output_chars,
+                execution_decision=outcome.decision,
+            )
 
         if binding is None:
             action_request = ActionRequest(
@@ -268,13 +307,21 @@ def _arguments(value: Any) -> dict[str, Any]:
 def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[str, Any]:
     """Project capability output for the Harness model without mutating provenance."""
 
-    projected = dict(data)
+    projected = model_web_artifacts(data) if capability in {"web.search", "web.fetch"} else dict(data)
+    if isinstance(projected.get("search_transport"), dict):
+        projected["search_transport"] = {key: value for key, value in projected["search_transport"].items()
+                                          if key != "diagnostics"}
     if capability in {"web.search", "web.fetch"}:
         projected.pop("network_diagnostics", None)
+        # This generated block duplicates source_excerpt and needlessly consumes
+        # its budget. Keep Host data/blocks intact; project one evidence surface.
+        if isinstance(projected.get("source_excerpt"), dict):
+            projected.pop("bounded_evidence_block", None)
     if capability in {"web.search", "web.fetch"} and data.get("execution_succeeded") is False:
         projected = {key: data[key] for key in (
             "capability", "tool", "access_event_id", "web_source_id", "access_status", "status",
             "execution_status", "execution_succeeded", "http_attempted", "reason",
+            "evidence_counts", "evidence_boundary",
             "failure_explanation", "requested_provider", "actual_provider", "fallback_occurred",
             "acquisition_backend",
             "fallback_reason", "requested_constraints", "http_status", "error", "error_kind",
@@ -312,6 +359,9 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
                             for key in ("thread_id", "turn_id", "event_id")}}
             for item in projected["semantic_items"]
         ]
+    if (data.get("evidence_boundary") or {}).get("schema") == "uaea.evidence_boundary.v1":
+        # UAEA origin/citation facts are independent of lexical relevance diagnostics.
+        return projected
     if capability != "web.search":
         return projected
 
@@ -387,6 +437,9 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
     if (payload.get("capability") == "web.search" and isinstance(data, dict)
             and data.get("execution_succeeded") is True):
         return _bounded_search_evidence(payload, budget)
+    if (payload.get("capability") == "web.fetch" and isinstance(data, dict)
+            and data.get("execution_succeeded") is True and isinstance(data.get("source_excerpt"), dict)):
+        return _bounded_fetch_evidence(payload, budget)
     for candidate in (
         payload,
         _bounded_payload(payload, string_limit=800, list_limit=10),
@@ -394,6 +447,7 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
         _bounded_payload(payload, string_limit=80, list_limit=3),
         _minimal_payload(payload),
     ):
+        candidate = _finalize_excerpt(payload, candidate)
         text = json.dumps(candidate, ensure_ascii=False, default=str)
         if len(text) <= budget:
             return text
@@ -415,6 +469,103 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
     return text
 
 
+
+def _finalize_excerpt(original: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+    """Hash exactly the supplied source prefix, never a generated truncation suffix."""
+    source = original.get("data", {}).get("source_excerpt")
+    if not isinstance(source, dict) or not isinstance(source.get("text"), str):
+        return candidate
+    candidate = deepcopy(candidate)
+    target = candidate.get("data", {}).get("source_excerpt")
+    if not isinstance(target, dict) or not isinstance(target.get("text"), str):
+        return candidate
+    text = source["text"]
+    if hashlib.sha256(text.encode()).hexdigest() != source.get("text_sha256"):
+        candidate["data"].pop("source_excerpt", None)
+        candidate["data"]["source_excerpt_status"] = "invalid_acquired_excerpt_hash"
+        return candidate
+    supplied = text[:len(target["text"])]
+    target.update(text=supplied, text_sha256=hashlib.sha256(supplied.encode()).hexdigest())
+    if supplied != text:
+        target["projection"] = {
+            "acquired_text_sha256": source["text_sha256"],
+            "acquired_chars": len(text), "supplied_chars": len(supplied),
+            "truncated": True, "scope": "prefix_only_not_full_page",
+        }
+    return candidate
+
+
+
+def _bounded_fetch_evidence(payload: dict[str, Any], budget: int) -> str:
+    """Reserve the existing output budget for source text, not repeated audit detail."""
+    original_wire = json.dumps(_finalize_excerpt(payload, payload), ensure_ascii=False, default=str)
+    if len(original_wire) <= budget:
+        return original_wire
+    data = payload["data"]
+    projected = {key: deepcopy(data[key]) for key in (
+        "capability", "tool", "access_event_id", "web_source_id", "url", "title",
+        "execution_status", "execution_succeeded", "http_attempted", "http_status", "reason",
+        "content_sha256", "source_excerpt", "temporal_facts", "observation_boundary",
+    ) if key in data}
+    ref = data.get("evidence_reference")
+    if isinstance(ref, dict):
+        projected["evidence_reference"] = {key: ref[key] for key in
+            ("source_kind", "source_id", "source_event_id", "location") if key in ref}
+    decision = data.get("execution_decision")
+    if isinstance(decision, dict):
+        projected["execution_decision"] = {
+            **{key: deepcopy(decision[key]) for key in (
+                "schema", "action_id", "input_id", "workflow_id", "effective_state_id",
+                "policy_reference", "allowed", "reason", "retryable", "authorization",
+                "request_satisfaction", "effective_parameters", "parameter_sources") if key in decision},
+            "full_decision_sha256": hashlib.sha256(json.dumps(
+                decision, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
+            "detail_scope": "summary; full decision retained in canonical host record",
+        }
+    metrics = data.get("projection_metrics") or {}
+    projected["evidence_extent"] = {
+        "source_text_chars": metrics.get("source_chars"),
+        "acquired_excerpt_chars": len(data["source_excerpt"].get("text", "")),
+        "scope": "extracted_excerpt_not_full_document",
+    }
+    candidate = {key: deepcopy(payload[key]) for key in
+                 ("ok", "capability", "tool", "status", "identity") if key in payload}
+    candidate["message"] = _truncate_text(str(payload.get("message") or ""), 120)
+    candidate["data"] = projected
+    text = projected["source_excerpt"].get("text", "")
+    full_wire = json.dumps(_finalize_excerpt(payload, candidate), ensure_ascii=False, default=str)
+    if len(full_wire) <= budget:
+        return full_wire
+    # Find the largest exact source prefix that fits; never truncate identity,
+    # authorization, temporal facts or decision outcome to make space.
+    best = None
+    low, high = 0, len(text)
+    while low <= high:
+        count = (low + high) // 2
+        trial = deepcopy(candidate)
+        trial["data"]["source_excerpt"]["text"] = text[:count]
+        trial = _finalize_excerpt(payload, trial)
+        if count == 0:
+            trial["data"]["source_excerpt_status"] = "omitted_for_budget"
+        wire = json.dumps(trial, ensure_ascii=False, default=str)
+        if len(wire) <= budget:
+            best = wire
+            low = count + 1
+        else:
+            high = count - 1
+    if best is None:
+        # Under a very small budget omit evidence explicitly; never shorten the
+        # authorization/decision or publish an untraceable fragment as evidence.
+        omitted = deepcopy(candidate)
+        omitted["data"].pop("source_excerpt", None)
+        omitted["data"]["source_excerpt_status"] = "omitted_for_budget"
+        wire = json.dumps(omitted, ensure_ascii=False, default=str)
+        if len(wire) > budget:
+            raise ValueError("Fetch identity/decision/temporal facts exceed projection budget")
+        return wire
+    return best
+
+
 def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
     data = payload["data"]
     candidates = [dict(item) for item in data.get("citable_results", [])
@@ -423,14 +574,29 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
     contract = data.get("search_contract") or {}
     eligibility = data.get("evidence_eligibility") or {}
     status = contract.get("candidate_status") or eligibility.get("candidate_status") or data.get("evidence_status")
-    if status == "low_relevance":
+    if status == "low_relevance" and not data.get("evidence_boundary"):
         candidates = []
     projected = {key: data[key] for key in (
         "access_event_id", "web_source_id", "execution_status", "execution_succeeded",
         "http_attempted", "reason", "requested_provider", "actual_provider",
         "acquisition_backend", "fallback_occurred", "evidence_status",
+        "search_transport",
         "observation_boundary",
     ) if key in data}
+    boundary = data.get("evidence_boundary")
+    if isinstance(boundary, dict):
+        projected["evidence_boundary"] = deepcopy(boundary)
+        projected["evidence_counts"] = deepcopy(data["evidence_counts"])
+        if data.get("search_transport"):
+            projected["search_transport"] = {key: data["search_transport"][key] for key in
+                ("backend_raw", "parsed", "candidate_projected") if key in data["search_transport"]}
+        projected["lexical_diagnostic"] = {
+            "status": (data.get("evidence_relevance") or {}).get("status"),
+            "role": "diagnostic_only",
+        }
+        projected["temporal_facts"] = deepcopy(data.get("temporal_facts", {}))
+        if data.get("publication_filter"):
+            projected["publication_filter"] = deepcopy(data["publication_filter"])
     projected.update({
         "_tool_output_truncated": True,
         "search_query": _truncate_text(str(data.get("search_query") or ""), 180),
@@ -439,6 +605,8 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
             "evidence_level": "search_results_only", "candidate_status": status,
             "page_evidence_requires_fetch": True,
             "citation_policy": "Only cite retained citable_results URLs; fetch before page-level claims.",
+            **({"citation_scope": "search_result_only", "semantic_relevance": "unassessed",
+                "constraints_satisfied": "not_established"} if boundary else {}),
         },
         "eligible_result_count": len(candidates),
     })
@@ -453,10 +621,22 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
             retained = []
             for item in candidates[:count]:
                 candidate = {"title": item["title"], "url": item["url"]}
+                if boundary:
+                    candidate.update({key: item[key] for key in (
+                        "source_id", "source_event_id", "citation_scope", "semantic_relevance",
+                        "constraints_satisfied", "page_acquired",
+                        "source_date_text", "source_date_kind", "source_date_anchor",
+                        "url_resolution", "destination_identity") if key in item})
                 if snippet_chars and item.get("snippet"):
                     candidate["snippet"] = _truncate_text(str(item["snippet"]), snippet_chars)
                 retained.append(candidate)
             projected["citable_results"] = retained
+            if boundary:
+                projected["evidence_counts"]["visible"] = count
+                if projected.get("search_transport"):
+                    projected["search_transport"].update(model_visible=count,
+                        visibility_basis="tool_response_projection")
+                projected["evidence_counts"]["discovery_citable"] = count
             projected["citable_result_count"] = count
             projected["search_contract"]["citable_result_count"] = count
             projected["omitted_eligible_result_count"] = len(candidates) - count
@@ -485,6 +665,8 @@ def _bounded_payload(payload: dict[str, Any], *, string_limit: int, list_limit: 
 def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
     data = payload.get("data")
     minimal_data: dict[str, Any] = {"_tool_output_truncated": True}
+    if isinstance(data, dict) and "temporal_facts" in data:
+        minimal_data["temporal_facts"] = deepcopy(data["temporal_facts"])
     if isinstance(data, dict):
         for key in (
             "status",
@@ -555,6 +737,8 @@ def _minimal_payload(payload: dict[str, Any]) -> dict[str, Any]:
 def _fallback_data(payload: dict[str, Any], budget: int) -> dict[str, Any]:
     data = payload.get("data")
     fallback: dict[str, Any] = {"_tool_output_truncated": True}
+    if isinstance(data, dict) and "temporal_facts" in data:
+        fallback["temporal_facts"] = deepcopy(data["temporal_facts"])
     if not isinstance(data, dict):
         return fallback
     for key in ("path", "handle", "content_ref", "section_index", "sha256", "source_kind",

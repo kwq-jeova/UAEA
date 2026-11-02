@@ -83,7 +83,7 @@ class GoogleSerpApiBackendTests(unittest.TestCase):
         self.assertEqual(result.data["search_provider"], "www.google.com")
         self.assertFalse(result.data["fallback_occurred"])
         self.assertEqual(len(result.data["citable_results"]), 2)
-        self.assertEqual(result.data["evidence_status"], "relevant")
+        self.assertEqual(result.data["evidence_status"], "candidates_available")
         self.assertEqual(self.event["metadata"]["acquisition_endpoint"], "https://serpapi.com/search.json")
         self.assertEqual(urllib.parse.urlsplit(self.event["url"]).hostname, "www.google.com")
         self.assertNotIn("api_key", self.event["url"])
@@ -104,6 +104,26 @@ class GoogleSerpApiBackendTests(unittest.TestCase):
         self.assertEqual(result.data["search_results"][0]["url"], "https://github.com/example/lora")
         self.assertEqual(result.data["requested_constraints"]["provider"], "google")
         self.assert_no_secret(result)
+
+    def test_language_serialization_preserves_requested_scope_and_region(self):
+        cases = [
+            ("zh", None, "lang_zh-CN|lang_zh-TW"),
+            ("zh-cn", "zh-cn", "lang_zh-CN"),
+            ("zh-tw", "zh-tw", "lang_zh-TW"),
+            ("en-gb", "en-gb", "lang_en"),
+        ]
+        for language, hl, lr in cases:
+            with self.subTest(language=language):
+                result = self.call(arguments={"query":"LoRA training","provider":"google",
+                                              "allow_fallback":False,"language":language})
+                params=urllib.parse.parse_qs(urllib.parse.urlsplit(self.request.full_url).query)
+                self.assertEqual(params.get("hl"), [hl] if hl else None)
+                self.assertEqual(params["lr"],[lr])
+                self.assertNotIn("gl",params)
+                self.assertEqual(result.data["requested_constraints"]["language"],language)
+                self.assertEqual(self.event["metadata"]["language_transport"]["requested"],language)
+                self.assertFalse(self.event["metadata"]["language_transport"]["country_inferred"])
+                self.assert_no_secret(result)
 
     def test_missing_credential_does_not_request_or_fallback(self):
         with patch.dict(os.environ, {"SERPAPI_KEY": ""}), patch("urllib.request.build_opener") as opener, \
@@ -178,7 +198,8 @@ class GoogleSerpApiBackendTests(unittest.TestCase):
         payload["organic_results"] += [payload["organic_results"][0], {"title": "bad", "link": "javascript:alert(1)"},
                                       {"title": "bad", "link": "https://[invalid"}, {"link": "https://example.org"}, None]
         result = self.call(payload)
-        self.assertEqual(result.data["raw_search_result_count"], 2)
+        self.assertEqual(result.data["raw_search_result_count"], len(payload["organic_results"]))
+        self.assertEqual(result.data["parsed_search_result_count"], 2)
         self.assertEqual(len(result.data["search_results"]), 2)
 
     def test_success_snapshot_redacts_echoed_credentials(self):

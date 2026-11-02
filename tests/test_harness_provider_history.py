@@ -345,7 +345,8 @@ class InteractiveToolBoundaryTests(unittest.TestCase):
                 events_path=root / "events.jsonl", stderr_path=root / "stderr", turn_timeout=10,
             )
             replies = [{"result": {}}, {"result": {"thread": {"id": "thread"}}}] * 2
-            with patch.object(repl.subprocess, "Popen"), \
+            with patch("harness.version_manifest.verify_binary_platform"), \
+                    patch.object(repl.subprocess, "Popen"), \
                     patch.object(repl.subprocess, "check_output", return_value="codex-cli test-double"), \
                     patch.object(repl, "ProviderHistoryBridge"), \
                     patch.object(repl.threading, "Thread"), \

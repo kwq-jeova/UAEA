@@ -119,10 +119,11 @@ class WebAdapterAndShellTests(unittest.TestCase):
             result = capability({"query": "marine mammal acoustics", "provider": "bing", "allow_fallback": False}, "unrelated")
         self.assertTrue(result.ok)
         self.assertEqual(result.data["execution_status"], "success")
-        self.assertEqual(result.data["evidence_status"], "low_relevance")
-        self.assertTrue(result.data["evidence_evaluation"]["performed"])
-        self.assertEqual(result.data["citable_results"], [])
-        self.assertIn("revise", result.data["search_contract"]["recommended_next_action"].lower())
+        self.assertEqual(result.data["evidence_status"], "candidates_available")
+        self.assertEqual(result.data["evidence_relevance"]["status"], "low_relevance")
+        self.assertFalse(result.data["evidence_relevance"]["semantic_authority"])
+        self.assertTrue(result.data["citable_results"])
+        self.assertEqual(result.data["search_contract"]["citation_scope"], "search_result_only")
 
     def test_supported_provider_without_configured_endpoint_is_not_network_failure(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -276,7 +277,7 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertEqual(result.data["raw_search_result_domains"], [])
         self.assertEqual(result.data["provider_constraint_support"]["exclude_domains"], "best_effort_query_shaping_and_post_filter")
         self.assertEqual(result.data["execution_status"], "success")
-        self.assertEqual(result.data["evidence_evaluation"], {"performed": False, "reason": "no_candidates"})
+        self.assertEqual(result.data["evidence_evaluation"], {"performed": False, "reason": "candidates_filtered_out"})
         self.assertIsNone(result.data["evidence_status"])
         self.assertNotIn("evidence_relevance", result.data)
         self.assertNotIn("evidence_eligibility", result.data)
@@ -286,7 +287,7 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertIn("diagnostic provenance only", result.data["evidence_reference"]["summary"])
         self.assertNotIn("https://example.test/qwen25", result.data["evidence_reference"]["summary"])
         self.assertNotIn("https://example.test/qwen25", result.data["bounded_evidence_block"])
-        self.assertIn("no candidate results", result.message)
+        self.assertIn("no candidates survived parsing/filtering", result.message)
         self.assertTrue(result.data["execution_succeeded"])
         self.assertEqual(result.data["actual_provider"], "custom")
         self.assertEqual(event["metadata"]["requested_constraints"]["region"], "us")
@@ -298,7 +299,7 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertIn("-site%3Aexample.test", event["url"])
         self.assertIn("-site%3A.cn", event["url"])
 
-    def test_web_search_uncertain_results_are_candidates_but_not_citable(self):
+    def test_web_search_uncertain_results_remain_visible_search_hits(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             db_path = root / "source.sqlite"
@@ -324,11 +325,11 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(result.data["evidence_relevance"]["status"], "uncertain")
         self.assertGreater(len(result.data["candidate_evidence_results"]), 0)
-        self.assertEqual(result.data["citable_results"], [])
-        self.assertEqual(result.data["search_contract"]["candidate_status"], "uncertain")
-        self.assertIn("Do not list or cite URLs yet", result.data["search_contract"]["recommended_next_action"])
-        self.assertIn("citable_results is empty", result.message)
-        self.assertIn("do not list or invent URLs", result.message)
+        self.assertGreater(len(result.data["citable_results"]), 0)
+        self.assertEqual(result.data["search_contract"]["candidate_status"], "candidates_available")
+        self.assertEqual(result.data["search_contract"]["semantic_relevance"], "unassessed")
+        self.assertEqual(result.data["search_contract"]["citation_scope"], "search_result_only")
+        self.assertTrue(all(not x["page_acquired"] for x in result.data["citable_results"]))
 
     def test_web_search_relevant_results_are_citable_candidates(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -357,7 +358,7 @@ class WebAdapterAndShellTests(unittest.TestCase):
         self.assertEqual(result.data["evidence_relevance"]["status"], "relevant")
         self.assertGreater(len(result.data["candidate_evidence_results"]), 0)
         self.assertGreater(len(result.data["citable_results"]), 0)
-        self.assertEqual(result.data["search_contract"]["candidate_status"], "relevant")
+        self.assertEqual(result.data["search_contract"]["candidate_status"], "candidates_available")
         self.assertTrue(result.data["search_contract"]["page_evidence_requires_fetch"])
 
     def test_legacy_web_search_query_and_max_results_remain_compatible(self):

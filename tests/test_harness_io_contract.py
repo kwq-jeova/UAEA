@@ -56,6 +56,7 @@ class HarnessIoContractTests(unittest.TestCase):
                 "uaea.runtime_facts.model",
                 "uaea.runtime_facts.execution",
                 "uaea.runtime_facts.capabilities",
+                "uaea.runtime_facts.interaction",
                 "uaea.runtime_facts.web_limits",
             },
             set(facts),

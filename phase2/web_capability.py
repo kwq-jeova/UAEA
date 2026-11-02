@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+
+from phase2.evidence_boundary import candidate_view, temporal_facts
+
 import sys
 from contextlib import closing
 from pathlib import Path
@@ -40,7 +44,7 @@ WEB_SEARCH_ARGUMENTS = frozenset(
         "exclude_domains",
         "preferred_domains",
         "source_types",
-        "freshness",
+        "freshness", "published_from", "published_to",
     }
 )
 
@@ -190,7 +194,9 @@ class WebSearchCapability:
         candidate_search_results = [result.to_dict() for result in access_result.search_results]
         extra_data = {
             "search_query": query,
-            "raw_search_result_count": len(raw_search_results),
+            "raw_search_result_count": int((event_metadata.get("search_transport") or {}).get(
+                "backend_raw", len(raw_search_results))),
+            "parsed_search_result_count": len(raw_search_results),
             "raw_search_result_domains": _result_domains(raw_search_results),
             "related_access_event_ids": list(access_result.related_access_event_ids),
             "max_results": max_results,
@@ -214,12 +220,20 @@ class WebSearchCapability:
                 "evidence_relevance",
                 "post_filtering",
                 "execution_status",
+                "publication_filter",
+                "search_transport",
                 "reason",
             ):
                 if key == "evidence_relevance" and (access_result.status != "fetched" or not candidate_search_results):
                     continue
                 if key in event_metadata:
                     extra_data[key] = event_metadata[key]
+        transport = extra_data.get("search_transport")
+        if transport:
+            extra_data["search_transport"] = {**transport,
+                "candidate_projected": len(candidate_search_results),
+                "model_visible": len(candidate_search_results),
+                "visibility_basis": "capability_projection_before_harness_budget"}
         if access_result.status != "fetched":
             outcome = _execution_outcome(access_result, event)
             extra_data.update(_unevaluated_evidence("execution_not_successful"))
@@ -231,37 +245,32 @@ class WebSearchCapability:
                 extra_data=extra_data,
             )
         if not candidate_search_results:
-            extra_data.update(_unevaluated_evidence("no_candidates"))
+            empty_reason = ("candidates_filtered_out" if raw_search_results else
+                            "no_parsed_candidates" if (transport or {}).get("backend_raw") else "no_candidates")
+            extra_data.update(_unevaluated_evidence(empty_reason))
             extra_data["raw_search_result_domains"] = []
             extra_data["bounded_evidence_block"] = (
                 "[WEB EXECUTION RESULT]\nexecution_status: success\n"
-                "evidence_evaluation: not performed; no candidates returned."
+                "evidence_evaluation: not performed; no candidates survived parsing/filtering. "
+                "This is not proof that the provider returned no results."
             )
             return _web_tool_result(
                 capability=WEB_SEARCH_CAPABILITY, tool=WEB_SEARCH_TOOL,
                 access_result=access_result, event=event, evidence_reference=evidence_reference,
                 projection=projection,
-                success_message=f"Search executed, but no candidate results were returned for {query}.",
+                success_message=f"Search executed; no candidates survived parsing/filtering for {query}. Check search_transport diagnostics.",
                 failure_message="", extra_data=extra_data,
             )
+        extra_data["access_event_id"] = access_result.access_event_id
+        extra_data["accessed_at"] = event.get("accessed_at") if event else None
         eligibility = _evidence_eligibility(extra_data, candidate_search_results)
-        if eligibility["candidate_status"] == "low_relevance":
-            extra_data["raw_search_result_domains"] = []
-        candidate_results = _eligible_results(candidate_search_results, eligibility["candidate_status"])
-        citable_results = _citable_results(candidate_search_results, eligibility["candidate_status"])
-        extra_data.update(
-            {
-                "evidence_eligibility": eligibility,
-                "candidate_evidence_results": candidate_results,
-                "citable_results": citable_results,
-                "search_results": candidate_results,
-                "evidence_status": eligibility["candidate_status"],
-                "evidence_evaluation": {"performed": True},
-            }
-        )
+        extra_data.update(candidate_view(extra_data, candidate_search_results))
+        extra_data["evidence_eligibility"] = eligibility
+        extra_data["evidence_evaluation"] = {
+            "performed": True, "scope": "lexical_diagnostic_only",
+            "semantic_relevance_performed": False,
+        }
         extra_data["search_contract"] = _search_contract(extra_data)
-        if eligibility["candidate_status"] == "low_relevance":
-            extra_data["bounded_evidence_block"] = _low_relevance_evidence_block(query, extra_data)
         return _web_tool_result(
             capability=WEB_SEARCH_CAPABILITY,
             tool=WEB_SEARCH_TOOL,
@@ -315,8 +324,17 @@ def _web_tool_result(
         "content_sha256": content_sha256,
         "evidence_reference": model_visible_evidence_reference,
         "evidence_refs": [model_visible_evidence_reference],
+        "temporal_facts": temporal_facts(event) if event else {},
         "projection_metrics": projection.metrics(),
         "bounded_evidence_block": projection.evidence_block(),
+        **({"source_excerpt": {
+            "source_event_id": projection.sources[0].access_event_id,
+            "content_sha256": projection.sources[0].content_sha256,
+            "text": projection.sources[0].projected_text,
+            "text_sha256": hashlib.sha256(
+                projection.sources[0].projected_text.encode("utf-8")).hexdigest(),
+            "scope": "projected_page_excerpt",
+        }} if capability == WEB_FETCH_CAPABILITY and projection.sources else {}),
     }
     if extra_data:
         data.update(extra_data)
@@ -328,6 +346,14 @@ def _web_tool_result(
     outcome = _execution_outcome(access_result, event)
     data.update(outcome)
     data["status"] = outcome["execution_status"]
+    if capability == WEB_SEARCH_CAPABILITY and "evidence_counts" not in data:
+        data["evidence_boundary"] = {
+            "schema": "uaea.evidence_boundary.v1", "citation_scope": "search_result_only",
+            "semantic_relevance": "unassessed", "constraints_satisfied": "not_established"}
+        data["evidence_counts"] = {
+            "raw": int(data.get("raw_search_result_count") or 0) if outcome["execution_succeeded"] else 0,
+            "retained": 0, "visible": 0, "discovery_citable": 0, "page_content_acquired": 0}
+
     if isinstance(data.get("evidence_evaluation"), dict) and data["evidence_evaluation"].get("performed") is False:
         data["evidence_refs"] = []
     if not outcome["execution_succeeded"]:
@@ -473,106 +499,46 @@ def _search_contract(data: dict[str, Any]) -> dict[str, Any]:
             "Report requested_provider, actual_provider, fallback_occurred, and actual_search_provider from the tool result. "
             "Do not claim Google was used unless actual_provider or actual_search_provider explicitly reports Google."
         ),
-        "page_evidence_requires_fetch": candidate_status != "low_relevance",
+        "page_evidence_requires_fetch": True,
+        "citation_scope": "search_result_only",
+        "semantic_relevance": "unassessed",
+        "constraints_satisfied": "not_established",
         "citation_policy": (
-            "Only cite URLs present in citable_results or later web.fetch results. "
-            "Do not invent, assume, or cite preferred-domain URLs that are absent from returned evidence."
+            "Returned URLs may be shown as search hits with unverified snippets. "
+            "Only use returned identities; fetch before page-level claims. "
+            "Discovery citation does not verify semantic relevance or user constraints."
         ),
         "repeat_query_policy": (
-            "After low_relevance, do not repeat the same query unchanged. "
-            "Reformulate meaningful domain terms before searching again, or report that evidence was not found."
+            "Use lexical diagnostics as hints only. Assess returned candidates and fetch as needed. "
+            "Preserve retained user requirements when reformulating; query changes do not revoke them."
         ),
         "recommended_next_action": _search_recommended_next_action(candidate_status),
     }
 
 
 def _search_recommended_next_action(candidate_status: str) -> str:
-    if candidate_status == "low_relevance":
-        return "Revise the search query with different domain terms; do not repeat the same query unchanged."
-    if candidate_status == "uncertain":
-        return "Do not list or cite URLs yet; revise the query or fetch a returned candidate before making page-level claims."
-    if candidate_status == "constraints_partially_satisfied":
-        return "State that provider constraints were only partially satisfied; fetch only returned URLs that are relevant."
-    if candidate_status == "relevant":
-        return "Use web.fetch on selected returned URLs before making page-level claims."
-    return "Do not cite results until evidence eligibility is established."
+    return "Assess candidate relevance and user requirements; fetch selected returned URLs before page-level claims."
 
 
 def _search_success_message(query: str, data: dict[str, Any]) -> str:
-    contract = data.get("search_contract") if isinstance(data.get("search_contract"), dict) else {}
-    candidate_status = str(contract.get("candidate_status") or "")
-    provider = str(data.get("search_provider") or "unknown")
-    fallback = " with fallback" if data.get("fallback_occurred") else ""
-    if candidate_status == "low_relevance":
-        return (
-            f"Actual provider {provider}{fallback} returned low-relevance candidate results for {query}; "
-            "do not cite or repeat the same query unchanged. Evidence is insufficient for this query; "
-            "this does not imply network/authorization restrictions or absence of material."
-        )
-    if candidate_status == "uncertain":
-        return (
-            f"Actual provider {provider}{fallback} returned uncertain candidate evidence for {query}; "
-            "citable_results is empty, so do not list or invent URLs. Evidence is insufficient for this query; "
-            "this does not imply network/authorization restrictions or absence of material."
-        )
-    if candidate_status == "constraints_partially_satisfied":
-        return f"Actual provider {provider}{fallback} returned partially constraint-satisfied candidates for {query}."
-    return f"Actual provider {provider}{fallback} searched web for {query}."
+    count = len(data.get("candidate_evidence_results") or [])
+    return (f"Search executed using {data.get('actual_provider')} ({data.get('search_provider')}); {count} candidates retained. "
+            "Lexical relevance is diagnostic only. Search-hit citations do not establish page content "
+            "or satisfaction of user requirements.")
 
 
 def _evidence_eligibility(data: dict[str, Any], raw_search_results: list[dict[str, str]]) -> dict[str, Any]:
-    relevance = data.get("evidence_relevance") if isinstance(data.get("evidence_relevance"), dict) else {}
-    post_filtering = data.get("post_filtering") if isinstance(data.get("post_filtering"), dict) else {}
-    relevance_status = str(relevance.get("status") or "not_validated")
-    preferred_missing = bool(post_filtering.get("preferred_domain_missing"))
-    if not raw_search_results or relevance_status == "low_relevance":
-        candidate_status = "low_relevance"
-    elif relevance_status == "relevant" and preferred_missing:
-        candidate_status = "constraints_partially_satisfied"
-    elif relevance_status == "relevant":
-        candidate_status = "relevant"
-    elif relevance_status == "uncertain":
-        candidate_status = "uncertain"
-    else:
-        candidate_status = "uncertain"
     return {
-        "candidate_status": candidate_status,
-        "relevance_status": relevance_status,
+        "candidate_status": "candidates_available",
+        "relevance_status": "unassessed",
+        "lexical_diagnostic": (data.get("evidence_relevance") or {}).get("status"),
         "raw_search_result_count": int(data.get("raw_search_result_count", len(raw_search_results))),
-        "candidate_evidence_count": len(_eligible_results(raw_search_results, candidate_status)),
-        "citable_result_count": len(_citable_results(raw_search_results, candidate_status)),
-        "raw_results_retained_in": [
-            "web_access_event.content_ref",
-            "web_access_event.metadata.results",
-            "trajectory.raw_event",
-        ],
+        "candidate_evidence_count": len(raw_search_results),
+        "citable_result_count": len(raw_search_results),
+        "citation_scope": "search_result_only",
+        "semantic_relevance": "unassessed",
+        "raw_results_retained_in": ["web_access_event.content_ref", "web_access_event.metadata.results"],
     }
-
-
-def _eligible_results(raw_search_results: list[dict[str, str]], candidate_status: str) -> list[dict[str, Any]]:
-    if candidate_status == "low_relevance":
-        return []
-    return [
-        {
-            **result,
-            "evidence_eligibility": candidate_status,
-            "citable": candidate_status == "relevant",
-        }
-        for result in raw_search_results
-    ]
-
-
-def _citable_results(raw_search_results: list[dict[str, str]], candidate_status: str) -> list[dict[str, Any]]:
-    if candidate_status != "relevant":
-        return []
-    return [
-        {
-            **result,
-            "evidence_eligibility": "relevant",
-            "citable": True,
-        }
-        for result in raw_search_results
-    ]
 
 
 def _result_domains(results: list[dict[str, str]]) -> list[str]:
@@ -592,31 +558,3 @@ def _raw_search_results(event_metadata: Any, access_result: Any) -> list[dict[st
         if isinstance(raw, list):
             return [dict(item) for item in raw if isinstance(item, dict)]
     return [result.to_dict() for result in access_result.search_results]
-
-
-def _low_relevance_evidence_block(query: str, data: dict[str, Any]) -> str:
-    provider = str(data.get("search_provider") or "unknown")
-    requested_provider = data.get("requested_provider") or "none"
-    actual_provider = data.get("actual_provider") or "none"
-    relevance = data.get("evidence_relevance") if isinstance(data.get("evidence_relevance"), dict) else {}
-    matched = ", ".join(str(item) for item in relevance.get("matched_terms") or []) or "none"
-    domains = ", ".join(str(item) for item in data.get("raw_search_result_domains") or []) or "none"
-    return "\n".join(
-        [
-            "[WEB SEARCH RESULT CONTRACT]",
-            f"query: {query}",
-            f"requested_provider: {requested_provider}",
-            f"actual_provider: {actual_provider}",
-            f"fallback_occurred: {bool(data.get('fallback_occurred'))}",
-            f"actual_search_provider: {provider}",
-            "candidate_status: low_relevance",
-            "citable_results: 0",
-            "candidate_evidence_results: 0",
-            f"raw_search_result_count: {data.get('raw_search_result_count') or 0}",
-            f"raw_result_domains: {domains}",
-            f"matched_terms: {matched}",
-            "action: revise_query",
-            "citation_policy: do not cite these raw search results as evidence.",
-            "raw_results_retained_in: web_access_event.content_ref, web_access_event.metadata.results, trajectory.raw_event",
-        ]
-    )

@@ -6,6 +6,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterable
 
+from .evidence_boundary import temporal_facts
+
 from memory.sqlite_store import (
     evidence_reference_for_web_access_event,
     get_web_access_event,
@@ -43,6 +45,7 @@ class ProjectedWebSource:
     source_chars: int
     truncated: bool
     failure_reason: str = ""
+    temporal_facts: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -71,6 +74,8 @@ class WebContextProjection:
                     f"title: {source.title}",
                     f"domain: {source.domain}",
                     f"accessed_at: {source.accessed_at}",
+                    f"published_at (source-declared): {source.temporal_facts.get('published_at')}",
+                    "content_period: unknown; model interpretation must cite source evidence",
                     f"status: {source.access_status}",
                     f"source_type: {source.source_type}",
                     f"provenance: {source.source_provenance}",
@@ -162,6 +167,7 @@ def project_web_access_events(
                 source_chars=int(event.get("content_chars") or len(source_text)),
                 truncated=truncated,
                 failure_reason=failure_reason,
+                temporal_facts=temporal_facts(event),
             )
         )
 

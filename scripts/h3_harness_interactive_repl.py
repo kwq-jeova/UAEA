@@ -10,7 +10,7 @@ import sys
 import threading
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -36,6 +36,7 @@ from harness.semantic_state_adapter import (  # noqa: E402
     ProjectionCapacityError,
     SEMANTIC_STATE_SCHEMA,
 )
+from harness.user_interaction import collect_answers, InputCancelled
 from harness.responses_bridge import ProviderHistoryBridge  # noqa: E402
 from harness.semantic_promotion_audit import build_promotion_audit  # noqa: E402
 from harness.trajectory_writer import HarnessTrajectoryWriter  # noqa: E402
@@ -184,7 +185,9 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                     "Do not encode search provider requirements as preferred_domains. "
                     "Use web.fetch on a selected result URL when page-level evidence is needed. "
                     "Constraint enforcement is best-effort and actual provider details are returned. "
-                    "Only cite URLs returned by web.search or web.fetch."
+                    "Only cite URLs returned by web.search or web.fetch. "
+                    "Use published_from/published_to for a publication-date range; this does not verify "
+                    "the period discussed in the content. Ask the user if those meanings are ambiguous."
                 ),
                 input_schema={
                     "type": "object",
@@ -221,6 +224,12 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                                 "type": "string",
                                 "enum": ["academic", "forum", "news", "documentation", "general"],
                             },
+                        },
+                        "published_from": {
+                            "type": "string", "description": "Inclusive publication-date lower bound YYYY-MM-DD; supply with published_to."
+                        },
+                        "published_to": {
+                            "type": "string", "description": "Inclusive publication-date upper bound YYYY-MM-DD, not the content's financial/research period. Native date filtering currently supports provider=google with allow_fallback=false."
                         },
                         "freshness": {
                             "type": "string",
@@ -263,6 +272,9 @@ class InteractiveAppServer:
         stderr_path: Path,
         turn_timeout: int,
         model: str = DEFAULT_MODEL,
+        user_input_timeout: int = 300,
+        reasoning_effort: str = "none",
+        execution_contract: str = "legacy",
     ) -> None:
         self.codex = codex
         self.codex_home = codex_home
@@ -273,6 +285,13 @@ class InteractiveAppServer:
         self.stderr_path = stderr_path
         self.turn_timeout = turn_timeout
         self.model = model
+        if reasoning_effort not in {"none", "low", "medium", "high"}:
+            raise ValueError("Unsupported Harness reasoning effort")
+        self.reasoning_effort = reasoning_effort
+        self.user_input_timeout = user_input_timeout
+        self._input_wait_seconds = 0.0
+        self._native_input_responses: dict[str, tuple[str, dict]] = {}
+        self._pending_user_input: str | None = None
         self._dynamic_tools: list[dict[str, Any]] = []
         self.process: subprocess.Popen[str] | None = None
         self.thread_id = ""
@@ -289,6 +308,14 @@ class InteractiveAppServer:
         self._trajectory_writer: HarnessTrajectoryWriter | None = None
         self.semantic_state = HarnessSemanticStateAdapter()
         self.adapter.bind_semantic_state_adapter(self.semantic_state)
+        if execution_contract not in {"legacy", "shared"}:
+            raise ValueError("Unknown execution contract mode")
+        self.execution_contract = execution_contract
+        if execution_contract == "shared":
+            from harness.execution_host import SharedExecutionHost
+            self.adapter.execution_boundary = SharedExecutionHost(
+                self.adapter.registry, self.semantic_state,
+                events_path.with_name("execution-contract.trajectory.jsonl"))
 
     def start(self, *, resume_thread_id: str = "") -> None:
         from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest, verify_binary_platform
@@ -323,11 +350,13 @@ class InteractiveAppServer:
             ).open("a", encoding="utf-8")
         except OSError as exc:
             print(f"[AUDIT] shadow journal unavailable: {type(exc).__name__}", flush=True)
+        self._write_run_manifest()
         self._history_bridge = ProviderHistoryBridge(
             self.base_url,
             journal_path=self.events_path.with_name("provider-history-decisions.jsonl"),
             timeout=self.turn_timeout,
             raw_events_path=self.events_path,
+            audit_path=self.events_path.with_name("model-http-audit.jsonl"),
         )
         self._history_bridge.start()
         self.process = subprocess.Popen(
@@ -448,7 +477,22 @@ class InteractiveAppServer:
             return
         self._last_turn_context = turn_context_payload(
             self._dynamic_tools, model=self.model, semantic_projection=semantic_projection.payload,
+            evidence_provenance=self.semantic_state.snapshot(self.thread_id)["evidence_provenance"],
+            retained_requests=self.semantic_state.retained_requests(self.thread_id),
+            filesystem_root=str(PROJECT_ROOT),
         )
+        from harness.request_audit import RequestAudit, digest
+        projection_snapshot = self.semantic_state.snapshot(self.thread_id)
+        RequestAudit(self.events_path.with_name("context-projections.jsonl")).write({
+            "schema": "uaea.context_delivery.v1", "stage": "prepared_for_app_server",
+            "thread_id": self.thread_id,
+            "manifest": projection_snapshot["projection_manifest"],
+            "blocks": {key: {"kind": block["kind"], "chars": len(block["value"]),
+                             "value_sha256": digest(block["value"].encode())}
+                       for key, block in self._last_turn_context.items()},
+            "upstream_http_delivery": "see model-http-audit.jsonl",
+        })
+        self._publish_runtime_context()
         self._write_promotion_audit("PRE_TURN")
         print("\n[HARNESS] turn/start", flush=True)
         print(f"[UAEA] runtime_facts injected: {runtime_fact_summary(model=self.model)}", flush=True)
@@ -464,7 +508,7 @@ class InteractiveAppServer:
             f"constraints={len(semantic_projection.payload.get('constraints') or [])}",
             flush=True,
         )
-        completion = self._request(
+        completion = self._request_turn(
             {
                 "jsonrpc": "2.0",
                 "id": request_id,
@@ -472,16 +516,11 @@ class InteractiveAppServer:
                 "params": {
                     "threadId": self.thread_id,
                     "input": [{"type": "text", "text": text}],
-                    "effort": "none",
+                    "effort": self.reasoning_effort,
                     "model": self.model,
                     "additionalContext": self._last_turn_context,
                 },
             },
-            lambda message: (
-                message.get("method") == "turn/completed"
-                and message.get("params", {}).get("threadId") == self.thread_id
-            )
-            or (message.get("id") == request_id and message.get("error") is not None),
             timeout=self.turn_timeout,
         )
         if completion is None:
@@ -541,6 +580,64 @@ class InteractiveAppServer:
                 pass
             self._promotion_audit_file = None
 
+    def _write_run_manifest(self) -> None:
+        import hashlib
+        sources = {}
+        for folder in ("harness", "phase2", "scripts"):
+            for path in sorted((PROJECT_ROOT / folder).glob("*.py")):
+                sources[str(path.relative_to(PROJECT_ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        try:
+            head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT, text=True, timeout=3).strip()
+            status = subprocess.check_output(["git", "status", "--porcelain"], cwd=PROJECT_ROOT, timeout=3)
+            dirty = bool(status)
+        except (OSError, subprocess.SubprocessError):
+            head, dirty = None, None
+        from urllib.parse import urlsplit
+        endpoint = urlsplit(self.base_url)
+        safe_endpoint = f"{endpoint.scheme}://{endpoint.hostname}:{endpoint.port}"
+        manifest = {
+            "schema": "uaea.run_manifest.v1", "execution_contract": self.execution_contract,
+            "uaea_head": head, "git_dirty": dirty,
+            "source_tree_sha256": hashlib.sha256(json_line(sources).encode()).hexdigest(),
+            "source_files_sha256": sources, "model": self.model,
+            "base_url": safe_endpoint,
+            "model_behavior": "not_evaluated_by_manifest",
+        }
+        self.events_path.with_name("run-manifest.json").write_text(json_line(manifest)+"\n")
+
+    def _publish_runtime_context(self) -> None:
+        try:
+            self._publish_runtime_context_snapshot()
+        except Exception:
+            if self._history_bridge is not None:
+                self._history_bridge.invalidate_runtime_context()
+            raise
+
+    def _publish_runtime_context_snapshot(self) -> None:
+        if self._history_bridge is None or not self.thread_id:
+            return
+        snapshot = self.semantic_state.snapshot(self.thread_id)
+        if not snapshot.get("current_input_id"):
+            return
+        projection = self.semantic_state.current_projection(self.thread_id)
+        context = turn_context_payload(
+            self._dynamic_tools, model=self.model, semantic_projection=projection.payload,
+            evidence_provenance=snapshot["evidence_provenance"],
+            retained_requests=self.semantic_state.retained_requests(self.thread_id),
+            filesystem_root=str(PROJECT_ROOT))
+        current = next((x for x in snapshot["workflow_continuity"]["request_continuity"]["inputs"]
+                        if x["object_id"] == snapshot["current_input_id"]), None)
+        if current is not None:
+            context["uaea.current_user_request"] = {
+                "kind": "untrusted", "value": json_line({
+                    "input_id": current["object_id"], "text": current["metadata"]["text"],
+                    "raw_text_sha256": current["metadata"]["raw_text_sha256"],
+                    "authorization_established": False})}
+        context["uaea.recovery_sources"] = {
+            "kind": "untrusted", "value": json_line(self.semantic_state.recovery_sources(self.thread_id))}
+        self._history_bridge.set_runtime_context(
+            context, thread_id=self.thread_id, input_id=snapshot["current_input_id"])
+
     def _write_promotion_audit(
         self, stage: str, *, snapshot: dict[str, Any] | None = None,
     ) -> None:
@@ -583,6 +680,23 @@ class InteractiveAppServer:
         self.process.stdin.write(json_line(message) + "\n")
         self.process.stdin.flush()
 
+    def _request_turn(self, message: dict[str, Any], *, timeout: int) -> dict[str, Any] | None:
+        # A terminal event belongs to this request only after its RPC ack binds
+        # the native turn ID. Never use another turn's completion as success.
+        self._turn_wait = {"request_id": message["id"], "turn_id": None}
+        try:
+            return self._request(
+                message,
+                lambda m: (
+                    m.get("method") == "turn/completed"
+                    and (m.get("params") or {}).get("threadId") == self.thread_id
+                    and (m.get("params") or {}).get("turn", {}).get("id") == self._turn_wait["turn_id"]
+                    and self._turn_wait["turn_id"] is not None
+                ) or (m.get("id") == message["id"] and m.get("error") is not None),
+                timeout=timeout)
+        finally:
+            self._turn_wait = None
+
     def _request(
         self,
         message: dict[str, Any],
@@ -617,6 +731,17 @@ class InteractiveAppServer:
                 message = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            waiting = getattr(self, "_turn_wait", None)
+            if waiting is not None and message.get("id") == waiting["request_id"]:
+                native = (message.get("result") or {}).get("turn", {}).get("id")
+                if isinstance(native, str) and native:
+                    waiting["turn_id"] = native
+            terminal = message.get("method") == "turn/completed"
+            params = message.get("params") or {}
+            foreign_terminal = (waiting is not None and terminal and
+                                params.get("threadId") == self.thread_id and
+                                (waiting["turn_id"] is None or
+                                 params.get("turn", {}).get("id") != waiting["turn_id"]))
             if self._events_file is not None:
                 observed_at = datetime.utcnow().isoformat()
                 self._events_file.write(
@@ -628,7 +753,15 @@ class InteractiveAppServer:
                         {"observed_at": observed_at, "message": message},
                         raw_event_reference={"path": str(self.events_path)},
                     )
-                semantic_updates = self.semantic_state.consume_raw_event(
+                if foreign_terminal:
+                    with self.events_path.with_name("turn-correlation.jsonl").open("a", encoding="utf-8") as log:
+                        log.write(json_line({
+                            "reason": "terminal_not_bound_to_active_start",
+                            "start_request_id": waiting["request_id"],
+                            "expected_turn_id": waiting["turn_id"],
+                            "observed_turn_id": params.get("turn", {}).get("id"),
+                            "semantic_state_updated": False}) + chr(10))
+                semantic_updates = [] if foreign_terminal else self.semantic_state.consume_raw_event(
                     {"observed_at": observed_at, "message": message},
                     raw_event_reference={"path": str(self.events_path)},
                 )
@@ -649,13 +782,25 @@ class InteractiveAppServer:
                         )
                         self._semantic_snapshots_file.flush()
                     self._write_promotion_audit("POST_TURN", snapshot=snapshot)
+            if foreign_terminal:
+                continue
+            prior_wait = self._input_wait_seconds
             self._handle_message(message)
+            if (message.get("method") == "item/completed" and
+                    (message.get("params") or {}).get("item", {}).get("type") in
+                    {"dynamicToolCall", "contextCompaction"}):
+                self._publish_runtime_context()
+            # Human think time has its own timeout and does not consume inference time.
+            deadline += self._input_wait_seconds - prior_wait
             if predicate(message):
                 return message
         return None
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         method = message.get("method")
+        if method == "item/tool/requestUserInput":
+            self._handle_user_input_request(message)
+            return
         if method == "item/tool/call":
             self._handle_tool_call(message)
             return
@@ -677,6 +822,84 @@ class InteractiveAppServer:
                     print(f"\n[ASSISTANT]\n{text}", flush=True)
             elif item.get("type") == "dynamicToolCall":
                 print(_format_dynamic_tool_result(item), flush=True)
+
+    def _handle_user_input_request(self, message: dict[str, Any]) -> None:
+        params = message.get("params") or {}
+        if (not isinstance(params, dict) or params.get("threadId") != self.thread_id
+                or any(not isinstance(params.get(key), str) or not params[key]
+                       for key in ("threadId", "turnId", "itemId"))):
+            self._send({"jsonrpc": "2.0", "id": message.get("id"),
+                        "error": {"code": -32602, "message": "Interaction scope/identity mismatch"}})
+            return
+        identity = ":".join(params[key] for key in ("threadId", "turnId", "itemId"))
+        fingerprint = json_line(params)
+        prior = self._native_input_responses.get(identity)
+        if prior:
+            if prior[0] != fingerprint:
+                self._send({"jsonrpc": "2.0", "id": message.get("id"),
+                            "error": {"code": -32602, "message": "Interaction identity conflict"}})
+            else:
+                self._send({**prior[1], "id": message.get("id")})
+            return
+        started = time.monotonic()
+        questions = params.get("questions") or []
+        status = "awaiting_input"
+        response = None
+        self._pending_user_input = identity
+
+        def journal(state, answers=None):
+            record = self.semantic_state.record_interaction(
+                params.get("threadId") or self.thread_id, identity,
+                status=state, questions=questions, answers=answers)
+            with (self.events_path.parent / "user-input-events.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(json_line({
+                    "observed_at": datetime.now(timezone.utc).isoformat(),
+                    "kind": "native_interaction", "request_id": message.get("id"),
+                    "thread_id": params.get("threadId"), "turn_id": params.get("turnId"),
+                    "item_id": params.get("itemId"), "status": state, "record": record,
+                    "authorization_established": False,
+                }) + "\n")
+
+        def alive():
+            if self.process is not None and self.process.poll() is not None:
+                raise EOFError("Harness process ended while waiting for input")
+
+        try:
+            journal("awaiting_input")
+            print("\n[WAITING_FOR_USER] native input; no option is selected automatically.", flush=True)
+            deadline = time.monotonic() + self.user_input_timeout
+
+            def read(prompt):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError
+                return read_user_input(prompt, on_idle=alive, timeout=remaining)
+
+            answers = collect_answers(questions, read)
+            status = "answered"
+            journal(status, answers)
+            response = {"jsonrpc": "2.0", "id": message.get("id"), "result": {"answers": answers}}
+        except ValueError:
+            status = "rejected"
+            journal(status)
+            response = {"jsonrpc": "2.0", "id": message.get("id"),
+                        "error": {"code": -32602, "message": "Unsupported native question payload"}}
+        except (InputCancelled, KeyboardInterrupt, EOFError, TimeoutError) as exc:
+            status = "timed_out" if isinstance(exc, TimeoutError) else "cancelled"
+            journal(status)
+            response = {"jsonrpc": "2.0", "id": message.get("id"),
+                        "error": {"code": -32800, "message": f"User input {status}"}}
+        finally:
+            self._pending_user_input = None
+            self._input_wait_seconds += time.monotonic() - started
+        if status in {"cancelled", "timed_out"}:
+            # Interrupt first; do not resume the model with an empty/default answer.
+            self._send({"jsonrpc": "2.0", "id": self._next_id(), "method": "turn/interrupt",
+                        "params": {"threadId": params.get("threadId"), "turnId": params.get("turnId")}})
+        if response is not None:
+            self._native_input_responses[identity] = (fingerprint, response)
+            self._send(response)
+        print(f"[USER_INPUT] {status}", flush=True)
 
     def _handle_tool_call(self, message: dict[str, Any]) -> None:
         params = message.get("params") or {}
@@ -719,6 +942,10 @@ class InteractiveAppServer:
                 }]},
             })
             return
+        if self.execution_contract == "shared":
+            # Shared Host already persisted the Observation; publish it before
+            # replying, so a subsequent provider request cannot race its echo.
+            self._publish_runtime_context()
         self._write_promotion_audit("POST_ACTION_VALIDATION")
         trace = dispatch.to_trace_metadata()
         print(
@@ -813,7 +1040,7 @@ def run(args: argparse.Namespace) -> int:
     workspace = args.workspace_root / f"interactive-{context_window}-{stamp}"
     result_dir.mkdir(parents=True, exist_ok=True)
     workspace.mkdir(parents=True, exist_ok=True)
-    write_config(codex_home, base_url, context_window, model=model, n1x=getattr(args, "profile", "") == "n1x")
+    write_config(codex_home, base_url, context_window, model=model, n1x=getattr(args, "profile", "") == "n1x", reasoning_effort=getattr(args, "reasoning_effort", "none"))
     (result_dir / "connection.json").write_text(json_line({
         "vllm_mode": "external" if external else "managed",
         "endpoint": base_url, "model": model, "context_window": context_window,
@@ -859,6 +1086,9 @@ def run(args: argparse.Namespace) -> int:
             stderr_path=result_dir / "app-server-stderr.log",
             turn_timeout=args.turn_timeout,
             model=model,
+            user_input_timeout=getattr(args, "user_input_timeout", 300),
+            reasoning_effort=getattr(args, "reasoning_effort", "none"),
+            execution_contract=getattr(args, "execution_contract", "legacy"),
         )
         app.start()
         print(f"[READY] source-built Codex app-server thread={app.thread_id}", flush=True)
@@ -898,6 +1128,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--vllm-mode", choices=("managed", "external"))
     parser.add_argument("--base-url", help="Loopback server root URL, without /v1")
     parser.add_argument("--model", help="Exact served model name")
+    parser.add_argument("--reasoning-effort", choices=("none", "low", "medium", "high"), default="none",
+                        help="Forwarded to Harness config and turn/start; default preserves existing profiles.")
     parser.add_argument("--result-root", type=Path)
     parser.add_argument("--codex-bin", type=Path)
     parser.add_argument("--codex-home-root", type=Path)
@@ -908,9 +1140,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Managed H3 profile only; external service is not reconfigured.")
     parser.add_argument("--health-timeout", type=int, default=DEFAULT_HEALTH_TIMEOUT)
     parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT)
+    parser.add_argument("--user-input-timeout", type=int, default=300,
+                        help="Seconds to wait for an actual native answer; no auto-selection.")
+    parser.add_argument("--execution-contract", choices=("legacy", "shared"), default="legacy",
+                        help="Opt-in shared read-only execution contract; legacy is the rollback path.")
     parser.add_argument("--generation-diagnostics", action="store_true",
                         help="Managed service only; no parser behavior changes.")
     args = parser.parse_args(argv)
+    if args.user_input_timeout <= 0:
+        parser.error("--user-input-timeout must be positive")
     n1x = args.profile == "n1x"
     host = current_platform()
     required_host = "linux-aarch64" if n1x else "linux-x86_64"

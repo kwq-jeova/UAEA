@@ -10,14 +10,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from memory.sqlite_store import insert_web_access_event
-from phase2.serpapi_backend import SERPAPI_ENDPOINT, SerpApiFailure, google_search
+from phase2.serpapi_backend import SERPAPI_ENDPOINT, SerpApiFailure, google_search, google_language_parameters
 from phase2.network_observability import NetworkObservation, observe_open, observe_read
 
 
@@ -48,6 +48,7 @@ PROVIDER_CONSTRAINT_SUPPORT = {
         "preferred_domains": "best_effort_query_shaping",
         "source_types": "best_effort_query_shaping",
         "freshness": "best_effort_query_shaping",
+        "publication_range": "native_cdr_best_effort",
     },
     "duckduckgo.com": {
         "language": "partial",
@@ -85,6 +86,8 @@ class WebSearchConstraints:
     preferred_domains: tuple[str, ...] = field(default_factory=tuple)
     source_types: tuple[str, ...] = field(default_factory=tuple)
     freshness: str = ""
+    published_from: str = ""
+    published_to: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -96,6 +99,8 @@ class WebSearchConstraints:
             "preferred_domains": list(self.preferred_domains),
             "source_types": list(self.source_types),
             "freshness": self.freshness,
+            "published_from": self.published_from,
+            "published_to": self.published_to,
         }
 
 
@@ -104,9 +109,14 @@ class WebSearchResult:
     title: str
     url: str
     snippet: str = ""
+    source_date_text: str = ""
+    source_link: str = ""
 
     def to_dict(self) -> dict[str, str]:
-        return {"title": self.title, "url": self.url, "snippet": self.snippet}
+        return {"title": self.title, "url": self.url, "snippet": self.snippet,
+                **({"source_date_text": self.source_date_text} if self.source_date_text else {}),
+                **({"source_link": self.source_link, "url_resolution": "same_origin_reference",
+                    "destination_identity": "unresolved"} if self.source_link else {})}
 
 
 @dataclass(frozen=True)
@@ -354,7 +364,16 @@ class WebAdapter:
         search_constraints = constraints or WebSearchConstraints()
         event_metadata = json.loads(str(event_row["metadata_json"]))
         if event_metadata.get("acquisition_backend") == "serpapi":
-            parsed_results = tuple(_parse_google_search_results(json.loads(body)))
+            payload = json.loads(body)
+            diagnostics = []
+            parsed_results = tuple(_parse_google_search_results(payload, diagnostics=diagnostics))
+            event_metadata["search_transport"] = {
+                "backend_raw": len(payload.get("organic_results", [])),
+                "parsed": len(parsed_results),
+                "diagnostics": diagnostics,
+            }
+            connection.execute("UPDATE web_access_events SET metadata_json = ? WHERE access_event_id = ?",
+                               (json.dumps(event_metadata, ensure_ascii=False), access_event_id))
         else:
             parsed_results = tuple(_parse_search_results(body, max_results=max_results * 3))
         search_results = _apply_result_constraints(parsed_results, search_constraints, max_results=max_results)
@@ -426,10 +445,13 @@ class WebAdapter:
                        max_results: int, constraints: WebSearchConstraints) -> WebAccessResult:
         parameters: dict[str, Any] = {"q": effective_query, "num": max_results}
         if constraints.language:
-            language = constraints.language.split("-")[0]
-            parameters.update({"hl": language, "lr": f"lang_{language}"})
+            parameters.update(google_language_parameters(constraints.language))
         if constraints.region:
             parameters["gl"] = constraints.region.split("-")[0]
+        if constraints.published_from:
+            lower = date.fromisoformat(constraints.published_from).strftime("%m/%d/%Y")
+            upper = date.fromisoformat(constraints.published_to).strftime("%m/%d/%Y")
+            parameters["tbs"] = f"cdr:1,cd_min:{lower},cd_max:{upper}"
         provenance_url = "https://www.google.com/search?" + urllib.parse.urlencode(parameters)
         access_event_id = f"WEB-LIVE-{uuid4()}"
         accessed_at = _utc_now()
@@ -443,6 +465,23 @@ class WebAdapter:
             "provider_constraint_support": _provider_constraint_support("www.google.com"),
             "search_attempt_index": 1,
         }
+        if constraints.language:
+            metadata["language_transport"] = {
+                "requested": constraints.language,
+                "parameters": {key: parameters[key] for key in ("hl", "lr") if key in parameters},
+                "basis": "serpapi_documented_language_codes",
+                "interface_language": parameters.get("hl"),
+                "result_language_enforcement": "provider_best_effort",
+                "country_inferred": False,
+            }
+        if constraints.published_from:
+            metadata["publication_filter"] = {
+                "published_from": constraints.published_from, "published_to": constraints.published_to,
+                "date_semantics": "publication_date_only", "range_endpoints": "inclusive",
+                "sent_parameter": "tbs", "sent_value": parameters["tbs"],
+                "provider_reported_value": None, "enforcement": "provider_best_effort",
+                "content_period_satisfied": "not_established",
+            }
         started_at = time.monotonic()
         network = NetworkObservation(SERPAPI_ENDPOINT)
         metadata["network_diagnostics"] = network.data
@@ -450,6 +489,12 @@ class WebAdapter:
             with network:
                 payload = google_search(parameters, timeout=self.timeout_seconds,
                                         max_bytes=self.max_snapshot_bytes, user_agent=self.user_agent)
+                if "publication_filter" in metadata:
+                    metadata["publication_filter"]["provider_reported_value"] = (
+                        payload.get("search_parameters") or {}).get("tbs")
+                    metadata["publication_filter"]["provider_confirmation"] = (
+                        "echo_match" if metadata["publication_filter"]["provider_reported_value"] == parameters["tbs"]
+                        else "not_confirmed")
         except SerpApiFailure as exc:
             metadata.update({"execution_status": exc.status, "reason": exc.reason,
                              "http_attempted": exc.http_attempted,
@@ -701,6 +746,23 @@ def normalize_search_constraints(arguments: dict[str, Any]) -> WebSearchConstrai
     freshness = _safe_single_line_text(arguments.get("freshness")).lower()
     if freshness and freshness not in SUPPORTED_FRESHNESS:
         raise ValueError(f"unsupported freshness: {freshness}")
+    published_from = _safe_single_line_text(arguments.get("published_from", ""))
+    published_to = _safe_single_line_text(arguments.get("published_to", ""))
+    if published_from or published_to:
+        if not published_from or not published_to:
+            raise ValueError("published_from and published_to must be supplied together")
+        try:
+            lower, upper = date.fromisoformat(published_from), date.fromisoformat(published_to)
+        except ValueError:
+            raise ValueError("Publication range requires ISO YYYY-MM-DD dates") from None
+        if lower.isoformat() != published_from or upper.isoformat() != published_to or lower > upper:
+            raise ValueError("Invalid publication range ordering or date format")
+        if provider != "google":
+            raise ValueError("Absolute publication filtering is not supported by the selected provider")
+        if allow_fallback:
+            raise ValueError("Date-filtered search requires allow_fallback=false; fallback providers cannot preserve this filter")
+        if freshness and freshness != "any":
+            raise ValueError("Do not combine a relative freshness filter with an absolute publication range")
     return WebSearchConstraints(
         provider=provider,
         allow_fallback=allow_fallback,
@@ -711,6 +773,7 @@ def normalize_search_constraints(arguments: dict[str, Any]) -> WebSearchConstrai
         preferred_domains=preferred_domains,
         source_types=source_types,
         freshness=freshness,
+        published_from=published_from, published_to=published_to,
     )
 
 
@@ -1077,25 +1140,52 @@ def _plain_text_excerpt(body: bytes, *, content_type: str, limit: int = 1200) ->
     return text[:limit].rstrip()
 
 
-def _parse_google_search_results(payload: dict[str, Any]) -> list[WebSearchResult]:
+def _parse_google_search_results(payload: dict[str, Any], *,
+                                 diagnostics: list[dict[str, Any]] | None = None) -> list[WebSearchResult]:
+    """Normalize references against the fixed provider origin, never decode opaque destinations.
+
+    This discovers candidates only. Fetch still traverses the unchanged capability,
+    URL, and sandbox checks; normalization grants no network permission.
+    """
     results: list[WebSearchResult] = []
     seen: set[str] = set()
-    for item in payload.get("organic_results", []):
-        if not isinstance(item, dict):
-            continue
-        url, title = item.get("link"), item.get("title")
+    for index, item in enumerate(payload.get("organic_results", [])):
+        reason = ""
+        original = item.get("link") if isinstance(item, dict) else None
+        title = item.get("title") if isinstance(item, dict) else None
+        url = original
+        relative = False
         if not isinstance(url, str) or not isinstance(title, str) or not title.strip():
-            continue
-        try:
-            parsed = urllib.parse.urlsplit(url)
-            valid = parsed.scheme in {"http", "https"} and parsed.hostname
-        except ValueError:
-            valid = False
-        if not valid or url in seen:
+            reason = "missing_identity"
+        elif any(ord(c) < 33 or ord(c) == 127 for c in url) or "\\" in url:
+            reason = "invalid_url_characters"
+        else:
+            relative = url.startswith("/") and not url.startswith("//")
+            if relative:
+                url = urllib.parse.urljoin("https://www.google.com/", url)
+            try:
+                parsed = urllib.parse.urlsplit(url)
+                valid = (parsed.scheme in {"http", "https"} and parsed.hostname
+                         and not parsed.username and not parsed.password)
+                parsed.port  # Reject malformed ports before candidate projection.
+            except ValueError:
+                valid = False
+            if not valid:
+                reason = "invalid_http_identity"
+            elif url in seen:
+                reason = "duplicate_identity"
+        if diagnostics is not None:
+            diagnostics.append({"index": index, "status": "rejected" if reason else "parsed",
+                                "reason": reason or ("same_origin_reference" if relative else "absolute_reference"),
+                                "source_link": original, "normalized_url": None if reason else url})
+        if reason:
             continue
         seen.add(url)
         snippet = item.get("snippet", "")
-        results.append(WebSearchResult(title.strip(), url, snippet if isinstance(snippet, str) else ""))
+        source_date = item.get("date")
+        results.append(WebSearchResult(title.strip(), url, snippet if isinstance(snippet, str) else "",
+                                       source_date if isinstance(source_date, str) else "",
+                                       original if relative else ""))
     return results
 
 
@@ -1113,6 +1203,8 @@ def _format_search_results(query: str, results: tuple[WebSearchResult, ...]) -> 
         lines.append(f"   url: {result.url}")
         if result.snippet:
             lines.append(f"   snippet: {result.snippet}")
+        if result.source_date_text:
+            lines.append(f"   source_date_text (search-provider claim): {result.source_date_text}")
     return "\n".join(lines)
 
 

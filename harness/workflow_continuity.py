@@ -60,15 +60,39 @@ def record_outcome(step, observation: Mapping[str, Any], result: Mapping[str, An
         "actual_provider": data.get("actual_provider"),
         "evidence_status": evidence_status if succeeded else "not_evaluated",
         "result_available": bool(data.get("result_available", succeeded)),
-        "citable_count": len(candidates) if succeeded and evidence_status == "relevant" else 0,
-        "citable_candidates": candidates if succeeded and evidence_status == "relevant" else [],
+        "citable_count": len(candidates) if succeeded and evidence_status in {"relevant", "candidates_available"} else 0,
+        "citable_candidates": candidates if succeeded and evidence_status in {"relevant", "candidates_available"} else [],
         "reason": data.get("reason"),
         "retryable": data.get("retryable"),
         "observation_id": step.execution_observation_id,
         "source_url": data.get("url"),
         "access_event_id": data.get("access_event_id"),
         "evidence_reference": deepcopy(data.get("evidence_reference")),
+        "content_sha256": data.get("content_sha256"),
+        "source_excerpt": deepcopy(data.get("source_excerpt")),
+        "temporal_facts": deepcopy(data.get("temporal_facts")),
+        "search_transport": deepcopy(data.get("search_transport")),
+        "evidence_counts": deepcopy(data.get("evidence_counts")),
     }
+
+    # Only a real host receipt can later turn this into source inventory.
+    # Native echo alone does not prove acquisition. Exact content hash is checked.
+    if succeeded and step.capability in {"document.read_file", "document.read_section"}:
+        from hashlib import sha256
+        text = data.get("content")
+        content_hash = data.get("content_hash")
+        if isinstance(text, str) and sha256(text.encode("utf-8")).hexdigest() == content_hash:
+            excerpt = text[:4000]
+            step.action["outcome"]["document_source"] = {
+                "path": data.get("path"), "resolved_path": data.get("resolved_path"),
+                "source_hash": data.get("source_hash") or content_hash,
+                "content_hash": content_hash, "section": data.get("section"),
+                "line_start": data.get("line_start"), "line_end": data.get("line_end"),
+                "acquired_excerpt": excerpt,
+                "acquired_excerpt_sha256": sha256(excerpt.encode("utf-8")).hexdigest(),
+                "excerpt_is_full_content": len(text) <= 4000,
+            }
+
 
 
 def workflow_snapshot(store, workflow_id: str, receipts: list[dict]) -> dict[str, Any]:
@@ -79,6 +103,16 @@ def workflow_snapshot(store, workflow_id: str, receipts: list[dict]) -> dict[str
     origin = next((item.action["harness"] for item in steps
                    if item.action["harness"].get("user_request")
                    and item.action["harness"]["user_request"] != initial_request), {})
+    requests = request_snapshot(store, workflow_id)
+    for item in requests["inputs"]:
+        own = [step for step in steps
+               if step.action["harness"].get("input_id") == item["object_id"]]
+        item["execution"] = {
+            "attempts": len(own),
+            "outcomes_observed": sum("outcome" in step.action for step in own),
+            "successful": sum(step.status == "completed" for step in own),
+            "fulfillment": "not_established",
+        }
     return {
         "workflow_id": workflow_id,
         "initial_request": initial_request,
@@ -87,7 +121,7 @@ def workflow_snapshot(store, workflow_id: str, receipts: list[dict]) -> dict[str
         "attempts": [item.to_dict() for item in steps],
         "turn_receipts": [deepcopy(item) for item in receipts if item["workflow_id"] == workflow_id],
         "source_coverage": source_coverage(steps),
-        "request_continuity": request_snapshot(store, workflow_id),
+        "request_continuity": requests,
         "last_action_request": {key: deepcopy(value) for key, value in steps[-1].action["harness"].items()
                                 if key in {"user_request", "input_id", "call_id", "turn_id"}} if steps else {},
         "action_request_origin": {key: deepcopy(value) for key, value in origin.items()
@@ -113,7 +147,7 @@ def source_coverage(steps) -> dict[str, Any]:
         outcome = step.action.get("outcome", {})
         if step.capability != "web.search" or not outcome.get("execution_succeeded"):
             continue
-        if outcome.get("evidence_status") != "relevant":
+        if outcome.get("evidence_status") not in {"relevant", "candidates_available"}:
             continue
         for candidate in outcome.get("citable_candidates", []):
             url = candidate.get("url")

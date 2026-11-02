@@ -33,7 +33,7 @@ class H3InteractiveWebSchemaTests(unittest.TestCase):
                 "exclude_domains",
                 "preferred_domains",
                 "source_types",
-                "freshness",
+                "freshness", "published_from", "published_to",
             },
             set(properties),
         )
@@ -63,7 +63,8 @@ class H3InteractiveWebSchemaTests(unittest.TestCase):
         self.assertIn("exclude_domains", web_limits)
         self.assertIn("best-effort", web_limits)
         self.assertIn("low_relevance", web_limits)
-        self.assertIn("do not repeat the same query", web_limits)
+        self.assertIn("diagnostics, not semantic verdicts", web_limits)
+        self.assertIn("does not revoke retained user requirements", web_limits)
         capability_state = json.loads(context["uaea.effective_capability_state"]["value"])
         self.assertTrue(capability_state["capabilities"]["web.search"]["available"])
         self.assertTrue(capability_state["capabilities"]["web.fetch"]["available"])

@@ -8,6 +8,13 @@ set -euo pipefail
 
 PROJECT_ROOT="${UAEA_PROJECT_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 PYTHON_EXE="${UAEA_PYTHON_EXE:-python3}"
+
+# Inherit the user's existing WSL proxy setup for non-interactive launches too.
+# The helper discovers the gateway and honors its own disabled flag.
+if [[ -z "${HTTP_PROXY:-${http_proxy:-}}" && -z "${HTTPS_PROXY:-${https_proxy:-}}" \
+      && -f "$HOME/.config/wsl-proxy/proxy.sh" ]]; then
+    . "$HOME/.config/wsl-proxy/proxy.sh"
+fi
 cd -- "${PROJECT_ROOT}"
 
 if [[ "${1:-}" == "--web-env-check" ]]; then

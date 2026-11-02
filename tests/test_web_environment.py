@@ -222,6 +222,8 @@ class WebEnvironmentTests(unittest.TestCase):
             events_path=root / "events.jsonl", stderr_path=root / "stderr.log", turn_timeout=420,
         )
         with patch.dict(os.environ, {"SERPAPI_KEY": self.secret}), \
+                patch("harness.version_manifest.verify_binary_platform"), \
+                patch("harness.version_manifest.verify_binary_digest"), \
                 patch.object(interactive_repl.subprocess, "Popen") as spawn, \
                 patch.object(interactive_repl.subprocess, "check_output", return_value="codex-cli test-double") as version_probe, \
                 patch.object(interactive_repl, "ProviderHistoryBridge"), \
@@ -229,7 +231,12 @@ class WebEnvironmentTests(unittest.TestCase):
                 patch.object(app, "_request", side_effect=[{"result": {}}, {"result": {"thread": {"id": "test"}}}]):
             app.start()
             self.assertNotIn("SERPAPI_KEY", spawn.call_args.kwargs["env"])
-            self.assertNotIn("SERPAPI_KEY", version_probe.call_args.kwargs["env"])
+            # Manifest probes also call check_output; inspect the Codex version
+            # probe by its command instead of whichever subprocess ran last.
+            codex_probes = [call for call in version_probe.call_args_list
+                            if call.args and call.args[0] == [str(root / "codex"), "--version"]]
+            self.assertEqual(len(codex_probes), 1)
+            self.assertNotIn("SERPAPI_KEY", codex_probes[0].kwargs["env"])
             self.assertEqual(os.environ["SERPAPI_KEY"], self.secret)
         app.close()
 
