@@ -105,6 +105,10 @@ class HarnessToolDispatch:
             if recovery is not None:
                 data["recovery"] = recovery
                 data["authorization"] = recovery["authorization"]
+        if data.get("execution_succeeded") is False:
+            recovery = recovery_observation(data)
+            if recovery is not None:
+                data["recovery"] = recovery
         if self.observation.capability in {"web.search", "web.fetch"}:
             data["observation_boundary"] = observation_boundary()
         payload = {
@@ -321,7 +325,7 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
         projected = {key: data[key] for key in (
             "capability", "tool", "access_event_id", "web_source_id", "access_status", "status",
             "execution_status", "execution_succeeded", "http_attempted", "reason",
-            "evidence_counts", "evidence_boundary",
+            "evidence_counts", "evidence_boundary", "recovery", "transport_failure",
             "failure_explanation", "requested_provider", "actual_provider", "fallback_occurred",
             "acquisition_backend",
             "fallback_reason", "requested_constraints", "http_status", "error", "error_kind",
@@ -421,7 +425,7 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
             "requested_provider", "actual_provider", "fallback_occurred", "recovery",
             "error_kind", "semantic_status", "active_constraints", "effective_state_id",
             "semantic_items", "authorization", "retryable", "retry_instruction",
-            "validation_source", "policy_validation_passed", "observation_boundary",
+            "validation_source", "policy_validation_passed", "observation_boundary", "transport_failure",
         ) if key in data}
         if "error" in data:
             compact["data"]["error"] = _truncate_text(str(data["error"]), 400)

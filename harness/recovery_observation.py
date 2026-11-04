@@ -12,12 +12,34 @@ def recovery_observation(data: Mapping[str, Any]) -> dict[str, Any] | None:
     existing = data.get("recovery")
     if isinstance(existing, dict) and existing.get("schema") == RECOVERY_SCHEMA:
         return deepcopy(existing)
+    if (data.get("execution_status") == "network_failure"
+            and data.get("execution_succeeded") is False
+            and data.get("capability") in {"web.search", "web.fetch"}):
+        provider = data.get("requested_provider")
+        step = {"action": "retry_capability", "capability": data["capability"],
+                "preserve_other_arguments": True, "requires_current_policy_validation": True,
+                "new_action_identity_required": True, "automatic": False}
+        if data["capability"] == "web.search":
+            # A suggestion cannot grant provider switching, even if the failed
+            # proposal requested it. A new attempt is checked by the same policy.
+            step["argument_updates"] = {"allow_fallback": False, **({"provider": provider} if provider else {})}
+        else:
+            step["argument_updates"] = {}
+        return {"schema": RECOVERY_SCHEMA, "reason": data.get("reason"),
+                "retryable": True, "state": "recoverable_failure",
+                "transport_failure": deepcopy(data.get("transport_failure", {})),
+                "retry_scope": "same_provider_or_url_new_attempt",
+                "requires_current_policy_validation": True,
+                "interaction_failure_grants_authorization": False,
+                "legal_next_steps": [step, {"action": "report_blocked",
+                    "preserve_unfinished_request": True, "workflow_completed": False}]}
     if (data.get("execution_status") != "validation_failed"
             and data.get("error_kind") != "semantic_validation"):
         return None
     constraints = list(data.get("active_constraints") or [])
     authorization = data.get("authorization") or {}
-    state = authorization.get("state")
+    switch = authorization.get("provider_switch", authorization)
+    state = switch.get("state")
     if state not in {"unknown", "denied", "granted"}:
         state = "unknown"
     sources = []
@@ -71,4 +93,7 @@ def recovery_observation(data: Mapping[str, Any]) -> dict[str, Any] | None:
             steps.append({"action": "ask_user_to_resolve_constraints", "wait_for_user_reply": True})
     elif retryable:
         steps.append({"action": "repair_arguments", "use_current_tool_schema": True})
+    steps.append({"action": "report_blocked", "preserve_unfinished_request": True,
+                  "workflow_completed": False})
+    result["state"] = "recoverable_failure" if retryable else "blocked"
     return result

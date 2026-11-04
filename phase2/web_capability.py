@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 
 from phase2.evidence_boundary import candidate_view, temporal_facts
+from harness.recovery_observation import recovery_observation
 
 import sys
 from contextlib import closing
@@ -346,6 +347,14 @@ def _web_tool_result(
     outcome = _execution_outcome(access_result, event)
     data.update(outcome)
     data["status"] = outcome["execution_status"]
+    if outcome["execution_status"] == "network_failure":
+        diagnostic = data.get("network_diagnostics") or {}
+        data["transport_failure"] = {key: diagnostic.get(key) for key in
+            ("error_kind", "exception_type", "cause_type", "network_error_stage")}
+        data["retryable"] = True
+        recovery = recovery_observation(data)
+        if recovery is not None:
+            data["recovery"] = recovery
     if capability == WEB_SEARCH_CAPABILITY and "evidence_counts" not in data:
         data["evidence_boundary"] = {
             "schema": "uaea.evidence_boundary.v1", "citation_scope": "search_result_only",

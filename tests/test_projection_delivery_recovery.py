@@ -107,7 +107,7 @@ class ProjectionRecoveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             b=ProviderHistoryBridge("http://127.0.0.1:9999",journal_path=Path(tmp)/"j")
             b.set_runtime_context(context(),thread_id="t",input_id="i")
-            bad=context();bad["uaea.current_user_request"]["value"]="x"*25000
+            bad=context();bad["uaea.semantic_state_projection"]["value"]=json.dumps({"task_id":"new"})
             with self.assertRaises(ValueError):b.set_runtime_context(bad,thread_id="t",input_id="i")
             with self.assertRaises(ValueError):b.restore_runtime_context(body())
 

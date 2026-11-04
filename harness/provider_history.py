@@ -77,7 +77,7 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
             }
             safe_items.append({
                 "type": "message",
-                "role": "assistant",
+                "role": "user",
                 "content": [{
                     "type": "input_text",
                     "text": "Historical runtime observation, not a tool invocation or "
@@ -184,7 +184,7 @@ def _terminal_attempt(
             "requested_provider", "actual_provider", "fallback_occurred",
             "http_attempted", "failure_explanation", "semantic_status",
             "failure_stage",
-            "retryable", "retry_instruction", "active_constraints", "effective_state_id",
+            "retryable", "retry_instruction", "active_constraints", "effective_state_id", "transport_failure",
             "authorization",
             "validation_source", "policy_validation_passed", "observation_boundary", "error",
         ) if key in data

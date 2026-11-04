@@ -85,7 +85,7 @@ class ObservationBoundaryTests(unittest.TestCase):
             self.assertIn("unsupported source_types value: blog", data["error"])
             self.assertIn("unsupported source_types value: blog", payload["message"])
             recovery = data["recovery"]
-            self.assertEqual(recovery["legal_next_steps"], [{"action": "repair_arguments",
+            self.assertEqual(recovery["legal_next_steps"][:-1], [{"action": "repair_arguments",
                 "use_current_tool_schema": True, "preserve_active_constraints": True,
                 "requires_current_policy_validation": True}])
             self.assertIn("web.provider=google", recovery["active_constraints"])

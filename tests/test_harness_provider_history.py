@@ -64,7 +64,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         self.assertEqual(recovery["reason"], "interaction_unavailable")
         self.assertEqual(recovery["authorization"]["state"], "unknown")
         self.assertFalse(recovery["retryable"])
-        self.assertEqual(recovery["legal_next_steps"], [
+        self.assertEqual(recovery["legal_next_steps"][:-1], [
             {"action": "ask_user_in_conversation", "wait_for_user_reply": True},
         ])
 
@@ -80,7 +80,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
             "capability": "web.search", "active_constraints": ["web.provider=google", "web.fallback=forbidden"],
             "authorization": {"state": "denied", "model_proposal": True},
         })
-        self.assertEqual(len(recovery["legal_next_steps"]), 1)
+        self.assertEqual(len(recovery["legal_next_steps"]), 2)
         self.assertFalse(recovery["legal_next_steps"][0]["argument_updates"]["allow_fallback"])
         self.assertEqual(recovery["active_constraints"], ["web.provider=google", "web.fallback=forbidden"])
 
@@ -101,13 +101,14 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         recovery = recovery_observation({"execution_status": "validation_failed", "retryable": False,
                                          "capability": "web.search"})
         self.assertFalse(recovery["retryable"])
-        self.assertEqual(recovery["legal_next_steps"], [])
+        self.assertEqual(recovery["legal_next_steps"], [
+            {"action": "report_blocked", "preserve_unfinished_request": True, "workflow_completed": False}])
 
     def test_conflicting_constraints_are_not_silently_relaxed(self):
         recovery = recovery_observation({"execution_status": "validation_failed", "retryable": True,
             "capability": "web.search", "active_constraints": ["web.provider=google", "web.exclude_provider=google"],
         })
-        self.assertEqual(recovery["legal_next_steps"], [
+        self.assertEqual(recovery["legal_next_steps"][:-1], [
             {"action": "ask_user_to_resolve_constraints", "wait_for_user_reply": True},
         ])
 
@@ -118,7 +119,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         self.assertEqual(original, frozen)
         self.assertEqual(len(projection.request["input"]), 2)
         self.assertTrue(all(item["type"] == "message" for item in projection.request["input"]))
-        self.assertTrue(all(item["role"] == "assistant" for item in projection.request["input"]))
+        self.assertTrue(all(item["role"] == "user" for item in projection.request["input"]))
         self.assertEqual({d["state"] for d in projection.decisions}, {state})
         self.assertTrue(all(d["terminal"] and not d["replayable"] for d in projection.decisions))
         self.assertEqual(projection.request["tools"], frozen["tools"])

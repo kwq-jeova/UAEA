@@ -290,6 +290,11 @@ class SharedExecutionBoundary:
                 "execution_status": "validation_failed", "execution_succeeded": False,
                 "capability_called": False, "reason": decision["reason"],
                 "failure_stage": "contract_validation", "retryable": decision["retryable"],
+                "capability": action.capability,
+                "effective_state_id": decision["effective_state_id"],
+                "authorization": deepcopy(decision["authorization"]),
+                **({"requested_provider": decision["effective_parameters"].get("provider")}
+                   if action.capability == "web.search" else {}),
             })
         else:
             called = True
@@ -311,6 +316,10 @@ class SharedExecutionBoundary:
                 })
             result.data["capability_called"] = True
         result.data.update(capability=action.capability, tool=tool)
+        from .recovery_observation import recovery_observation
+        recovery = recovery_observation(result.data)
+        if recovery is not None:
+            result.data["recovery"] = recovery
         observation = ExecutionObservation.from_tool_result(tool, result)
         observation = ExecutionObservation(
             observation_id="execution:" + sha256(f"{contract.workflow_id}:{action.request_id}".encode()).hexdigest(),

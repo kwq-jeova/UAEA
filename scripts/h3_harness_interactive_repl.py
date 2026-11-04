@@ -782,6 +782,9 @@ class InteractiveAppServer:
                         )
                         self._semantic_snapshots_file.flush()
                     self._write_promotion_audit("POST_TURN", snapshot=snapshot)
+            if (terminal and params.get("threadId") == self.thread_id and self._history_bridge is not None
+                    and params.get("turn", {}).get("id")):
+                self._history_bridge.set_compaction(params.get("turn", {}).get("id", ""), False)
             if foreign_terminal:
                 continue
             prior_wait = self._input_wait_seconds
@@ -798,6 +801,34 @@ class InteractiveAppServer:
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         method = message.get("method")
+        params = message.get("params") or {}
+        bridge = getattr(self, "_history_bridge", None)
+        if (bridge is not None and params.get("threadId") == self.thread_id
+                and params.get("item", {}).get("type") == "contextCompaction"
+                and method in {"item/started", "item/completed"}):
+            bridge.set_compaction(params["turnId"], method == "item/started")
+        if method == "error" and params.get("threadId") == self.thread_id:
+            error = params.get("error") or {}
+            details = error.get("additionalDetails")
+            try:
+                typed = json.loads(details).get("error", {}) if isinstance(details, str) else {}
+            except (ValueError, AttributeError):
+                typed = {}
+            budget_error = (typed.get("code") == 400 and typed.get("param") == "input_tokens"
+                            or typed.get("type") == "uaea_context_budget_exceeded")
+            turn_id = params.get("turnId")
+            stopped = getattr(self, "_context_budget_stops", set())
+            waiting = getattr(self, "_turn_wait", None)
+            if (budget_error and turn_id and waiting is not None
+                    and turn_id == waiting["turn_id"] and turn_id not in stopped):
+                self._context_budget_stops = stopped | {turn_id}
+                self._send({"jsonrpc": "2.0", "id": self._next_id(), "method": "turn/interrupt",
+                            "params": {"threadId": self.thread_id, "turnId": turn_id}})
+                with self.events_path.with_name("context-budget-events.jsonl").open("a", encoding="utf-8") as log:
+                    log.write(json_line({"state": "blocked", "reason": "context_budget",
+                        "turn_id": turn_id, "task_retained": True, "workflow_completed": False,
+                        "automatic_identical_retry_interrupted": True})+"\n")
+                print("[UAEA] Context budget blocked; task/receipts retained. No identical automatic retry.", flush=True)
         if method == "item/tool/requestUserInput":
             self._handle_user_input_request(message)
             return

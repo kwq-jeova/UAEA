@@ -64,6 +64,8 @@ def record_outcome(step, observation: Mapping[str, Any], result: Mapping[str, An
         "citable_candidates": candidates if succeeded and evidence_status in {"relevant", "candidates_available"} else [],
         "reason": data.get("reason"),
         "retryable": data.get("retryable"),
+        "recovery": deepcopy(data.get("recovery")),
+        "transport_failure": deepcopy(data.get("transport_failure")),
         "observation_id": step.execution_observation_id,
         "source_url": data.get("url"),
         "access_event_id": data.get("access_event_id"),
@@ -238,6 +240,10 @@ def execution_projection(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             **{key: outcome[key] for key in ("execution_status", "execution_succeeded", "http_attempted",
                                            "result_available") if key in outcome},
         }
+        if outcome.get("execution_succeeded") is False and outcome.get("recovery"):
+            recovery = outcome["recovery"]
+            projection["last_attempt"]["recovery_state"] = (
+                "recoverable_failure" if recovery.get("retryable") is True else "blocked")
         if step["capability"] == "web.search":
             projection["last_attempt"].update({key: outcome[key] for key in
                                                ("actual_provider", "evidence_status", "citable_count")

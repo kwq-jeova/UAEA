@@ -14,6 +14,10 @@ from .provider_history import project_provider_history
 from .request_audit import RequestAudit
 
 
+class ContextBudgetError(ValueError):
+    """Required Host facts cannot fit the configured recovery-byte budget."""
+
+
 HOP_HEADERS = frozenset({
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
     "te", "trailer", "transfer-encoding", "upgrade", "host", "content-length",
@@ -27,6 +31,7 @@ class ProviderHistoryBridge:
         self, upstream_url: str, *, journal_path: Path, timeout: float = 420,
         raw_events_path: Path | None = None,
         audit_path: Path | None = None,
+        max_recovery_bytes: int = 24000,
     ) -> None:
         parsed = urlsplit(upstream_url)
         if (
@@ -49,6 +54,10 @@ class ProviderHistoryBridge:
         self.audit_errors = 0
         self._runtime_context: dict[str, Any] | None = None
         self._context_required = False
+        if max_recovery_bytes <= 0:
+            raise ValueError("Recovery byte budget must be positive")
+        self.max_recovery_bytes = max_recovery_bytes
+        self._compaction_turn_id: str | None = None
 
     @property
     def base_url(self) -> str:
@@ -94,7 +103,8 @@ class ProviderHistoryBridge:
                             self.send_error(400, "Responses request must be an object")
                             return
                         projection = project_provider_history(request)
-                        forwarded, restoration = owner.restore_runtime_context(projection.request)
+                        forwarded, restoration = owner.restore_runtime_context(
+                            projection.request, compact=self.path.split("?", 1)[0] == "/v1/responses/compact")
                         decisions = projection.decisions + tuple(restoration)
                         if decisions:
                             body = json.dumps(forwarded, ensure_ascii=False).encode("utf-8")
@@ -122,6 +132,22 @@ class ProviderHistoryBridge:
                         received += len(chunk)
                         self.wfile.write(chunk)
                         self.wfile.flush()
+                except ContextBudgetError:
+                    if owner.audit is not None:
+                        owner.audit.write({"schema": "uaea.model_http_audit.v1",
+                            "event": "request_blocked", "reason": "required_host_context_over_budget",
+                            "upstream_forwarded": False, "task_retained": True,
+                            "original_bytes_sha256": hashlib.sha256(original_body).hexdigest()})
+                    transport_error = "ContextBudgetError"
+                    if not headers_sent:
+                        error = json.dumps({"error": {"type": "uaea_context_budget_exceeded",
+                            "code": 413, "param": "host_context_bytes",
+                            "message": "Required Host facts exceed recovery byte budget; request not forwarded. Task retained."}}).encode()
+                        self.send_response(413)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(error)))
+                        self.end_headers()
+                        self.wfile.write(error)
                 except (BrokenPipeError, ConnectionResetError) as exc:
                     transport_error = type(exc).__name__
                 except (OSError, ValueError, TypeError, http.client.HTTPException) as exc:
@@ -167,67 +193,141 @@ class ProviderHistoryBridge:
             for block in context.values():
                 if block.get("kind") not in {"application", "untrusted"} or not isinstance(block.get("value"), str):
                     raise ValueError("Invalid host context block")
-            if sum(len(b["value"]) for b in context.values()) > 24000:
-                raise ValueError("Host recovery context exceeds bounded budget")
+            # Keep authoritative facts outside the model window. The serialized
+            # transport copy is bounded in restore_runtime_context; rejecting here
+            # would discard the snapshot after a successful tool execution.
             self._runtime_context = deepcopy({
                 "blocks": context, "thread_id": thread_id, "input_id": input_id,
                 "context_sha256": hashlib.sha256(json.dumps(
                     context, sort_keys=True, ensure_ascii=False).encode()).hexdigest()})
 
-    def restore_runtime_context(self, request: dict[str, Any]):
-        """Responses adapter: recover lost host context, not the Harness's reasoning/history."""
+    def set_compaction(self, turn_id: str, active: bool) -> None:
+        """Host lifecycle signal only; never infer compaction from model prose."""
+        if not turn_id:
+            raise ValueError("Compaction identity required")
+        with self._lock:
+            if active:
+                self._compaction_turn_id = turn_id
+            elif self._compaction_turn_id == turn_id:
+                self._compaction_turn_id = None
+
+    @staticmethod
+    def _without_host_blocks(request, blocks):
+        labels = {key if value["kind"] == "application" else "external_"+key:
+                  "developer" if value["kind"] == "application" else "user"
+                  for key, value in blocks.items()}
+        result = deepcopy(request)
+        removed = 0
+        for field in ("input", "previous_input_messages"):
+            items = result.get(field)
+            if not isinstance(items, list):
+                continue
+            retained = []
+            for item in items:
+                if (not isinstance(item, dict) or item.get("type", "message") != "message"
+                        or not isinstance(item.get("content"), list)):
+                    retained.append(item)
+                    continue
+                content = []
+                for part in item["content"]:
+                    value = part.get("text") if isinstance(part, dict) else None
+                    text = value.strip() if isinstance(value, str) else ""
+                    owned = any(item.get("role") == role
+                        and text.startswith("<"+label+">") and text.endswith("</"+label+">")
+                        # A complete single envelope only; never strip quoted source text.
+                        and text.count("<"+label+">") == 1
+                        for label, role in labels.items())
+                    if owned:
+                        removed += 1
+                    else:
+                        content.append(part)
+                if content or not item["content"]:
+                    retained.append({**item, "content": content})
+            result[field] = retained
+        return result, removed
+
+    @staticmethod
+    def _render_blocks(blocks):
+        return [{"role": "developer" if block["kind"] == "application" else "user",
+                 "content": [{"type": "input_text", "text":
+                    "<"+(key if block["kind"] == "application" else "external_"+key)+">\n"+
+                    block["value"]+"\n</"+(key if block["kind"] == "application" else "external_"+key)+">"}]}
+                for key, block in blocks.items()]
+
+    def _bounded_blocks(self, original):
+        blocks = deepcopy(original)
+        omitted = []
+        def size():
+            return len(json.dumps(self._render_blocks(blocks), ensure_ascii=False).encode())
+        if size() > self.max_recovery_bytes:
+            # Explanatory duplicates are optional; current input, effective
+            # constraints, capability state and receipt/source identities are not.
+            for key in ("uaea.runtime_facts.model", "uaea.runtime_facts.web_limits",
+                        "uaea.runtime_facts.capabilities", "uaea.runtime_facts.interaction",
+                        "uaea.runtime_facts.filesystem", "uaea.runtime_facts.execution"):
+                if key in blocks:
+                    blocks.pop(key);omitted.append(key)
+                if size() <= self.max_recovery_bytes:
+                    break
+        if size() > self.max_recovery_bytes and "uaea.semantic_interpretations" in blocks:
+            key = "uaea.semantic_interpretations"
+            payload = json.loads(blocks[key]["value"])
+            if isinstance(payload, dict) and "background" in payload:
+                payload.pop("background")
+                payload["background_omitted_for_budget"] = True
+                blocks[key]["value"] = json.dumps(payload, ensure_ascii=False)
+                omitted.append(key+".background")
+        if size() > self.max_recovery_bytes and "uaea.recovery_sources" in blocks:
+            for limit in (160, 0):
+                sources = json.loads(blocks["uaea.recovery_sources"]["value"])
+                for source in sources:
+                    text = source.get("text", "")
+                    source["text"] = text[:limit]
+                    source["text_sha256"] = hashlib.sha256(source["text"].encode()).hexdigest()
+                    source["supplied_chars"] = len(source["text"])
+                    source["truncated_for_budget"] = True
+                    source["excerpt_omitted_for_budget"] = not bool(source["text"])
+                blocks["uaea.recovery_sources"]["value"] = json.dumps(sources, ensure_ascii=False)
+                omitted.append("uaea.recovery_sources.text:"+str(limit))
+                if size() <= self.max_recovery_bytes:
+                    break
+        if size() > self.max_recovery_bytes:
+            raise ContextBudgetError("Required current request/constraints/source facts exceed recovery budget")
+        return blocks, omitted, size()
+
+    def restore_runtime_context(self, request: dict[str, Any], *, compact=False):
+        """Replace stale projections, never append an unbounded second Host copy."""
         with self._lock:
             state = deepcopy(self._runtime_context)
             required = self._context_required
+            compaction = compact or self._compaction_turn_id is not None
         if state is None:
             if required:
                 raise ValueError("Required Host context unavailable; refusing to forward")
             return request, []
-        items = request.get("input")
-        if not isinstance(items, list):
+        if not isinstance(request.get("input"), list):
             raise ValueError("Recovery requires explicit Responses input messages")
-        tag = "uaea.semantic_state_projection"
-        expected = json.loads(state["blocks"][tag]["value"])
-        found = None
-        critical = {"uaea.semantic_state_projection", "uaea.context_boundary",
-                    "uaea.effective_capability_state", "uaea.retained_user_requests",
-                    "uaea.evidence_provenance", "uaea.semantic_interpretations"} & state["blocks"].keys()
-        seen = set()
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            for part in item.get("content", []):
-                text = part.get("text", "") if isinstance(part, dict) else ""
-                for key in critical:
-                    trusted = state["blocks"][key]["kind"] == "application"
-                    label = key if trusted else "external_"+key
-                    if (item.get("role") == ("developer" if trusted else "user")
-                            and text.strip().startswith("<"+label+">")
-                            and text.strip().endswith("</"+label+">")):
-                        seen.add(key)
-                if (item.get("role") == "developer" and text.strip().startswith("<"+tag+">")
-                        and text.strip().endswith("</"+tag+">")):
-                    try:
-                        found = json.loads(text.strip()[len(tag)+2:-(len(tag)+3)])
-                    except ValueError:
-                        found = None
-        if (critical <= seen and isinstance(found, dict)
-                and all(found.get(k) == expected[k] for k in ("task_id", "effective_state_id"))):
+        restored, removed = self._without_host_blocks(request, state["blocks"])
+        if compaction:
+            # The immutable Host retains authority/receipts outside the model
+            # summary. Reinject them on the next ordinary model request.
+            blocks, omitted, supplied_bytes = {}, [], 0
+        else:
+            blocks, omitted, supplied_bytes = self._bounded_blocks(state["blocks"])
+            restored["input"].extend(self._render_blocks(blocks))
+        if restored == request and not compaction:
             return request, []
-        restored = deepcopy(request)
-        blocks = state["blocks"]
-        for key, block in blocks.items():
-            label = key if block["kind"] == "application" else "external_"+key
-            restored["input"].append({
-                "role": "developer" if block["kind"] == "application" else "user",
-                "content": [{"type": "input_text", "text":
-                    "<"+label+">\n"+block["value"]+"\n</"+label+">"}]})
+        expected = json.loads(state["blocks"]["uaea.semantic_state_projection"]["value"])
         return restored, [{
-            "kind": "host_context_restored", "reason": "host_context_missing_or_stale",
+            "kind": "host_context_deferred_for_compaction" if compaction else "host_context_restored",
+            "reason": "compaction_host_state_retained_out_of_band" if compaction else "host_context_normalized",
             "thread_id": state["thread_id"], "input_id": state["input_id"],
             "task_id": expected["task_id"], "effective_state_id": expected["effective_state_id"],
             "host_context_sha256": state["context_sha256"],
             "block_keys": list(blocks), "source": "published_host_snapshot",
+            "removed_host_blocks": removed, "omitted_fields": omitted,
+            "recovery_bytes": supplied_bytes, "recovery_byte_limit": self.max_recovery_bytes,
+            "token_count": "not_measured; byte budget is not model token count",
             "turn_id": "", "call_id": "", "item_id": "",
             "creates_execution_or_authorization": False,
         }]

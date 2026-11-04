@@ -123,6 +123,8 @@ def write_config(home: Path, base_url: str, context_window: int, *, model: str =
                 f"model = {json.dumps(model)}",
                 f"model_reasoning_effort = {json.dumps(reasoning_effort)}",
                 f"model_context_window = {context_window}",
+                # Reserve 25% for tool results, recovery and compaction output.
+                f"model_auto_compact_token_limit = {context_window - max(1024, context_window // 4)}",
                 "project_doc_max_bytes = 0",
                 *(['web_search = "disabled"'] if n1x else []),
                 "",
