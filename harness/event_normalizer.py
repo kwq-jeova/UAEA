@@ -6,6 +6,7 @@ from typing import Any, Iterable, Mapping
 
 
 USER_INPUT = "USER_INPUT"
+CONTEXT_MESSAGE = "CONTEXT_MESSAGE"
 AGENT_OUTPUT = "AGENT_OUTPUT"
 TOOL_CALL = "TOOL_CALL"
 TOOL_RESULT = "TOOL_RESULT"
@@ -61,6 +62,7 @@ class HarnessEventNormalizer:
     def __init__(self, *, source: str = "codex_app_server") -> None:
         self.source = source
         self._sequence = 0
+        self._compacting: set[tuple[str, str]] = set()
 
     def normalize_many(
         self,
@@ -96,6 +98,13 @@ class HarnessEventNormalizer:
         thread_id = _thread_id(params, item, message)
         turn_id = _turn_id(params, item, message)
         item_id = str(params.get("itemId") or item.get("id") or params.get("callId") or "")
+        if item.get("type") == "contextCompaction" and thread_id and turn_id:
+            if method == "item/started":
+                self._compacting.add((thread_id, turn_id))
+            elif method == "item/completed":
+                self._compacting.discard((thread_id, turn_id))
+        if method == "turn/completed":
+            self._compacting.discard((thread_id, turn_id))
         base_payload = {
             "method": method,
             "message_id": message.get("id"),
@@ -466,7 +475,9 @@ class HarnessEventNormalizer:
         role = str(item.get("role") or "")
         payload = {"raw_response_item": dict(item)}
         if item_type == "message" and role == "user":
-            event_type = USER_INPUT
+            # Protocol role is not human identity: includes Host projections,
+            # environment and Harness-derived context. Never promote this echo.
+            event_type = CONTEXT_MESSAGE
         elif item_type == "message" and role in {"assistant", "agent"}:
             event_type = AGENT_OUTPUT
         elif item_type == "function_call":
@@ -506,6 +517,10 @@ class HarnessEventNormalizer:
         method = message.get("method") if isinstance(message, dict) else None
         if method and "method" not in reference:
             reference["method"] = method
+        payload = dict(payload)
+        if event_type == AGENT_OUTPUT:
+            payload["origin_kind"] = ("compaction_derived" if
+                (thread_id, turn_id) in self._compacting else "model_output")
         return TrajectoryEvent(
             sequence=self._sequence,
             event_type=event_type,

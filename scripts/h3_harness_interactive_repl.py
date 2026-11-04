@@ -275,6 +275,9 @@ class InteractiveAppServer:
         user_input_timeout: int = 300,
         reasoning_effort: str = "none",
         execution_contract: str = "legacy",
+        goal_mode: str = "off",
+        goal_projection: str = "optional",
+        input_actor: str = "operator",
     ) -> None:
         self.codex = codex
         self.codex_home = codex_home
@@ -306,7 +309,10 @@ class InteractiveAppServer:
         self._last_turn_context: dict[str, Any] | None = None
         self._history_bridge: ProviderHistoryBridge | None = None
         self._trajectory_writer: HarnessTrajectoryWriter | None = None
-        self.semantic_state = HarnessSemanticStateAdapter()
+        self.semantic_state = HarnessSemanticStateAdapter(require_registered_input=True)
+        from harness.goal_integration import GoalIntegration
+        self.goals = GoalIntegration(self.semantic_state, events_path.with_name("goal-events.jsonl"),
+                                     mode=goal_mode, input_actor=input_actor, projection=goal_projection)
         self.adapter.bind_semantic_state_adapter(self.semantic_state)
         if execution_contract not in {"legacy", "shared"}:
             raise ValueError("Unknown execution contract mode")
@@ -434,6 +440,14 @@ class InteractiveAppServer:
     def run_turn(self, text: str) -> None:
         from harness.request_continuity import parse_request_operation
 
+        if text.startswith("/goal "):
+            try:
+                result = self.goals.control(self.thread_id, text)
+                self._publish_runtime_context()
+                print("[UAEA GOAL] " + json_line(result), flush=True)
+            except ValueError as exc:
+                print("[UAEA GOAL] rejected: " + str(exc), flush=True)
+            return
         try:
             request_operation = parse_request_operation(text)
         except ValueError as exc:
@@ -481,6 +495,8 @@ class InteractiveAppServer:
             retained_requests=self.semantic_state.retained_requests(self.thread_id),
             filesystem_root=str(PROJECT_ROOT),
         )
+        self._last_turn_context.update(self.goals.context(self.thread_id))
+        goal_input_id = self.semantic_state.snapshot(self.thread_id)["current_input_id"]
         from harness.request_audit import RequestAudit, digest
         projection_snapshot = self.semantic_state.snapshot(self.thread_id)
         RequestAudit(self.events_path.with_name("context-projections.jsonl")).write({
@@ -519,10 +535,33 @@ class InteractiveAppServer:
                     "effort": self.reasoning_effort,
                     "model": self.model,
                     "additionalContext": self._last_turn_context,
+                    # Goal metadata is an optional observable final envelope.
+                    # Do not constrain every provider sampling step: native
+                    # tool-call generation must retain its original protocol.
                 },
             },
             timeout=self.turn_timeout,
         )
+        if completion is not None and self.goals.mode != "off":
+            turn = (completion.get("params") or {}).get("turn") or {}
+            if turn.get("status") == "completed":
+                messages = [x for x in turn.get("items", []) if x.get("type") == "agentMessage"]
+                if messages:
+                    final = messages[-1]
+                    try:
+                        candidate = self.goals.observe_final(
+                            self.thread_id, input_id=goal_input_id, turn_id=turn["id"],
+                            model_event_id=final["id"], text=extract_text(final))
+                        if candidate is not None:
+                            print("[UAEA GOAL] candidate=" + candidate.object_id
+                                  + " relation=" + candidate.metadata["proposal"]["relation"]
+                                  + " references_valid=" + str(candidate.metadata["reference_validation"]["valid"])
+                                  + " summary=" + candidate.metadata["hypothesis"]["hypothesis"], flush=True)
+                    except (ValueError, KeyError, TypeError) as exc:
+                        self.goals._event(self.thread_id, "GOAL_PROPOSAL_REJECTED",
+                            {"input_id": goal_input_id, "turn_id": turn.get("id"),
+                             "reason": type(exc).__name__, "detail": str(exc)[:160]})
+                        print("[UAEA GOAL] final proposal rejected; no Goal adoption.", flush=True)
         if completion is None:
             print("[HARNESS] turn timeout", flush=True)
         elif completion.get("error") is not None:
@@ -597,6 +636,8 @@ class InteractiveAppServer:
         safe_endpoint = f"{endpoint.scheme}://{endpoint.hostname}:{endpoint.port}"
         manifest = {
             "schema": "uaea.run_manifest.v1", "execution_contract": self.execution_contract,
+            "goal_mode": self.goals.mode, "goal_projection": self.goals.projection,
+            "input_actor": self.goals.input_actor,
             "uaea_head": head, "git_dirty": dirty,
             "source_tree_sha256": hashlib.sha256(json_line(sources).encode()).hexdigest(),
             "source_files_sha256": sources, "model": self.model,
@@ -635,6 +676,7 @@ class InteractiveAppServer:
                     "authorization_established": False})}
         context["uaea.recovery_sources"] = {
             "kind": "untrusted", "value": json_line(self.semantic_state.recovery_sources(self.thread_id))}
+        context.update(self.goals.context(self.thread_id))
         self._history_bridge.set_runtime_context(
             context, thread_id=self.thread_id, input_id=snapshot["current_input_id"])
 
@@ -850,6 +892,13 @@ class InteractiveAppServer:
             if item.get("type") == "agentMessage":
                 text = extract_text(item)
                 if text:
+                    if self.goals.mode != "off" and not (
+                            self._history_bridge is not None and self._history_bridge._compaction_turn_id):
+                        from harness.goal_integration import decode_final
+                        try:
+                            text = decode_final(text)["answer"]
+                        except (ValueError, TypeError):
+                            pass
                     print(f"\n[ASSISTANT]\n{text}", flush=True)
             elif item.get("type") == "dynamicToolCall":
                 print(_format_dynamic_tool_result(item), flush=True)
@@ -1120,6 +1169,8 @@ def run(args: argparse.Namespace) -> int:
             user_input_timeout=getattr(args, "user_input_timeout", 300),
             reasoning_effort=getattr(args, "reasoning_effort", "none"),
             execution_contract=getattr(args, "execution_contract", "legacy"),
+            goal_mode=getattr(args, "goal_mode", "off"),
+            goal_projection=getattr(args, "goal_projection", "optional"),
         )
         app.start()
         print(f"[READY] source-built Codex app-server thread={app.thread_id}", flush=True)
@@ -1175,6 +1226,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Seconds to wait for an actual native answer; no auto-selection.")
     parser.add_argument("--execution-contract", choices=("legacy", "shared"), default="legacy",
                         help="Opt-in shared read-only execution contract; legacy is the rollback path.")
+    parser.add_argument("--goal-projection", choices=("none", "optional"), default="optional",
+                        help="none: passive Goal collection only; optional: bounded Goal context, no forced format.")
+    parser.add_argument("--goal-mode", choices=("off", "shadow", "adopt"), default="off",
+                        help="Opt-in Goal shadow/adoption experiment; explicit Host /goal controls only.")
     parser.add_argument("--generation-diagnostics", action="store_true",
                         help="Managed service only; no parser behavior changes.")
     args = parser.parse_args(argv)

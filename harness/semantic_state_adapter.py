@@ -143,6 +143,7 @@ class HarnessSemanticStateAdapter:
         normalizer: HarnessEventNormalizer | None = None,
         scope_resolver: Callable[[str], str] | None = None,
         max_projection_chars: int = 2400,
+        require_registered_input: bool = False,
     ) -> None:
         self.normalizer = normalizer or HarnessEventNormalizer(
             source="codex_app_server.semantic_state_adapter"
@@ -151,6 +152,7 @@ class HarnessSemanticStateAdapter:
             lambda thread_id: f"thread:{thread_id or 'unknown-thread'}"
         )
         self.max_projection_chars = max(600, int(max_projection_chars))
+        self.require_registered_input = require_registered_input
         self._states: dict[str, _SemanticState] = {}
 
     def prepare_turn(
@@ -184,6 +186,11 @@ class HarnessSemanticStateAdapter:
             payload={"text": user_input},
             provenance={"source": "harness.semantic_state_adapter.pre_turn_input"},
         ))
+        request = next(x for x in request_inputs(state.runtime_objects, state.current_task_id)
+                       if x.object_id == state.current_input_id)
+        request.metadata["host_input_origin"] = {
+            "channel": "registered_user_entry", "input_id": state.current_input_id,
+            "raw_text_sha256": sha256(user_input.encode()).hexdigest()}
         state.pending_user_input = text
         state.pending_relation = relation
         state.pending_turn_id = str(turn_id)
@@ -254,6 +261,15 @@ class HarnessSemanticStateAdapter:
         if event.event_type == PRE_TURN_CONTEXT:
             return None
         if event.event_type == USER_INPUT:
+            if self.require_registered_input:
+                request = next((x for x in request_inputs(state.runtime_objects, state.current_task_id)
+                                if x.object_id == state.current_input_id), None)
+                origin = request.metadata.get("host_input_origin", {}) if request else {}
+                if (request is None or origin.get("channel") != "registered_user_entry"
+                        or _event_text(event.payload) != request.metadata["text"]
+                        or not state.prepared_input_applied
+                        or state.pending_turn_id and event.turn_id != state.pending_turn_id):
+                    return None
             self._apply_user_input(state, event)
             return None
         if event.event_type == AGENT_OUTPUT:
@@ -261,7 +277,8 @@ class HarnessSemanticStateAdapter:
             if not event.payload.get("is_delta") and output_text:
                 record_model_output(state.runtime_objects, state.current_task_id,
                                     text=output_text, event_id=event.event_id,
-                                    turn_id=event.turn_id, raw_reference=event.raw_event_reference)
+                                    turn_id=event.turn_id, raw_reference=event.raw_event_reference,
+                                    origin_kind=event.payload.get("origin_kind", "model_output"))
             state.last_agent_output = _compact_text(
                 _event_text(event.payload),
                 600,

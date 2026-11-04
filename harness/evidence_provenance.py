@@ -127,7 +127,8 @@ def explicit_urls(text: str) -> list[str]:
 
 
 def record_model_output(store, workflow_id: str, *, text: str, event_id: str,
-                        turn_id: str, raw_reference: Mapping | None = None) -> dict:
+                        turn_id: str, raw_reference: Mapping | None = None,
+                        origin_kind: str = "model_output") -> dict:
     from runtime.runtime_objects import RuntimeObjectRecord
     steps = [s for s in store.step_runs if s.workflow_id == workflow_id]
     report = ground_claim(source_inventory(steps), text=text, urls=explicit_urls(text))
@@ -138,7 +139,8 @@ def record_model_output(store, workflow_id: str, *, text: str, event_id: str,
             object_id=identity, object_type="model_output_claim", owner=workflow_id,
             status="unverified", source_event_ids=[event_id] if event_id else [],
             metadata={"text": text, "text_sha256": digest(text), "turn_id": turn_id,
-                      "grounding_at_output": report, "authority_level": "interpretation",
+                       "grounding_at_output": report, "authority_level": "interpretation",
+                       "origin_kind": origin_kind if origin_kind in {"model_output", "compaction_derived"} else "model_output",
                       "execution_assertions": "not_extracted_from_prose",
                       "raw_references": []})
         store.objects.append(existing)
