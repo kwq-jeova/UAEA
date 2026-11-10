@@ -1,0 +1,158 @@
+--- before/guard_ctl.py
++++ after/guard_ctl.py
+@@ -49,10 +49,17 @@
+   end=time.monotonic()+grace
+   while time.monotonic()<end and [x for x in tree(m["pgid"]) if x["state"]!="Z"]:time.sleep(.02)
+  return {"signals":signals,"remaining":tree(m["pgid"])}
++_gpu_sampler=None
+ def metrics():
++ global _gpu_sampler
++ # Timestamp the oldest observation, not the end of a potentially delayed query.
++ utc=time.time()
++ if _gpu_sampler is None:
++  from nvml_metrics import NvmlMemory
++  _gpu_sampler=NvmlMemory()
+  mem={l.split(":")[0]:int(l.split()[1]) for l in Path("/proc/meminfo").read_text().splitlines() if ":" in l}
+- g=[int(x.strip()) for x in subprocess.check_output(["nvidia-smi","--query-gpu=memory.total,memory.used,memory.free","--format=csv,noheader,nounits"],text=True,timeout=2).split(",")]
+- return {"utc":time.time(),"wsl_available":mem["MemAvailable"]*1024,"wsl_total":mem["MemTotal"]*1024,"wsl_cached":mem["Cached"]*1024,"wsl_anon":mem["AnonPages"]*1024,"wsl_mlocked":mem["Mlocked"]*1024,"wsl_unevictable":mem["Unevictable"]*1024,"swap_used":(mem["SwapTotal"]-mem["SwapFree"])*1024,"gpu_total":g[0]*2**20,"gpu_used":g[1]*2**20,"gpu_free":g[2]*2**20}
++ started=time.monotonic();gpu=_gpu_sampler.read();query_seconds=time.monotonic()-started
++ return {"utc":utc,"wsl_available":mem["MemAvailable"]*1024,"wsl_total":mem["MemTotal"]*1024,"wsl_cached":mem["Cached"]*1024,"wsl_anon":mem["AnonPages"]*1024,"wsl_mlocked":mem["Mlocked"]*1024,"wsl_unevictable":mem["Unevictable"]*1024,"swap_used":(mem["SwapTotal"]-mem["SwapFree"])*1024,"gpu_query_seconds":query_seconds,**gpu}
+ def metric_watcher():
+  import uuid,math
+  d=O/"metrics-watch";d.mkdir(exist_ok=True)
+@@ -78,10 +85,16 @@
+    frame=metrics()
+    if any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for v in frame.values()):
+     raise ValueError("invalid Linux metric")
+-   frame.update({"valid":True,"run_id":run_id,"seq":seq,"sample_seconds":time.monotonic()-started})
++   elapsed=time.monotonic()-started
++   # Preserve the old 2s sample budget without pretending to cancel a C call.
++   # A blocked call is covered by the independent unchanged 3s freshness guard.
++   # A late returned call must publish invalid and exit, never overwrite it with
++   # a subsequent fast frame before the external reader can see the failure.
++   if elapsed>2:raise TimeoutError("Linux sample exceeded 2s query budget")
++   frame.update({"valid":True,"run_id":run_id,"seq":seq,"sample_seconds":elapsed,"gpu_source":"nvml_persistent"})
+    save(O/"linux-metrics.json",frame)
+   except Exception as ex:
+-   save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq,"utc":time.time(),"error":type(ex).__name__})
++   save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq,"utc":time.time(),"error":type(ex).__name__,"error_detail":str(ex)[:160]})
+    return
+   time.sleep(max(.02,1-(time.monotonic()-started)))
+  save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq+1,"utc":time.time(),"error":"SAMPLER_TIMEOUT"})
+--- /dev/null
++++ after/nvml_metrics.py
+@@ -0,0 +1,51 @@
++# Local read-only N1X telemetry. No CUDA allocation, retries or stale fallback.
++import atexit
++import ctypes
++import time
++
++LIBRARY = '/usr/lib/wsl/lib/libnvidia-ml.so.1'
++
++class NvmlError(RuntimeError):
++    pass
++
++class Memory(ctypes.Structure):
++    _fields_ = [('total',ctypes.c_ulonglong),('free',ctypes.c_ulonglong),('used',ctypes.c_ulonglong)]
++
++class NvmlMemory:
++    def __init__(self, library=LIBRARY):
++        self.lib=ctypes.CDLL(library)
++        self.lib.nvmlInit_v2.argtypes=[];self.lib.nvmlInit_v2.restype=ctypes.c_int
++        self.lib.nvmlShutdown.argtypes=[];self.lib.nvmlShutdown.restype=ctypes.c_int
++        self.lib.nvmlDeviceGetCount_v2.argtypes=[ctypes.POINTER(ctypes.c_uint)]
++        self.lib.nvmlDeviceGetCount_v2.restype=ctypes.c_int
++        self.lib.nvmlDeviceGetHandleByIndex_v2.argtypes=[ctypes.c_uint,ctypes.POINTER(ctypes.c_void_p)]
++        self.lib.nvmlDeviceGetHandleByIndex_v2.restype=ctypes.c_int
++        self.lib.nvmlDeviceGetMemoryInfo.argtypes=[ctypes.c_void_p,ctypes.POINTER(Memory)]
++        self.lib.nvmlDeviceGetMemoryInfo.restype=ctypes.c_int
++        self.closed=True
++        self.check(self.lib.nvmlInit_v2(),'init');self.closed=False
++        try:
++            count=ctypes.c_uint();self.check(self.lib.nvmlDeviceGetCount_v2(ctypes.byref(count)),'count')
++            if count.value!=1:raise NvmlError('Expected one GPU; ambiguous identity')
++            self.handle=ctypes.c_void_p()
++            self.check(self.lib.nvmlDeviceGetHandleByIndex_v2(0,ctypes.byref(self.handle)),'handle')
++        except Exception:
++            self.close();raise
++        atexit.register(self.close)
++
++    @staticmethod
++    def check(code,op):
++        if code!=0:raise NvmlError('NVML '+op+' status '+str(code))
++
++    def read(self):
++        if self.closed:raise NvmlError('NVML handle closed')
++        mem=Memory();self.check(self.lib.nvmlDeviceGetMemoryInfo(self.handle,ctypes.byref(mem)),'memory')
++        result={'gpu_total':mem.total,'gpu_used':mem.used,'gpu_free':mem.free}
++        if not mem.total or mem.used>mem.total or mem.free>mem.total or mem.used+mem.free>mem.total:
++            raise NvmlError('Invalid NVML memory counters')
++        return result
++
++    def close(self):
++        if not self.closed:
++            self.closed=True
++            self.lib.nvmlShutdown()
+--- before/SHA256.json
++++ after/SHA256.json
+@@ -8,10 +8,11 @@
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/bolt-serve-args.json": "9370ab6c873b90ec40aa30d777c60cfec929ecf40271767049141e3517cdbe05",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/guard.ps1": "6577c9c67dd3c81987960fad77f2d4a714c1071783f93108ed8fb2c2f1267556",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/config.json": "e93b9144e6515323c222cd8339caf6d71babf7597c18d79108b061b3d554397f",
+-  "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/guard_ctl.py": "622494d562dfc649a21ad1810c9d5acc8f61b7b3cd436fe30b124c2c748f96d6",
++  "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/guard_ctl.py": "03561c65a66bf0652dacd648759f101bc64cb57db4e75eb1fa647e33fe833ff0",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/validate.py": "3d42ae740b2b1f4c5f69982257b3efdb87bd4575fa41a69df992ef062e82e626",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/run-service.sh": "e1422585eb1a8829d1fda6c26d717ab8ca440f273538a3c2ee57bd5f28deb077",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/service.py": "7c48dbbd5f0dd2f91eadf3c03614a892f8189d760f6a5760c6a4f618d6680cdb",
+   "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/readonly-dxgi.cs": "066912e83102ffb82c2b906ce6119a5fcdb0429a7717556482fb26db1fb68368",
+-  "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/monitor/windows-native-metrics.cs": "257b52e689a6ba6cf01bd861234f25c2e7725508052c833d9933222bb701469f"
++  "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/monitor/windows-native-metrics.cs": "257b52e689a6ba6cf01bd861234f25c2e7725508052c833d9933222bb701469f",
++  "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/launch/nvml_metrics.py": "ea7f75af758d92a151f79edae65eb3b188130898b5a748fa413d3e849415f158"
+ }
+--- before/README.md
++++ after/README.md
+@@ -62,7 +62,7 @@
+ A single owned Linux sampler now writes sequenced, run-bound atomic snapshots;
+ Windows rejects invalid, stale (3s), reversed or cross-run data. Resource limits,
+ the independent Windows-heartbeat supervisor and model-process cleanup are unchanged.
+-No last-good fallback is used. The sampler retains its 2s nvidia-smi deadline.
++No last-good fallback is used. The sampler now uses a persistent read-only NVML handle; see the 2026-11-10 correction below. Its failure still stops fail-closed.
+ Startup/control/shutdown still use WSL calls, but ordinary sampling does not.
+ See records/metrics-link-20261104T002523Z for original files, diff and no-model tests.
+ 
+@@ -84,3 +84,35 @@
+ 900s model-readiness timeout and Harness per-Turn waiting timeout are separate.
+ The Workflow and its retained requests/observations are not completed or erased
+ when a model process stops. Cross-Harness durable resumption is not claimed.
++
++
++## 2026-11-10 telemetry query correction
++
++The collector previously spawned nvidia-smi every sample (2s CLI timeout, 3s
++freshness). A stale sample and subsequent TimeoutExpired stopped the 2026-11-10
++Goal attempt. The underlying reason for that CLI delay remains unknown.
++
++Only the Linux metric query is changed: nvml_metrics.py holds one read-only NVML
++handle, with a single-GPU check and memory-counter validation. Sample UTC is the
++oldest observation/start, not query completion. gpu_query_seconds and
++gpu_source=nvml_persistent are recorded. No new Python dependency is installed.
++The launch pin manifest includes the helper. Rollback files and exact diff are
++archived in the 2026-11-10 telemetry-goal-loop research record.
++
++No query retry, CLI fallback or last-good reuse is implemented. NVML is also the
++underlying library for nvidia-smi, so it is not an independent emergency sensor.
++An error publishes invalid and exits; a blocked call stops advancing snapshots
++and the unchanged external freshness/heartbeat guards terminate the workload.
++All memory thresholds, 3s freshness and owned-process cleanup remain unchanged.
++
++Short validation: 40 paired idle reads (direct median0.85ms, CLI58.5ms), 6 Python
++checks, 10 native freshness counterexamples, invalid/frozen producer termination
++integrations and the existing no-model smoke gates. This is not unattended
++reliability acceptance, nor proof that driver stalls can never occur.
++
++Final late-success refusal: after the real run and cleanup, V2 added a 2s
++completed-sample budget (mirroring the former CLI deadline). A returned late call
++publishes invalid and exits, rather than being overwritten by a fast successor.
++A blocked C call is still covered externally by the unchanged3s freshness gate;
++the helper does not pretend to preempt it. Virtual2.1/3.1s cases fail onV1 and
++pass onV2. V2 repeated no-model guards, not another complete model run.
