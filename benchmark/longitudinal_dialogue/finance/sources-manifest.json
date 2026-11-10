@@ -1,0 +1,32 @@
+[
+  {
+    "id": "intel",
+    "url": "https://www.intc.com/news-events/press-releases/detail/1786/intel-reports-third-quarter-2026-financial-results",
+    "http_status": 200,
+    "content_type": "text/html; charset=UTF-8",
+    "path": "/home/wqkan_wsl/uaea-n1x/research-records/finance-dialogue-20261109T075314Z/frozen-sources/intel.html",
+    "sha256": "3d823f04dfb919aa87d4844d36a403ff59d2c7581a74ebda4315045fb66ae21e",
+    "accessed_at": "2026-11-09T07:55:03.022342+00:00",
+    "kind": "new_retrieval_of_prior_published_document_not_original_1104_snapshot"
+  },
+  {
+    "id": "alphabet",
+    "url": "https://s206.q4cdn.com/479360582/files/doc_news/2026/Oct/28/attachments/2026q3-alphabet-earnings-release.pdf",
+    "http_status": 200,
+    "content_type": "application/pdf",
+    "path": "/home/wqkan_wsl/uaea-n1x/research-records/finance-dialogue-20261109T075314Z/frozen-sources/alphabet.pdf",
+    "sha256": "2f9b94e9194ea4b462bf754c4b651615ab53518b314550f3402b27aabf0735e9",
+    "accessed_at": "2026-11-09T07:55:08.287385+00:00",
+    "kind": "new_retrieval_of_prior_published_document_not_original_1104_snapshot"
+  },
+  {
+    "id": "apple",
+    "url": "https://www.apple.com/newsroom/2026/11/apple-reports-fourth-quarter-results/",
+    "http_status": 200,
+    "content_type": "text/html;charset=utf-8",
+    "path": "/home/wqkan_wsl/uaea-n1x/research-records/finance-dialogue-20261109T075314Z/frozen-sources/apple.html",
+    "sha256": "3f6a90e31b77b65c1e9944ef0ae2b8a3be8a38aea135462e486a0e74fde23dcb",
+    "accessed_at": "2026-11-09T07:55:08.730548+00:00",
+    "kind": "new_retrieval_of_prior_published_document_not_original_1104_snapshot"
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-10",
+  "scope": "Local Git checkpoint only; no Push/model run",
+  "base_commit": "2d8d68d26ff97a4bf007895ebef02724890fa817",
+  "commit_groups": [
+    "Harness/Web source recovery, scoped errors and manual Turn lifecycle",
+    "N1X persistent-NVML patch and versioned validation report",
+    "Longitudinal Goal/Memory research tools, fixtures and limited findings"
+  ],
+  "validation": {
+    "available_fixture_main_suite": {
+      "executed": 667,
+      "passed": 665,
+      "optional_skipped": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    "research_suite": {
+      "executed": 83,
+      "passed": 83
+    },
+    "full_main_suite_is_not_claimed_pass": true,
+    "unavailable_private_fixture_tests": [
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_available_attachment_can_be_referenced_as_evidence",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_chatgpt_graph_parent_children_trace_is_recoverable",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_chatgpt_node_trace_keeps_source_file_and_raw_node",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_conversation_node_can_be_referenced_as_evidence_without_candidate_extraction",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_exported_conversation_ingestion_does_not_create_candidates",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_failed_attachment_can_be_referenced_without_content_extraction",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_ingests_exported_conversation_as_raw_source_records",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_chatgpt_attachment_availability_is_preserved",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_chatgpt_current_path_and_off_path_nodes_are_preserved",
+      "tests.memory.test_sqlite_store.SQLitePrototypeTests.test_ingests_chatgpt_corpus_as_conversation_graph_source"
+    ],
+    "unavailable_private_fixture_paths": [
+      "tests/test_resources/UAEA_phase-1-benchmark-phase.json",
+      "tests/test_resources/chatgpt_personal_selected_2026-08-24"
+    ],
+    "correct_main_discovery": "python3 -B -m unittest discover -s tests -t . -v",
+    "research_discovery": "python3 -B -m unittest discover -s benchmark/longitudinal_dialogue -p 'test_*.py'",
+    "archival_patch_whitespace_exception": {
+      "path": "docs/implementation/harness/patches/n1x-telemetry-persistent-nvml-20261110.patch",
+      "line": 122,
+      "reason": "one literal unified-diff blank context line; exact patch retained",
+      "patch_reverse_dry_run": "PASS; no host file modification"
+    },
+    "format_only_change": {
+      "path": "benchmark/longitudinal_dialogue/test_contracts.py",
+      "operation": "remove blank lines at EOF",
+      "AST_unchanged": true
+    }
+  },
+  "excluded_artifacts": [
+    "unused/context-projections.jsonl",
+    "models/environments/wheels",
+    "raw model/API traces, run records and Windows review copies",
+    "private exported conversation corpora and credentials"
+  ],
+  "research_limits": [
+    "Web Research PARTIAL",
+    "natural Goal formation and autonomous candidate evolution UNKNOWN",
+    "current wording contrast:5 sessions30turns,0Goal proposals",
+    "Goal/Memory incremental decision value UNKNOWN",
+    "Memory mathematics ResearchReserved",
+    "NVML real model runV1, finalV2 late-success refusal CPU/no-model only"
+  ],
+  "external_asset_boundary": "N1X launch files live outside repository; commit archives their exact patch, not the entire host deployment. Git revert alone does not roll back those live assets.",
+  "audit_record": "/home/wqkan_wsl/uaea-n1x/research-records/git-checkpoint-20261110T011442Z"
+}

@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "kind": "adapted_from_real_user_financial_dialogues_with_explicit_study_interventions",
+  "cases": [
+    {
+      "id": "intc",
+      "fixture": "financial-ledger.md",
+      "history_refs": [
+        "interactive-32768-20261105-053257:1-5"
+      ],
+      "adaptation": "保留财报/行情/纠正/模拟估值链，Google改为明确冻结源读取；新增模拟参数用于可核验算术，不冒充原用户报价。",
+      "turns": [
+        "本轮为冻结来源回放，不联网、不交易。先用document.read_section真实读取ledger.md第1节(section_index=1)。事实须引来源ID、日期/期间、单位，缺口UNKNOWN；中文200字以内。请研究intc 2026 Q3财报及电话会议，核对收入及GAAP/non-GAAP EPS，说明是否有足够证据判断Q3 miss。",
+        "继续原研究：以11月4日收盘后为估值时点，价格及forward EPS是否已经真实取得？不要将季度EPS乘4冒充共识，缺少时说明条件，不替我编价格。200字以内。",
+        "先做明确的模拟实验：假设价格50 USD、预期下一全年EPS 2 USD/股，算forward P/E；这不是11月4日真实收盘价，也不是公司指引。中文150字。",
+        "修正这个模拟假设：价格仍50 USD，预期全年EPS改为1.25 USD/股。更新估值、撤回过时计算，并区分目标没变与假设变化；引用既有财报数据时保留原期间。200字。"
+      ]
+    },
+    {
+      "id": "comparison",
+      "fixture": "financial-ledger.md",
+      "history_refs": [
+        "interactive-32768-20261105-053257:6",
+        "interactive-32768-20261105-071627:1,2,5,6,7"
+      ],
+      "adaptation": "合并真实跨对象与100%现金请求；追加20%单票、80%现金约束为显式研究干预。",
+      "turns": [
+        "本轮为冻结来源回放，不联网、不交易。先用document.read_section真实读取ledger.md第1节(section_index=1)。事实须引来源ID、日期/期间、单位，缺口UNKNOWN；中文200字以内。用同样方法研究google/Alphabet 2026Q3财报，与Intel比较基本面；不要因为换研究对象而丢掉同一个截止日，避免只按营收规模判投资价值。",
+        "如果两支给你管理，假设100%现金、模拟资金100000 USD、每支最大20%；仅作研究，不下单。行情和forward EPS缺失时能否有依据给唯一买入排名？给有条件的方案。200字。",
+        "用户修改限制：现金至少80%，仍无真实报价。重新评估旧模拟仓位可行性，分别列事实、假设、缺失信息以及下一步最有价值的观察，不把修改风险限制当成长期研究目标改变。200字。"
+      ]
+    },
+    {
+      "id": "apple",
+      "fixture": "financial-ledger.md",
+      "compact_after": 2,
+      "history_refs": [
+        "interactive-32768-20261105-071627:8",
+        "interactive-32768-20261105-053257:5"
+      ],
+      "adaptation": "保留40倍PE提问及数据纠正；新增显式假设和受控原生Compaction，不将其称自然长Context压力。",
+      "turns": [
+        "本轮为冻结来源回放，不联网、不交易。先用document.read_section真实读取ledger.md第1节(section_index=1)。事实须引来源ID、日期/期间、单位，缺口UNKNOWN；中文200字以内。同样方式分析apple。现在40倍PE是不是高估？先辨明40倍是待核验提问还是已证事实，以及Apple最新财报属于哪个财政期间；不要据季度EPS推出forward PE。",
+        "明确只做敏感性研究：模拟价格100 USD，预期全年EPS假设2.5 USD/股。算P/E并保留这是模拟而非真实报价，现有行情缺口仍在。150字。",
+        "压缩后继续同一研究：模拟价格改为80 USD，其余年度EPS假设保持上一轮值。恢复该假设，更新P/E，说明旧100 USD已过期；同时核对Apple季度EPS与财政期间，必要时重新读取ledger.md，无法恢复就UNKNOWN。200字。"
+      ]
+    }
+  ],
+  "tool_output_chars": 12000
+}
