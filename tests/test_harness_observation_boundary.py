@@ -51,7 +51,8 @@ class ObservationBoundaryTests(unittest.TestCase):
         ]}
         original = copy.deepcopy(raw)
         projected = project_provider_history(raw)
-        fact = json.loads(projected.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+        self.assertEqual(len(projected.request["input"]), 1)
+        fact = json.loads(projected.request["input"][0]["content"][0]["text"].split("\n", 1)[1])
         self.assertEqual(fact["reason"], reason)
         self.assertEqual(fact["observation"]["error"], reason)
         self.assertIsNone(fact["observation"]["actual_provider"])
@@ -132,15 +133,27 @@ class ObservationBoundaryTests(unittest.TestCase):
                 self.assertNotIn("do not call this Google", text)
                 self.assertEqual(dispatch.tool_result.data, raw)
 
-    def test_success_message_counts_retained_candidates_not_internal_candidates(self):
+    def test_projection_counts_retained_candidates_not_internal_candidates(self):
         from tests.test_harness_boundary_integrity import search_payload
-        payload = search_payload()
-        payload["data"]["observation_boundary"] = observation_boundary()
-        visible = json.loads(_bounded_json_text(payload, 2200))
-        count = len(visible["data"]["citable_results"])
-        self.assertGreater(count, 0)
-        self.assertLess(count, len(payload["data"]["citable_results"]))
-        self.assertIn(f"citable candidates: {count}", visible["message"])
+        for current_boundary in (False, True):
+            with self.subTest(current_boundary=current_boundary):
+                payload = search_payload()
+                payload["data"]["observation_boundary"] = observation_boundary()
+                if current_boundary:
+                    payload["data"]["evidence_boundary"] = {"schema": "uaea.evidence_boundary.v1"}
+                    payload["data"]["evidence_counts"] = {"raw": 5, "retained": 5, "visible": 5}
+                visible = json.loads(_bounded_json_text(payload, 2200))
+                count = len(visible["data"]["citable_results"])
+                self.assertGreater(count, 0)
+                self.assertLess(count, len(payload["data"]["citable_results"]))
+                self.assertEqual(visible["data"]["citable_result_count"], count)
+                self.assertEqual(visible["data"]["search_contract"]["citable_result_count"], count)
+                if current_boundary:
+                    self.assertEqual(visible["data"]["evidence_counts"]["visible"], count)
+                    self.assertIn(f"visible={count}", visible["message"])
+                else:
+                    # Legacy generic prose need not repeat the structured count.
+                    self.assertNotIn("citable candidates: 5", visible["message"])
 
 
 if __name__ == "__main__":

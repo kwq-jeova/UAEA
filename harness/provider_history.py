@@ -53,6 +53,7 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
             if attempt is not None:
                 terminal[call_id] = attempt
         safe_items = []
+        emitted: set[str] = set()
         for item in items:
             call_id = str(item.get("call_id") or "") if isinstance(item, dict) else ""
             attempt = terminal.get(call_id)
@@ -75,15 +76,19 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
                 "replayable": False,
                 "observation": {**attempt.outcome, "observation_boundary": observation_boundary()},
             }
-            safe_items.append({
-                "type": "message",
-                "role": "user",
-                "content": [{
-                    "type": "input_text",
-                    "text": "Historical runtime observation, not a tool invocation or "
-                    "user authorization:\n" + json.dumps(fact, ensure_ascii=False),
-                }],
-            })
+            keep_fact = (call_id not in emitted and
+                         (item["type"] == "function_call_output" or call_id not in outputs))
+            if keep_fact:
+                emitted.add(call_id)
+                safe_items.append({
+                    "type": "message",
+                    "role": "user",
+                    "content": [{
+                        "type": "input_text",
+                        "text": "Historical runtime observation, not a tool invocation or "
+                        "user authorization:\n" + json.dumps(fact, ensure_ascii=False),
+                    }],
+                })
             decisions.append({
                 "field": field,
                 "call_id": call_id,
@@ -94,6 +99,7 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
                 "terminal": True,
                 "replayable": False,
                 "phase": phase,
+                "projection_effect": "terminal_fact" if keep_fact else "coalesced_terminal_reference",
                 "raw_sha256": hashlib.sha256(
                     json.dumps(item, ensure_ascii=False, sort_keys=True).encode("utf-8")
                 ).hexdigest(),
@@ -184,6 +190,7 @@ def _terminal_attempt(
             "requested_provider", "actual_provider", "fallback_occurred",
             "http_attempted", "failure_explanation", "semantic_status",
             "failure_stage",
+            "failure_scope", "global_web_availability", "error_kind", "http_status",
             "retryable", "retry_instruction", "active_constraints", "effective_state_id", "transport_failure",
             "authorization",
             "validation_source", "policy_validation_passed", "observation_boundary", "error",

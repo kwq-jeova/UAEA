@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .recovery_observation import recovery_observation
-from .observation_boundary import factual_web_message, observation_boundary, model_web_artifacts
+from .observation_boundary import (
+    CapabilityInputError, scoped_failure, factual_web_message, observation_boundary, model_web_artifacts,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -274,13 +276,19 @@ class HarnessDynamicToolAdapter:
                     },
                 )
             else:
-                result = self.registry.execute_capability(
-                    action_request.capability,
-                    action_request.parameters,
-                    objective or f"Harness dynamic tool call: {binding.capability}",
-                )
+                try:
+                    result = self.registry.execute_capability(
+                        action_request.capability,
+                        action_request.parameters,
+                        objective or f"Harness dynamic tool call: {binding.capability}",
+                    )
+                except CapabilityInputError as exc:
+                    result = exc.tool_result()
             observation_tool_name = binding.tool_name
 
+        if action_request.capability in {"document.read_section", "fs.list"}:
+            result.data.setdefault("execution_succeeded", result.ok)
+        result.data = scoped_failure(action_request.capability, result.data)
         observation = ExecutionObservation.from_tool_result(observation_tool_name, result)
         return HarnessToolDispatch(
             thread_id=thread_id,
@@ -330,6 +338,7 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
             "acquisition_backend",
             "fallback_reason", "requested_constraints", "http_status", "error", "error_kind",
             "semantic_status", "retryable", "retry_instruction",
+            "failure_scope", "global_web_availability", "failure_stage", "semantic_resolution_id",
             "validation_source", "unsupported_fields",
             "evidence_status", "evidence_evaluation", "citable_results",
             "active_constraints", "effective_state_id", "semantic_items",
@@ -426,6 +435,7 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
             "error_kind", "semantic_status", "active_constraints", "effective_state_id",
             "semantic_items", "authorization", "retryable", "retry_instruction",
             "validation_source", "policy_validation_passed", "observation_boundary", "transport_failure",
+            "failure_scope", "global_web_availability", "http_status", "failure_stage",
         ) if key in data}
         if "error" in data:
             compact["data"]["error"] = _truncate_text(str(data["error"]), 400)
@@ -490,6 +500,10 @@ def _finalize_excerpt(original: dict[str, Any], candidate: dict[str, Any]) -> di
         return candidate
     supplied = text[:len(target["text"])]
     target.update(text=supplied, text_sha256=hashlib.sha256(supplied.encode()).hexdigest())
+    if "start_char" in source:
+        end = source["start_char"] + len(supplied)
+        total = source["extracted_text_chars"]
+        target.update(end_char=end, has_more=end < total, next_start_char=end if end < total else None)
     if supplied != text:
         target["projection"] = {
             "acquired_text_sha256": source["text_sha256"],
@@ -500,44 +514,62 @@ def _finalize_excerpt(original: dict[str, Any], candidate: dict[str, Any]) -> di
 
 
 
+def _fetch_projection_wire(original: dict[str, Any], candidate: dict[str, Any]) -> str:
+    candidate = _finalize_excerpt(original, candidate)
+    data = candidate["data"]
+    excerpt = data.get("source_excerpt")
+    if data.get("source_excerpt_status"):
+        candidate["message"] = "Fetch succeeded; source excerpt withheld: " + data["source_excerpt_status"]
+    elif isinstance(excerpt, dict) and "extracted_text_chars" in excerpt:
+        if excerpt.get("has_more"):
+            candidate["message"] = (
+                "Partial extracted text only. More saved text is available: call web_fetch "
+                "with the same url and source_event_id, start_char=next_start_char. "
+                "This does not prove the page supports a conclusion.")
+        else:
+            candidate["message"] = (
+                "End of saved extracted text; not a guarantee of full-page coverage "
+                "or semantic support.")
+    return json.dumps(candidate, ensure_ascii=False, default=str, separators=(",", ":"))
+
+
 def _bounded_fetch_evidence(payload: dict[str, Any], budget: int) -> str:
     """Reserve the existing output budget for source text, not repeated audit detail."""
-    original_wire = json.dumps(_finalize_excerpt(payload, payload), ensure_ascii=False, default=str)
+    original_wire = _fetch_projection_wire(payload, payload)
     if len(original_wire) <= budget:
         return original_wire
     data = payload["data"]
     projected = {key: deepcopy(data[key]) for key in (
-        "capability", "tool", "access_event_id", "web_source_id", "url", "title",
+        "access_event_id", "web_source_id", "url", "title",
         "execution_status", "execution_succeeded", "http_attempted", "http_status", "reason",
         "content_sha256", "source_excerpt", "temporal_facts", "observation_boundary",
+        "acquisition_mode", "snapshot_http_status",
     ) if key in data}
-    ref = data.get("evidence_reference")
-    if isinstance(ref, dict):
-        projected["evidence_reference"] = {key: ref[key] for key in
-            ("source_kind", "source_id", "source_event_id", "location") if key in ref}
+    # URL/access_event_id/source_excerpt already identify this source. The
+    # duplicate evidence-reference object remains in the full Host observation.
     decision = data.get("execution_decision")
     if isinstance(decision, dict):
         projected["execution_decision"] = {
             **{key: deepcopy(decision[key]) for key in (
-                "schema", "action_id", "input_id", "workflow_id", "effective_state_id",
+                "action_id", "input_id", "workflow_id", "effective_state_id",
                 "policy_reference", "allowed", "reason", "retryable", "authorization",
                 "request_satisfaction", "effective_parameters", "parameter_sources") if key in decision},
             "full_decision_sha256": hashlib.sha256(json.dumps(
                 decision, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
-            "detail_scope": "summary; full decision retained in canonical host record",
+            "detail_scope": "summary; full decision in Host trajectory",
         }
     metrics = data.get("projection_metrics") or {}
     projected["evidence_extent"] = {
-        "source_text_chars": metrics.get("source_chars"),
+        "snapshot_content_chars": metrics.get("source_chars"),
         "acquired_excerpt_chars": len(data["source_excerpt"].get("text", "")),
         "scope": "extracted_excerpt_not_full_document",
     }
     candidate = {key: deepcopy(payload[key]) for key in
                  ("ok", "capability", "tool", "status", "identity") if key in payload}
-    candidate["message"] = _truncate_text(str(payload.get("message") or ""), 120)
+    candidate["message"] = ""  # Filled from the actual supplied range, not verbose audit prose.
     candidate["data"] = projected
     text = projected["source_excerpt"].get("text", "")
-    full_wire = json.dumps(_finalize_excerpt(payload, candidate), ensure_ascii=False, default=str)
+    full_wire = _fetch_projection_wire(payload, candidate)
     if len(full_wire) <= budget:
         return full_wire
     # Find the largest exact source prefix that fits; never truncate identity,
@@ -551,7 +583,7 @@ def _bounded_fetch_evidence(payload: dict[str, Any], budget: int) -> str:
         trial = _finalize_excerpt(payload, trial)
         if count == 0:
             trial["data"]["source_excerpt_status"] = "omitted_for_budget"
-        wire = json.dumps(trial, ensure_ascii=False, default=str)
+        wire = _fetch_projection_wire(payload, trial)
         if len(wire) <= budget:
             best = wire
             low = count + 1
@@ -563,7 +595,7 @@ def _bounded_fetch_evidence(payload: dict[str, Any], budget: int) -> str:
         omitted = deepcopy(candidate)
         omitted["data"].pop("source_excerpt", None)
         omitted["data"]["source_excerpt_status"] = "omitted_for_budget"
-        wire = json.dumps(omitted, ensure_ascii=False, default=str)
+        wire = _fetch_projection_wire(payload, omitted)
         if len(wire) > budget:
             raise ValueError("Fetch identity/decision/temporal facts exceed projection budget")
         return wire
@@ -621,7 +653,7 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
     bounded = {**payload, "message": _truncate_text(str(payload.get("message") or ""), 160), "data": projected}
     # Drop descriptions before candidate quantity. Never truncate a retained title/URL pair.
     for count in range(min(3, len(candidates)), -1, -1):
-        for snippet_chars in (120, 0):
+        for snippet_chars in (600, 300, 180, 120, 60, 0):
             retained = []
             for item in candidates[:count]:
                 candidate = {"title": item["title"], "url": item["url"]}
@@ -632,7 +664,9 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
                         "source_date_text", "source_date_kind", "source_date_anchor",
                         "url_resolution", "destination_identity") if key in item})
                 if snippet_chars and item.get("snippet"):
-                    candidate["snippet"] = _truncate_text(str(item["snippet"]), snippet_chars)
+                    candidate["snippet"] = str(item["snippet"])[:snippet_chars]
+                if item.get("snippet"):
+                    candidate["snippet_truncated"] = len(str(item["snippet"])) > snippet_chars
                 retained.append(candidate)
             projected["citable_results"] = retained
             if boundary:
@@ -645,13 +679,17 @@ def _bounded_search_evidence(payload: dict[str, Any], budget: int) -> str:
             projected["search_contract"]["citable_result_count"] = count
             projected["omitted_eligible_result_count"] = len(candidates) - count
             projected["recommended_next_action"] = "fetch_selected_candidate" if count else "revise_query"
-            if data.get("observation_boundary"):
-                bounded["message"] = _truncate_text(factual_web_message("web.search", projected, ""), 160)
+            if boundary:
+                bounded["message"] = (
+                    f"Search executed via {projected.get('actual_provider')}; "
+                    f"raw={projected['evidence_counts']['raw']}, "
+                    f"retained={projected['evidence_counts']['retained']}, visible={count}. "
+                    "Discovery only; page content and semantic support not established.")
             if candidates and not count:
                 projected["projection_status"] = "identity_exceeds_budget"
                 projected["recommended_next_action"] = "report_projection_limit"
                 bounded["message"] = "Search executed, but no complete candidate identity fits the projection budget. No URL was supplied."
-            text = json.dumps(bounded, ensure_ascii=False, default=str)
+            text = json.dumps(bounded, ensure_ascii=False, default=str, separators=(",", ":"))
             if len(text) <= budget:
                 return text
     raise ValueError("Search execution/provenance identity exceeds projection budget")

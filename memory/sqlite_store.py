@@ -640,8 +640,38 @@ def insert_web_access_event(
     base_dir: Path | str | None = None,
 ) -> str:
     normalized = _normalize_web_access_event(event, base_dir=base_dir)
+    # Preserve the caller's commit boundary. A savepoint also prevents a failed
+    # insert from changing the URL-level latest pointer or earlier caller writes.
+    if not connection.in_transaction:
+        connection.execute("BEGIN")
+    connection.execute("SAVEPOINT immutable_web_access")
+    try:
+        identity = _insert_normalized_web_access_event(connection, normalized)
+    except Exception:
+        connection.execute("ROLLBACK TO immutable_web_access")
+        connection.execute("RELEASE immutable_web_access")
+        raise
+    connection.execute("RELEASE immutable_web_access")
+    return identity
+
+
+def _insert_normalized_web_access_event(
+    connection: sqlite3.Connection, normalized: Mapping[str, Any],
+) -> str:
     web_source = normalized["web_source"]
     access_event = normalized["access_event"]
+    recorded = connection.execute(
+        "SELECT * FROM web_access_events WHERE access_event_id = ?",
+        (access_event["access_event_id"],),
+    ).fetchone()
+    if recorded is not None:
+        expected = {k: v for k, v in access_event.items() if k not in {"metadata", "raw"}}
+        expected.update(metadata_json=_json_dumps(access_event["metadata"]),
+                        raw_json=_json_dumps(access_event["raw"]))
+        if any(recorded[k] != v for k, v in expected.items()):
+            raise ValueError("Web access event identity is immutable; a changed observation requires a new access_event_id")
+        # Replaying an old observation must not move web_sources.latest_* back.
+        return str(access_event["access_event_id"])
     existing = connection.execute(
         "SELECT first_accessed_at FROM web_sources WHERE web_source_id = ?",
         (web_source["web_source_id"],),
@@ -727,23 +757,6 @@ def insert_web_access_event(
             raw_json
         )
         VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(access_event_id) DO UPDATE SET
-            web_source_id = excluded.web_source_id,
-            url = excluded.url,
-            domain = excluded.domain,
-            title = excluded.title,
-            accessed_at = excluded.accessed_at,
-            access_status = excluded.access_status,
-            source_type = excluded.source_type,
-            source_provenance = excluded.source_provenance,
-            http_status = excluded.http_status,
-            content_ref = excluded.content_ref,
-            content_sha256 = excluded.content_sha256,
-            content_bytes = excluded.content_bytes,
-            content_chars = excluded.content_chars,
-            excerpt = excluded.excerpt,
-            metadata_json = excluded.metadata_json,
-            raw_json = excluded.raw_json
         """,
         (
             access_event["access_event_id"],

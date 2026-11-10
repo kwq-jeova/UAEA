@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import hashlib
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
@@ -46,6 +47,10 @@ class ProjectedWebSource:
     truncated: bool
     failure_reason: str = ""
     temporal_facts: dict[str, Any] = field(default_factory=dict)
+    start_char: int = 0
+    end_char: int = 0
+    extracted_text_chars: int = 0
+    extracted_text_sha256: str = ""
 
 
 @dataclass(frozen=True)
@@ -114,7 +119,11 @@ def project_web_access_events(
     access_event_ids: Iterable[str],
     *,
     limits: ProjectionLimits | None = None,
+    start_char: int = 0,
+    require_snapshot: bool = False,
 ) -> WebContextProjection:
+    if type(start_char) is not int or start_char < 0:
+        raise ValueError("start_char must be a non-negative integer")
     active_limits = limits or ProjectionLimits()
     ordered_ids = [str(access_event_id) for access_event_id in access_event_ids if str(access_event_id).strip()]
     selected_ids = ordered_ids[: max(active_limits.max_sources, 0)]
@@ -134,7 +143,9 @@ def project_web_access_events(
             warnings.append(f"web source not found: {event['web_source_id']}")
             continue
         reference = evidence_reference_for_web_access_event(connection, access_event_id)
-        source_text = _source_text_for_event(event)
+        source_text = _normalize_whitespace(_source_text_for_event(event, require_snapshot=require_snapshot))
+        if event["access_status"] == "fetched" and start_char > len(source_text):
+            raise ValueError("start_char exceeds the saved extracted text")
         total_source_chars += int(event.get("content_chars") or len(source_text))
         if event["access_status"] != "fetched":
             failure_reason = _failure_reason(event)
@@ -145,7 +156,10 @@ def project_web_access_events(
             continue
         else:
             allowed_chars = min(active_limits.per_source_chars, remaining_chars)
-            projected_text, truncated = _bounded_text(source_text or event["excerpt"], allowed_chars)
+            # Offsets address the normalized full snapshot. Do not normalize
+            # or strip each slice again: a leading space/newline is part of it.
+            projected_text = source_text[start_char:start_char + allowed_chars]
+            truncated = start_char + len(projected_text) < len(source_text)
             remaining_chars -= len(projected_text)
             failure_reason = ""
         sources.append(
@@ -168,6 +182,10 @@ def project_web_access_events(
                 truncated=truncated,
                 failure_reason=failure_reason,
                 temporal_facts=temporal_facts(event),
+                start_char=start_char,
+                end_char=start_char + len(projected_text),
+                extracted_text_chars=len(source_text),
+                extracted_text_sha256=hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
             )
         )
 
@@ -183,16 +201,22 @@ def project_web_access_events(
     )
 
 
-def _source_text_for_event(event: dict[str, Any]) -> str:
+def _source_text_for_event(event: dict[str, Any], *, require_snapshot: bool = False) -> str:
     if event.get("source_type") == "web_search_results":
         return _normalize_whitespace(str(event.get("excerpt") or ""))
     content_ref_resolved = str(event.get("raw", {}).get("content_ref_resolved") or "").strip()
     path = Path(content_ref_resolved) if content_ref_resolved else None
     if path is not None and path.is_file():
-        raw = path.read_text(encoding="utf-8", errors="replace")
+        data = path.read_bytes()
+        if require_snapshot and (not event.get("content_sha256")
+                                 or hashlib.sha256(data).hexdigest() != event["content_sha256"]):
+            raise ValueError("Saved snapshot hash changed before text extraction")
+        raw = data.decode("utf-8", errors="replace")
         if path.suffix.lower() in {".html", ".htm"}:
             return _extract_structured_html_text(raw)
         return _normalize_whitespace(raw)
+    if require_snapshot:
+        raise ValueError("Saved snapshot missing; cannot substitute a database excerpt")
     return _normalize_whitespace(str(event.get("excerpt") or ""))
 
 

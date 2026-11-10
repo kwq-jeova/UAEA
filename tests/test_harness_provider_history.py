@@ -40,7 +40,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
             "authorization": {"state": "unknown", "model_proposal": True, "source_items": []},
         }}
         projection = self.assert_isolated(raw, "REJECTED")
-        fact = json.loads(projection.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+        fact = json.loads(projection.request["input"][0]["content"][0]["text"].split("\n", 1)[1])
         observation = fact["observation"]
         self.assertEqual(observation["active_constraints"], raw["data"]["active_constraints"])
         self.assertEqual(observation["retry_instruction"], raw["data"]["retry_instruction"])
@@ -59,7 +59,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         raw = {"input": [item, output("request_user_input is unavailable in Default mode", "question")]}
         projection = project_provider_history(raw)
         self.assertTrue(all(row["type"] == "message" for row in projection.request["input"]))
-        fact = json.loads(projection.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+        fact = json.loads(projection.request["input"][0]["content"][0]["text"].split("\n", 1)[1])
         recovery = fact["observation"]["recovery"]
         self.assertEqual(recovery["reason"], "interaction_unavailable")
         self.assertEqual(recovery["authorization"]["state"], "unknown")
@@ -117,7 +117,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         frozen = copy.deepcopy(original)
         projection = project_provider_history(original)
         self.assertEqual(original, frozen)
-        self.assertEqual(len(projection.request["input"]), 2)
+        self.assertEqual(len(projection.request["input"]), 1)
         self.assertTrue(all(item["type"] == "message" for item in projection.request["input"]))
         self.assertTrue(all(item["role"] == "user" for item in projection.request["input"]))
         self.assertEqual({d["state"] for d in projection.decisions}, {state})
@@ -157,7 +157,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
             "execution_status": "network_failure", "requested_provider": "google",
             "actual_provider": None, "execution_succeeded": False,
         }}, "FAILED")
-        text = projection.request["input"][1]["content"][0]["text"]
+        text = projection.request["input"][0]["content"][0]["text"]
         self.assertIn('"actual_provider": null', text)
         self.assertIn('"execution_succeeded": false', text)
 
@@ -196,7 +196,7 @@ class ProviderHistoryProjectionTests(unittest.TestCase):
         items = [call("broken", "bad"), output("aborted", "bad"), call(call_id="good"),
                  output({"ok": True}, "good"), {"role": "user", "content": "continue"}]
         projection = project_provider_history({"input": items})
-        self.assertEqual(projection.request["input"][2:], items[2:])
+        self.assertEqual(projection.request["input"][1:], items[2:])
         self.assertEqual({d["call_id"] for d in projection.decisions}, {"bad"})
 
     def test_projection_is_idempotent(self):
@@ -295,6 +295,72 @@ class ResponsesBridgeTests(unittest.TestCase):
             upstream.server_close()
             thread.join()
 
+    def test_refused_provider_is_non_retryable_service_failure_and_preserves_host_facts(self):
+        import socket
+        with socket.socket() as reserved:
+            reserved.bind(("127.0.0.1",0))
+            port=reserved.getsockname()[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            audit=root/"audit.jsonl"
+            with ProviderHistoryBridge(f"http://127.0.0.1:{port}",journal_path=root/"j",audit_path=audit) as bridge:
+                context={"uaea.semantic_state_projection":{"kind":"application","value":json.dumps({
+                    "task_id":"unfinished","effective_state_id":"v1","constraints":["read-only"],
+                    "workflow_execution":{"completion_established":False}})}}
+                bridge.set_runtime_context(context,thread_id="t",input_id="user-request")
+                before=copy.deepcopy(bridge._runtime_context)
+                client=http.client.HTTPConnection("127.0.0.1",int(bridge.base_url.rsplit(":",1)[1]))
+                client.request("POST","/v1/responses",json.dumps({"input":[{"role":"user","content":"Continue"}]}))
+                response=client.getresponse();payload=json.loads(response.read());client.close()
+                self.assertEqual(response.status,400)
+                self.assertEqual(payload["error"]["type"],"uaea_provider_unavailable")
+                self.assertFalse(payload["error"]["retryable"])
+                self.assertFalse(payload["error"]["workflow_completed"])
+                self.assertEqual(bridge._runtime_context,before)
+            rows=[json.loads(l) for l in audit.read_text().splitlines()]
+            self.assertEqual(rows[-1]["transport_error"],"ConnectionRefusedError")
+            self.assertIsNone(rows[-1]["http_status"])
+            self.assertEqual(rows[-1]["bytes_received"],0)
+
+    def test_same_bridge_can_resume_after_provider_restart_without_resetting_host_history(self):
+        import socket
+        received=[]
+        class Upstream(BaseHTTPRequestHandler):
+            def log_message(self,*args):pass
+            def do_POST(self):
+                received.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+                self.send_response(200);self.send_header("Content-Type","text/event-stream");self.end_headers()
+                self.wfile.write(b'data: {"type":"response.completed"}\n\n')
+        with socket.socket() as reserved:
+            reserved.bind(("127.0.0.1",0));port=reserved.getsockname()[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            with ProviderHistoryBridge(f"http://127.0.0.1:{port}",journal_path=root/"j") as bridge:
+                context={"uaea.semantic_state_projection":{"kind":"application","value":json.dumps({
+                    "task_id":"same-workflow","effective_state_id":"v1","constraints":["read-only"],
+                    "workflow_execution":{"completion_established":False}})}}
+                bridge.set_runtime_context(context,thread_id="t",input_id="retained-user-input")
+                host_before=copy.deepcopy(bridge._runtime_context)
+                request={"input":[call(call_id="already-executed"),output({"ok":True,
+                    "data":{"execution_succeeded":True,"source_id":"source-1"}},"already-executed"),
+                    {"role":"user","content":"Continue the unfinished task."}]}
+                def post():
+                    client=http.client.HTTPConnection("127.0.0.1",int(bridge.base_url.rsplit(":",1)[1]))
+                    client.request("POST","/v1/responses",json.dumps(request))
+                    response=client.getresponse();status=response.status;response.read();client.close()
+                    return status
+                self.assertEqual(post(),400)
+                server=ThreadingHTTPServer(("127.0.0.1",port),Upstream)
+                worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
+                try:
+                    self.assertEqual(post(),200)
+                finally:
+                    server.shutdown();server.server_close();worker.join()
+                self.assertEqual(bridge._runtime_context,host_before)
+                self.assertEqual(received[0]["input"][:3],request["input"])
+                self.assertIn("same-workflow",json.dumps(received[0]))
+                self.assertIn('"completion_established": false',json.dumps(received[0]).replace('\\\"','"'))
+
     def test_frozen_or_nonlocal_endpoints_rejected(self):
         for url in ("http://127.0.0.1:8001", "https://127.0.0.1:8002",
                     "http://example.com:8002", "http://user:key@127.0.0.1:8002"):
@@ -329,7 +395,7 @@ class InteractiveToolBoundaryTests(unittest.TestCase):
             self.assertFalse(payload["data"]["retryable"])
             self.assertFalse(send.call_args.args[0]["result"]["success"])
             projected = project_provider_history({"input": [call(), output(payload)]})
-            fact = json.loads(projected.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+            fact = json.loads(projected.request["input"][0]["content"][0]["text"].split("\n", 1)[1])
             self.assertTrue(fact["observation"]["execution_succeeded"])
             self.assertEqual(fact["observation"]["failure_stage"], "result_projection")
 

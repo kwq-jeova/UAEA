@@ -54,6 +54,7 @@ class HarnessIoContractTests(unittest.TestCase):
         self.assertEqual(
             {
                 "uaea.runtime_facts.model",
+                "uaea.runtime_facts.time",
                 "uaea.runtime_facts.execution",
                 "uaea.runtime_facts.capabilities",
                 "uaea.runtime_facts.interaction",

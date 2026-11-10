@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import queue
 import signal
@@ -75,10 +76,19 @@ from h3_context_characterization import (  # noqa: E402
 
 
 DEFAULT_CONTEXT_WINDOW = 32768
-DEFAULT_TURN_TIMEOUT = 300
+DEFAULT_TURN_TIMEOUT = 0  # Manual interaction has no fixed Turn deadline.
 
 
 RUNTIME_FACT_SUMMARY = runtime_fact_summary()
+
+
+def _optional_wait_timeout(value: float | None) -> float | None:
+    """0/None disable an interactive wait deadline; positive values opt in."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        raise ValueError("Wait timeout must be finite and non-negative, or None")
+    return None if value == 0 else value
 
 
 def json_line(value: Any) -> str:
@@ -201,7 +211,7 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                         },
                         "allow_fallback": {
                             "type": "boolean",
-                            "description": "Whether UAEA may use another provider when the requested provider is unsupported or unavailable. Required whenever provider is set; set false when the user forbids fallback.",
+                            "description": "A proposed provider switch, not an authorization grant. true requires effective provider-switch authorization; unknown authorization is not permission. Use false for a same-provider request when switching is not authorized. The Runtime validates each proposal.",
                         },
                         "language": {"type": "string", "description": "Preferred language code, for example en or zh."},
                         "region": {
@@ -245,11 +255,24 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                 "web.fetch",
                 description=(
                     "Fetch a specific public URL and return bounded page-level evidence from it. "
-                    "Use this after web.search when a candidate source needs verification or summary."
+                    "Use this after web.search when a candidate source needs verification or summary. "
+                    "Only the returned source_excerpt segment was supplied, not the full page. "
+                    "For more text, reuse its source_event_id and next_start_char as start_char "
+                    "with the same URL; this reads the saved snapshot without another HTTP fetch. "
+                    "uaea.recovery_source_index lists older Host-acquired source IDs after compaction. "
+                    "An index entry is not page content: read its saved snapshot when needed and allowed. "
+                    "If unavailable or tools are forbidden, keep missing details unknown; never substitute another source. "
+                    "max_chars is bounded to 3000; actual supplied end_char/next_start_char "
+                    "reflect the tool output budget. HTTP success does not prove article content."
                 ),
                 input_schema={
                     "type": "object",
-                    "properties": {"url": {"type": "string"}},
+                    "properties": {
+                        "url": {"type": "string"},
+                        "source_event_id": {"type": "string", "description": "Previous fetch access_event_id in this run; fixes snapshot version."},
+                        "start_char": {"type": "integer", "minimum": 0, "description": "Use previous next_start_char; nonzero requires source_event_id."},
+                        "max_chars": {"type": "integer", "minimum": 1, "maximum": 3000},
+                    },
                     "required": ["url"],
                     "additionalProperties": False,
                 },
@@ -270,9 +293,9 @@ class InteractiveAppServer:
         adapter: HarnessDynamicToolAdapter,
         events_path: Path,
         stderr_path: Path,
-        turn_timeout: int,
+        turn_timeout: float | None,
         model: str = DEFAULT_MODEL,
-        user_input_timeout: int = 300,
+        user_input_timeout: float | None = 0,
         reasoning_effort: str = "none",
         execution_contract: str = "legacy",
         goal_mode: str = "off",
@@ -286,12 +309,12 @@ class InteractiveAppServer:
         self.adapter = adapter
         self.events_path = events_path
         self.stderr_path = stderr_path
-        self.turn_timeout = turn_timeout
+        self.turn_timeout = _optional_wait_timeout(turn_timeout)
         self.model = model
         if reasoning_effort not in {"none", "low", "medium", "high"}:
             raise ValueError("Unsupported Harness reasoning effort")
         self.reasoning_effort = reasoning_effort
-        self.user_input_timeout = user_input_timeout
+        self.user_input_timeout = _optional_wait_timeout(user_input_timeout)
         self._input_wait_seconds = 0.0
         self._native_input_responses: dict[str, tuple[str, dict]] = {}
         self._pending_user_input: str | None = None
@@ -300,6 +323,8 @@ class InteractiveAppServer:
         self.thread_id = ""
         self._queue: queue.Queue[tuple[str, str | None]] = queue.Queue()
         self._request_id = 1
+        self._turn_wait: dict[str, Any] | None = None
+        self._pending_turn: dict[str, Any] | None = None
         self._handled_call_ids: set[str] = set()
         self._events_file: Any = None
         self._stderr_file: Any = None
@@ -440,6 +465,19 @@ class InteractiveAppServer:
     def run_turn(self, text: str) -> None:
         from harness.request_continuity import parse_request_operation
 
+        if text.startswith("/turn "):
+            self._control_turn(text)
+            return
+        if self._pending_turn is not None:
+            # Consume an already queued terminal event before considering a new
+            # request. Never replace current_input_id while the old Turn runs.
+            self._resume_pending_turn(timeout=0.05)
+            if self._pending_turn is not None:
+                print("[HARNESS] previous Turn is still active or unconfirmed. "
+                      "Input not sent or retained. Use /turn wait, /turn status, "
+                      "or /turn cancel; ordinary text cannot start another Turn.", flush=True)
+                self._turn_lifecycle("new_input_blocked")
+                return
         if text.startswith("/goal "):
             try:
                 result = self.goals.control(self.thread_id, text)
@@ -542,6 +580,9 @@ class InteractiveAppServer:
             },
             timeout=self.turn_timeout,
         )
+        self._report_turn_completion(completion, goal_input_id)
+
+    def _report_turn_completion(self, completion, goal_input_id) -> None:
         if completion is not None and self.goals.mode != "off":
             turn = (completion.get("params") or {}).get("turn") or {}
             if turn.get("status") == "completed":
@@ -563,7 +604,9 @@ class InteractiveAppServer:
                              "reason": type(exc).__name__, "detail": str(exc)[:160]})
                         print("[UAEA GOAL] final proposal rejected; no Goal adoption.", flush=True)
         if completion is None:
-            print("[HARNESS] turn timeout", flush=True)
+            print("[HARNESS] Turn is NOT confirmed stopped; no terminal event received. "
+                  "Use /turn wait to keep waiting, /turn cancel to request "
+                  "interruption, or /turn status. Workflow remains unfinished.", flush=True)
         elif completion.get("error") is not None:
             print(f"[HARNESS] turn error: {completion['error']}", flush=True)
         else:
@@ -574,6 +617,87 @@ class InteractiveAppServer:
                 print(f"[HARNESS] turn/{status} error={error}", flush=True)
             else:
                 print("[HARNESS] turn/completed", flush=True)
+
+    def _turn_lifecycle(self, event: str) -> None:
+        pending = self._pending_turn or {}
+        with self.events_path.with_name("turn-lifecycle.jsonl").open("a", encoding="utf-8") as log:
+            log.write(json_line({
+                "event": event, "observed_at": datetime.utcnow().isoformat(),
+                "thread_id": self.thread_id, "turn_id": pending.get("turn_id"),
+                "start_request_id": pending.get("request_id"),
+                "input_id": pending.get("input_id"), "workflow_completed": False,
+                "turn_timeout_seconds": self.turn_timeout,
+            }) + "\n")
+
+    def _matches_pending_turn(self, message: dict[str, Any]) -> bool:
+        pending = self._turn_wait
+        if pending is None:
+            return False
+        return (
+            message.get("method") == "turn/completed"
+            and (message.get("params") or {}).get("threadId") == self.thread_id
+            and pending["turn_id"] is not None
+            and (message.get("params") or {}).get("turn", {}).get("id") == pending["turn_id"]
+        ) or (message.get("id") == pending["request_id"] and message.get("error") is not None)
+
+    def _resume_pending_turn(self, *, timeout: float | None, journal_unconfirmed: bool = True) -> None:
+        pending = self._pending_turn
+        if pending is None:
+            return
+        self._turn_wait = pending
+        try:
+            completion = self._wait_for(self._matches_pending_turn, timeout)
+        except KeyboardInterrupt:
+            self._turn_lifecycle("wait_interrupted")
+            return
+        finally:
+            self._turn_wait = None
+        if completion is not None:
+            self._turn_lifecycle("terminal_confirmed")
+            self._pending_turn = None
+            self._report_turn_completion(completion, pending.get("input_id"))
+        elif journal_unconfirmed:
+            self._turn_lifecycle("still_unconfirmed")
+
+    def poll_pending_turn(self) -> None:
+        """Service the existing Turn while the operator decides what to do."""
+        if self._pending_turn is not None:
+            self._resume_pending_turn(timeout=0.01, journal_unconfirmed=False)
+        if self.process is not None and self.process.poll() is not None:
+            raise EOFError("Harness process ended; pending work is not completed")
+
+    def _control_turn(self, text: str) -> None:
+        operation = text.strip()
+        if operation not in {"/turn wait", "/turn status", "/turn cancel"}:
+            print("[HARNESS] Use /turn wait, /turn status, or /turn cancel.", flush=True)
+            return
+        if self._pending_turn is None:
+            print("[HARNESS] no pending Turn.", flush=True)
+            return
+        if operation == "/turn status":
+            print("[HARNESS] pending Turn (last observed, not completion): "
+                  + json_line(self._pending_turn), flush=True)
+            return
+        if operation == "/turn cancel":
+            # Resolve a late ACK/terminal first. Without a known Turn ID, do not
+            # guess which native operation to interrupt.
+            self._resume_pending_turn(timeout=0.05)
+            if self._pending_turn is None:
+                return
+            turn_id = self._pending_turn["turn_id"]
+            if not turn_id:
+                print("[HARNESS] start ACK not received; cannot target cancellation. "
+                      "Use /turn wait or exit this Harness session.", flush=True)
+                return
+            self._send({"jsonrpc": "2.0", "id": self._next_id(), "method": "turn/interrupt",
+                        "params": {"threadId": self.thread_id, "turnId": turn_id}})
+            self._turn_lifecycle("interrupt_requested")
+            self._resume_pending_turn(timeout=10)
+        else:
+            self._turn_lifecycle("wait_requested")
+            self._resume_pending_turn(timeout=self.turn_timeout)
+        if self._pending_turn is not None:
+            print("[HARNESS] Turn still active/unconfirmed; no new input will be sent.", flush=True)
 
     def close(self) -> None:
         if self.process is not None:
@@ -642,6 +766,11 @@ class InteractiveAppServer:
             "source_tree_sha256": hashlib.sha256(json_line(sources).encode()).hexdigest(),
             "source_files_sha256": sources, "model": self.model,
             "base_url": safe_endpoint,
+            "turn_timeout_seconds": self.turn_timeout,
+            "user_input_timeout_seconds": self.user_input_timeout,
+            "turn_wait_policy": "unbounded" if self.turn_timeout is None else "finite_opt_in",
+            "manual_wait_changes_safety_policy": False,
+            "reasoning_effort": self.reasoning_effort,
             "model_behavior": "not_evaluated_by_manifest",
         }
         self.events_path.with_name("run-manifest.json").write_text(json_line(manifest)+"\n")
@@ -676,6 +805,11 @@ class InteractiveAppServer:
                     "authorization_established": False})}
         context["uaea.recovery_sources"] = {
             "kind": "untrusted", "value": json_line(self.semantic_state.recovery_sources(self.thread_id))}
+        source_index = self.semantic_state.recovery_source_index(self.thread_id)
+        if (source_index["total_sources"] or source_index["invalid_receipts"]
+                or source_index["conflicting_identities"]):
+            context["uaea.recovery_source_index"] = {
+                "kind": "untrusted", "value": json_line(source_index)}
         context.update(self.goals.context(self.thread_id))
         self._history_bridge.set_runtime_context(
             context, thread_id=self.thread_id, input_id=snapshot["current_input_id"])
@@ -722,20 +856,29 @@ class InteractiveAppServer:
         self.process.stdin.write(json_line(message) + "\n")
         self.process.stdin.flush()
 
-    def _request_turn(self, message: dict[str, Any], *, timeout: int) -> dict[str, Any] | None:
-        # A terminal event belongs to this request only after its RPC ack binds
-        # the native turn ID. Never use another turn's completion as success.
-        self._turn_wait = {"request_id": message["id"], "turn_id": None}
+    def _request_turn(self, message: dict[str, Any], *, timeout: float | None) -> dict[str, Any] | None:
+        # Keep identity binding beyond the outer waiting deadline. Native Turn
+        # completion, not an RPC ACK or timeout, releases the next-input gate.
+        if self._pending_turn is not None:
+            raise RuntimeError("Previous native Turn has not terminated")
+        self._turn_wait = {
+            "request_id": message["id"], "turn_id": None,
+            "input_id": self.semantic_state.snapshot(self.thread_id).get("current_input_id"),
+        }
+        pending = self._turn_wait
+        self._pending_turn = pending
         try:
-            return self._request(
-                message,
-                lambda m: (
-                    m.get("method") == "turn/completed"
-                    and (m.get("params") or {}).get("threadId") == self.thread_id
-                    and (m.get("params") or {}).get("turn", {}).get("id") == self._turn_wait["turn_id"]
-                    and self._turn_wait["turn_id"] is not None
-                ) or (m.get("id") == message["id"] and m.get("error") is not None),
-                timeout=timeout)
+            completion = self._request(message, self._matches_pending_turn, timeout=timeout)
+            if completion is not None:
+                self._pending_turn = None
+            else:
+                self._turn_lifecycle("wait_timeout")
+            return completion
+        except KeyboardInterrupt:
+            # Return control deliberately, without inventing a native terminal.
+            # The operator can wait, inspect or explicitly cancel this same Turn.
+            self._turn_lifecycle("wait_interrupted")
+            return None
         finally:
             self._turn_wait = None
 
@@ -744,7 +887,7 @@ class InteractiveAppServer:
         message: dict[str, Any],
         predicate: Callable[[dict[str, Any]], bool],
         *,
-        timeout: int,
+        timeout: float | None,
     ) -> dict[str, Any] | None:
         self._send(message)
         return self._wait_for(predicate, timeout)
@@ -752,10 +895,10 @@ class InteractiveAppServer:
     def _wait_for(
         self,
         predicate: Callable[[dict[str, Any]], bool],
-        timeout: int,
+        timeout: float | None,
     ) -> dict[str, Any] | None:
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while deadline is None or time.monotonic() < deadline:
             try:
                 label, line = self._queue.get(timeout=0.25)
             except queue.Empty:
@@ -831,12 +974,15 @@ class InteractiveAppServer:
                 continue
             prior_wait = self._input_wait_seconds
             self._handle_message(message)
-            if (message.get("method") == "item/completed" and
+            if ((message.get("method") == "item/completed" and
                     (message.get("params") or {}).get("item", {}).get("type") in
-                    {"dynamicToolCall", "contextCompaction"}):
+                    {"dynamicToolCall", "contextCompaction"})
+                    or (message.get("method") == "rawResponseItem/completed" and
+                        (message.get("params") or {}).get("item", {}).get("type") == "function_call_output")):
                 self._publish_runtime_context()
             # Human think time has its own timeout and does not consume inference time.
-            deadline += self._input_wait_seconds - prior_wait
+            if deadline is not None:
+                deadline += self._input_wait_seconds - prior_wait
             if predicate(message):
                 return message
         return None
@@ -947,11 +1093,11 @@ class InteractiveAppServer:
         try:
             journal("awaiting_input")
             print("\n[WAITING_FOR_USER] native input; no option is selected automatically.", flush=True)
-            deadline = time.monotonic() + self.user_input_timeout
+            deadline = None if self.user_input_timeout is None else time.monotonic() + self.user_input_timeout
 
             def read(prompt):
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0:
                     raise TimeoutError
                 return read_user_input(prompt, on_idle=alive, timeout=remaining)
 
@@ -1166,7 +1312,7 @@ def run(args: argparse.Namespace) -> int:
             stderr_path=result_dir / "app-server-stderr.log",
             turn_timeout=args.turn_timeout,
             model=model,
-            user_input_timeout=getattr(args, "user_input_timeout", 300),
+            user_input_timeout=getattr(args, "user_input_timeout", 0),
             reasoning_effort=getattr(args, "reasoning_effort", "none"),
             execution_contract=getattr(args, "execution_contract", "legacy"),
             goal_mode=getattr(args, "goal_mode", "off"),
@@ -1175,11 +1321,18 @@ def run(args: argparse.Namespace) -> int:
         app.start()
         print(f"[READY] source-built Codex app-server thread={app.thread_id}", flush=True)
         print(f"[ARTIFACTS] {result_dir}", flush=True)
+        print("[WAIT POLICY] Turn=" + ("unlimited" if app.turn_timeout is None else f"{app.turn_timeout}s")
+              + "; user reply=" + ("unlimited" if app.user_input_timeout is None else f"{app.user_input_timeout}s")
+              + ". Resource and transport failure detection remain enabled.", flush=True)
+        print("Ctrl+C during a Turn returns to controls without confirming cancellation. "
+              "Use /turn status, /turn wait, /turn cancel.", flush=True)
         print("Type exit or quit to stop app-server"
               + ("; external vLLM remains running.\n" if external else " and managed vLLM.\n"), flush=True)
         while True:
             try:
-                user_input = read_user_input("[USER] ").strip()
+                user_input = read_user_input(
+                    "[USER] ", on_idle=app.poll_pending_turn if app._pending_turn is not None else None,
+                ).strip()
             except (EOFError, KeyboardInterrupt):
                 print("", flush=True)
                 break
@@ -1206,7 +1359,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Interactive UAEA H3 Harness bridge REPL.")
     parser.add_argument("--profile", choices=("h3", "n1x"),
                         default="n1x" if current_platform() == "linux-aarch64" else "h3")
-    parser.add_argument("--context", type=int, choices=(32768,))
+    parser.add_argument("--context", type=int, choices=(32768, 65536))
+    parser.add_argument("--experimental-context-64k", action="store_true",
+                        help="Explicit N1X external-service experiment; does not change profile defaults or configure vLLM.")
     parser.add_argument("--vllm-mode", choices=("managed", "external"))
     parser.add_argument("--base-url", help="Loopback server root URL, without /v1")
     parser.add_argument("--model", help="Exact served model name")
@@ -1221,9 +1376,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.75,
                         help="Managed H3 profile only; external service is not reconfigured.")
     parser.add_argument("--health-timeout", type=int, default=DEFAULT_HEALTH_TIMEOUT)
-    parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT)
-    parser.add_argument("--user-input-timeout", type=int, default=300,
-                        help="Seconds to wait for an actual native answer; no auto-selection.")
+    parser.add_argument("--turn-timeout", type=int, default=DEFAULT_TURN_TIMEOUT,
+                        help="Turn wait seconds; default 0 waits until terminal/interruption. Positive values opt into a finite experiment wait.")
+    parser.add_argument("--user-input-timeout", type=int, default=0,
+                        help="Native user reply wait seconds; default 0 has no deadline or auto-selection.")
     parser.add_argument("--execution-contract", choices=("legacy", "shared"), default="legacy",
                         help="Opt-in shared read-only execution contract; legacy is the rollback path.")
     parser.add_argument("--goal-projection", choices=("none", "optional"), default="optional",
@@ -1233,8 +1389,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--generation-diagnostics", action="store_true",
                         help="Managed service only; no parser behavior changes.")
     args = parser.parse_args(argv)
-    if args.user_input_timeout <= 0:
-        parser.error("--user-input-timeout must be positive")
+    if args.turn_timeout < 0 or args.user_input_timeout < 0:
+        parser.error("--turn-timeout and --user-input-timeout must be non-negative (0 disables the wait deadline)")
     n1x = args.profile == "n1x"
     host = current_platform()
     required_host = "linux-aarch64" if n1x else "linux-x86_64"
@@ -1277,8 +1433,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("Model name cannot be empty")
     if args.vllm_mode == "managed" and (args.base_url != f"http://127.0.0.1:{DEFAULT_PORT}" or args.model != DEFAULT_MODEL):
         parser.error("Managed H3 keeps its validated endpoint/model; use external mode for overrides")
-    if n1x and (args.vllm_mode != "external" or args.context != 32768):
-        parser.error("N1X requires the formal external 32768-context service")
+    if args.context == 65536 and not (n1x and args.vllm_mode == "external" and args.experimental_context_64k):
+        parser.error("65536 requires N1X external mode and --experimental-context-64k")
+    if args.experimental_context_64k and args.context != 65536:
+        parser.error("--experimental-context-64k requires --context 65536")
+    if n1x and (args.vllm_mode != "external" or args.context not in (32768, 65536)):
+        parser.error("N1X requires an external service with a supported explicit context")
     if args.vllm_mode == "external" and args.generation_diagnostics:
         parser.error("Generation diagnostics require a managed service")
     return args

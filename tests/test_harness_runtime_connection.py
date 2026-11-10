@@ -21,8 +21,10 @@ class ConnectionSettingsTests(unittest.TestCase):
    self.assertEqual(c['model_reasoning_effort'],'low')
    self.assertEqual(c['model_providers']['uaea_local_vllm']['base_url'],'http://127.0.0.1:8003/v1')
  def test_file_root_is_separate_fact_without_rewriting_other_contracts(self):
-  original=turn_context_payload([])
-  augmented=turn_context_payload([],filesystem_root='/test/project')
+  with patch('harness.io_contract.datetime') as clock:
+   clock.now.return_value.isoformat.return_value='2026-11-05T00:00:00+00:00'
+   original=turn_context_payload([])
+   augmented=turn_context_payload([],filesystem_root='/test/project')
   fact=augmented.pop('uaea.runtime_facts.filesystem')
   self.assertEqual(augmented,original)
   self.assertEqual(fact['kind'],'application')

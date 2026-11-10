@@ -59,7 +59,9 @@ class HarnessDynamicToolAdapterTests(unittest.TestCase):
                  "arguments": '{"query":"AI agent","provider":"google"}'},
                 {"type": "function_call_output", "call_id": "bad", "output": json.dumps(payload)},
             ]})
-            fact = json.loads(projected.request["input"][1]["content"][0]["text"].split("\n", 1)[1])
+            # Terminal call + result are one retained fact after history deduplication.
+            self.assertEqual(len(projected.request["input"]), 1)
+            fact = json.loads(projected.request["input"][0]["content"][0]["text"].split("\n", 1)[1])
             self.assertEqual(fact["observation"]["recovery"], recovery)
 
     def test_recovery_projection_budget_never_truncates_surviving_constraints(self):

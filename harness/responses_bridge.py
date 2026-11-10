@@ -28,7 +28,7 @@ class ProviderHistoryBridge:
     """Loopback Responses transport; only outgoing history copies are projected."""
 
     def __init__(
-        self, upstream_url: str, *, journal_path: Path, timeout: float = 420,
+        self, upstream_url: str, *, journal_path: Path, timeout: float | None = 420,
         raw_events_path: Path | None = None,
         audit_path: Path | None = None,
         max_recovery_bytes: int = 24000,
@@ -79,7 +79,10 @@ class ProviderHistoryBridge:
                 self._forward()
 
             def _forward(self) -> None:
-                connection = http.client.HTTPConnection(owner.host, owner.port, timeout=owner.timeout)
+                # Manual inference can take an unknown time, but establishing a
+                # loopback transport still needs a bounded failure check.
+                connection = http.client.HTTPConnection(
+                    owner.host, owner.port, timeout=10 if owner.timeout is None else owner.timeout)
                 headers_sent = False
                 audit_id = None
                 response_status = None
@@ -118,6 +121,8 @@ class ProviderHistoryBridge:
                         if key.lower() not in HOP_HEADERS
                     }
                     connection.request(self.command, self.path, body=body, headers=headers)
+                    if owner.timeout is None and connection.sock is not None:
+                        connection.sock.settimeout(None)
                     response = connection.getresponse()
                     response_status = response.status
                     self.send_response(response.status)
@@ -144,6 +149,23 @@ class ProviderHistoryBridge:
                             "code": 413, "param": "host_context_bytes",
                             "message": "Required Host facts exceed recovery byte budget; request not forwarded. Task retained."}}).encode()
                         self.send_response(413)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(error)))
+                        self.end_headers()
+                        self.wfile.write(error)
+                except ConnectionRefusedError as exc:
+                    # Nothing was accepted by the loopback provider. Treat this
+                    # as an unavailable service, not a retryable inference or
+                    # authorization failure; the Host retains task/receipts.
+                    transport_error = type(exc).__name__
+                    if not headers_sent:
+                        error = json.dumps({"error": {
+                            "type": "uaea_provider_unavailable", "code": "provider_connection_refused",
+                            "message": "Local model service is not listening. Task and observations remain retained. "
+                                       "Restart the service explicitly before continuing; no automatic service reload.",
+                            "retryable": False, "workflow_completed": False,
+                        }}).encode("utf-8")
+                        self.send_response(400)
                         self.send_header("Content-Type", "application/json")
                         self.send_header("Content-Length", str(len(error)))
                         self.end_headers()
@@ -216,6 +238,9 @@ class ProviderHistoryBridge:
         labels = {key if value["kind"] == "application" else "external_"+key:
                   "developer" if value["kind"] == "application" else "user"
                   for key, value in blocks.items()}
+        # A new Workflow with no acquired sources intentionally publishes no
+        # directory. Its previous Workflow's owned directory must still expire.
+        labels.setdefault("external_uaea.recovery_source_index", "user")
         result = deepcopy(request)
         removed = 0
         for field in ("input", "previous_input_messages"):
@@ -277,6 +302,19 @@ class ProviderHistoryBridge:
                 payload["background_omitted_for_budget"] = True
                 blocks[key]["value"] = json.dumps(payload, ensure_ascii=False)
                 omitted.append(key+".background")
+        # Lookup hints are lower priority than actual recent evidence. Omit
+        # whole identities before shortening source text; never silently cut IDs.
+        key = "uaea.recovery_source_index"
+        if size() > self.max_recovery_bytes and key in blocks:
+            index = json.loads(blocks[key]["value"])
+            while index["entries"] and size() > self.max_recovery_bytes:
+                index["entries"].pop()
+                index["omitted_sources"] += 1
+                blocks[key]["value"] = json.dumps(index, ensure_ascii=False)
+            omitted.append(key + ".entries:" + str(index["omitted_sources"]))
+            if size() > self.max_recovery_bytes:
+                blocks.pop(key)
+                omitted.append(key)
         if size() > self.max_recovery_bytes and "uaea.recovery_sources" in blocks:
             for limit in (160, 0):
                 sources = json.loads(blocks["uaea.recovery_sources"]["value"])
@@ -285,6 +323,12 @@ class ProviderHistoryBridge:
                     source["text"] = text[:limit]
                     source["text_sha256"] = hashlib.sha256(source["text"].encode()).hexdigest()
                     source["supplied_chars"] = len(source["text"])
+                    if "start_char" in source and "extracted_text_chars" in source:
+                        end = source["start_char"] + len(source["text"])
+                        total = source["extracted_text_chars"]
+                        source.update(end_char=end, has_more=end < total,
+                                      next_start_char=end if end < total else None)
+                    # historical_supply describes past results, not this recovery slice.
                     source["truncated_for_budget"] = True
                     source["excerpt_omitted_for_budget"] = not bool(source["text"])
                 blocks["uaea.recovery_sources"]["value"] = json.dumps(sources, ensure_ascii=False)

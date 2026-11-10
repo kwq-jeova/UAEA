@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any, Mapping
 
 from .semantic_authority import (
@@ -102,6 +103,14 @@ def runtime_facts_context(
 ) -> dict[str, dict[str, str]]:
     return additional_context_payload(
         {
+            "uaea.runtime_facts.time": application_context(
+                json.dumps({
+                    "observed_at_utc": datetime.now(timezone.utc).isoformat(),
+                    "origin": "host_clock_at_context_projection",
+                    "scope": "system_time_only_not_requested_as_of_or_source_coverage",
+                    "market_calendar_validation": "not_provided",
+                }, ensure_ascii=False)
+            ),
             "uaea.runtime_facts.model": application_context(
                 "Runtime fact: this Harness session is configured with "
                 f"model_provider={model_provider} and model={model}. "
@@ -159,6 +168,12 @@ def runtime_facts_context(
                 "Reformulating a query does not revoke retained user requirements. "
                 "Distinguish runtime accessed_at, source-declared published_at and interpreted content_period. "
                 "If the source period is unknown, say unknown; never infer it from access time. "
+                "A requested historical as-of date is not the system date or proof of source coverage. "
+                "Trading-session dates, data coverage and timezones need source evidence; query dates "
+                "and publication filters do not verify them. Missing dated data remains unknown; "
+                "hypothetical inputs must not replace requested observations. Preserve units/currency "
+                "and use available deterministic computation to check arithmetic; calculation does "
+                "not validate its source inputs. "
                 "web.fetch fetches page-level evidence for a "
                 "specific URL. Do not claim Google was used unless runtime results report Google "
                 "as the actual provider."
@@ -260,6 +275,11 @@ def turn_context_payload(
         "A prior input without an Action is not necessarily unfinished: ordinary questions may "
         "be answered without tools. Relation labels are tentative and do not establish a new Goal. "
         "Search discovery is not page reading; use actual tool observations for execution facts. "
+        "recovery_sources text is a short re-supplied view; historical_supply records prior tool-result "
+        "coverage of that exact saved version. A short recovery view does not erase historical supply. "
+        "Full saved-text supply does not establish full-page acquisition, understanding or truth. "
+        "Discovery URLs are optional sources, not an obligation to fetch every result. "
+        "Reuse retained source versions when appropriate; retries or refreshes remain possible. "
         "Assistant output and model interpretations are not source evidence or authorization. "
         'background contains historical topic and user inputs, not current Goals or obligations.'
         "relation_hint is an unconfirmed legacy heuristic, not task ownership or a semantic verdict. "
@@ -299,9 +319,15 @@ def turn_context_payload(
             context = {key: deepcopy(value) for key, value in projection.items() if key not in authority_keys}
             background = {}
             if "topic" in context:
-                background["topic"] = context.pop("topic")
+                background["historical_topic"] = context.pop("topic")
             if "turn_relation" in context:
-                context["relation_hint"] = context.pop("turn_relation").get("relation")
+                relation = context.pop("turn_relation")
+                # Absence of a lexical marker is not evidence of a semantic switch.
+                # Keep the legacy resolver/ownership unchanged; expose uncertainty
+                # on this non-authoritative model surface only.
+                context["relation_hint"] = (
+                    "unknown" if relation.get("reason") == "no prior-context relation marker detected"
+                    else relation.get("relation"))
             continuation = context.get("workflow_continuation", {})
             for old, new in (("initial_request", "initial_request"),
                              ("request_history", "user_inputs"),

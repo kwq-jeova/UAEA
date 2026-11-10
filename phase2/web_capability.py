@@ -4,6 +4,7 @@ import hashlib
 
 from phase2.evidence_boundary import candidate_view, temporal_facts
 from harness.recovery_observation import recovery_observation
+from harness.observation_boundary import CapabilityInputError
 
 import sys
 from contextlib import closing
@@ -16,7 +17,7 @@ from memory.sqlite_store import (
     get_web_access_event,
     initialize,
 )
-from phase2.web_adapter import WebAdapter, WebSearchConstraintError, normalize_search_constraints
+from phase2.web_adapter import WebAdapter, WebAccessResult, WebSearchConstraintError, normalize_search_constraints
 from phase2.web_context import ProjectionLimits, project_web_access_events
 
 
@@ -74,6 +75,17 @@ def web_search_metadata() -> CapabilityMetadata:
     )
 
 
+class SavedSourceUnavailable(CapabilityInputError):
+    """A saved read failed before any HTTP/effect; retain direct-call ValueError compatibility."""
+
+    def __init__(self, source_id: str, url: str, error: str) -> None:
+        super().__init__(error)
+        self.source_id, self.url = source_id, url
+
+    def tool_result(self):
+        return _saved_source_failure(self.source_id, self.url, str(self))
+
+
 class WebFetchCapability:
     def __init__(
         self,
@@ -96,17 +108,43 @@ class WebFetchCapability:
                 error="url missing",
             )
 
+        start = arguments.get("start_char", 0)
+        count = arguments.get("max_chars", self.projection_limits.per_source_chars)
+        source_id = arguments.get("source_event_id")
+        if (type(start) is not int or start < 0 or type(count) is not int
+                or count < 1 or count > 3000
+                or source_id is not None and (not isinstance(source_id, str) or not source_id)):
+            raise CapabilityInputError("Use integer start_char>=0, max_chars in 1..3000 and a valid source_event_id")
+        if start and not source_id:
+            raise CapabilityInputError("Continuation requires source_event_id from a previous fetch; no implicit refetch")
+        limits = ProjectionLimits(max_sources=1, per_source_chars=count, total_chars=count)
         with closing(connect(self.db_path)) as connection:
             initialize(connection)
-            access_result = self.adapter.fetch_url(
-                connection,
-                url,
-                metadata={"capability": WEB_FETCH_CAPABILITY, "objective": objective},
-            )
+            if source_id:
+                # IDs resolve only inside this run's Source store. The model
+                # never supplies a filesystem locator or a replacement hash.
+                event = get_web_access_event(connection, source_id)
+                if (event is None or event["access_status"] != "fetched"
+                        or event["source_type"] != "web_page" or event["url"] != url):
+                    raise SavedSourceUnavailable(source_id, url, "Saved page ID/URL mismatch or unavailable")
+                path = Path(event.get("raw", {}).get("content_ref_resolved") or event["content_ref"])
+                root = self.adapter.snapshot_root.resolve()
+                if (not path.resolve().is_relative_to(root) or not path.is_file()
+                        or not event.get("content_sha256")
+                        or hashlib.sha256(path.read_bytes()).hexdigest() != event["content_sha256"]):
+                    raise SavedSourceUnavailable(source_id, url,
+                        "Saved page is missing, outside snapshot root, or hash changed")
+                access_result = WebAccessResult(
+                    access_event_id=source_id, url=event["url"], status="fetched",
+                    http_status=event["http_status"], content_ref=event["content_ref"], title=event["title"])
+            else:
+                access_result = self.adapter.fetch_url(
+                    connection, url,
+                    metadata={"capability": WEB_FETCH_CAPABILITY, "objective": objective},
+                )
             projection = project_web_access_events(
-                connection,
-                [access_result.access_event_id],
-                limits=self.projection_limits,
+                connection, [access_result.access_event_id], limits=limits, start_char=start,
+                require_snapshot=bool(source_id),
             )
             event = get_web_access_event(connection, access_result.access_event_id)
             evidence_reference = evidence_reference_for_web_access_event(
@@ -114,7 +152,7 @@ class WebFetchCapability:
                 access_result.access_event_id,
             ).to_dict()
 
-        return _web_tool_result(
+        result = _web_tool_result(
             capability=WEB_FETCH_CAPABILITY,
             tool=WEB_FETCH_TOOL,
             access_result=access_result,
@@ -124,6 +162,13 @@ class WebFetchCapability:
             success_message=f"Fetched web source {access_result.url}",
             failure_message=f"Failed to fetch web source {access_result.url}",
         )
+        if source_id:
+            result.data.update(http_attempted=False, acquisition_mode="retained_snapshot",
+                               snapshot_http_status=event["http_status"], http_status=None)
+            result.message = f"Read saved source segment {source_id}; no new HTTP request."
+        else:
+            result.data["acquisition_mode"] = "network_fetch"
+        return result
 
 
 class WebSearchCapability:
@@ -334,7 +379,15 @@ def _web_tool_result(
             "text": projection.sources[0].projected_text,
             "text_sha256": hashlib.sha256(
                 projection.sources[0].projected_text.encode("utf-8")).hexdigest(),
-            "scope": "projected_page_excerpt",
+            "scope": "extracted_snapshot_segment_not_full_page",
+            "start_char": projection.sources[0].start_char,
+            "end_char": projection.sources[0].end_char,
+            "extracted_text_chars": projection.sources[0].extracted_text_chars,
+            "extracted_text_sha256": projection.sources[0].extracted_text_sha256,
+            "has_more": projection.sources[0].end_char < projection.sources[0].extracted_text_chars,
+            "next_start_char": (projection.sources[0].end_char
+                                if projection.sources[0].end_char < projection.sources[0].extracted_text_chars else None),
+            "snapshot_truncated": bool((event.get("metadata") or {}).get("snapshot_truncated")),
         }} if capability == WEB_FETCH_CAPABILITY and projection.sources else {}),
     }
     if extra_data:
@@ -440,6 +493,28 @@ def _model_visible_evidence_reference(
         "citable_results is empty, so these raw results are not model-visible evidence."
     )
     return sanitized
+
+
+def _saved_source_failure(source_id: str, url: str, error: str) -> ToolResult:
+    """Known local read rejection, not an unknown network execution effect."""
+    return _failed_web_result(
+        capability=WEB_FETCH_CAPABILITY, tool=WEB_FETCH_TOOL,
+        message=error + "; no HTTP request attempted. Missing content remains UNKNOWN, not another source.",
+        error=error, extra_data={
+            "execution_status": "source_unavailable", "status": "source_unavailable",
+            "reason": "saved_source_unavailable", "error_kind": "saved_source_unavailable",
+            "acquisition_mode": "retained_snapshot", "access_event_id": source_id, "url": url,
+            "failure_stage": "retained_snapshot", "validation_source": None, "retryable": False,
+            "failure_scope": "saved_source_version", "global_web_availability": "not_determined_by_this_failure",
+            "recovery": {"schema": "uaea.recovery_observation.v1", "reason": "saved_source_unavailable",
+                "state": "blocked_attempt", "retryable": False,
+                "failure_scope": "saved_source_version", "http_attempted": False,
+                "requires_current_policy_validation": True,
+                "interaction_failure_grants_authorization": False,
+                "legal_next_steps": [{"action": "report_evidence_gap", "missing_details": "UNKNOWN",
+                    "do_not_substitute_source": True, "preserve_unfinished_request": True,
+                    "workflow_completed": False}]}},
+    )
 
 
 def _failed_web_result(

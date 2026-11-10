@@ -49,8 +49,11 @@ class SourceCoverageTests(unittest.TestCase):
         self.fetch("read2", self.urls[3])
         coverage = self.coverage()
         self.assertEqual([coverage[key] for key in ("discovered", "fetched", "unattempted", "failed")], [6, 2, 4, 0])
-        self.assertEqual(coverage["sources"][0]["fetch_attempts"][0]["call_id"], "read1")
-        self.assertEqual(coverage["sources"][0]["discovered_by"][0]["call_id"], "search")
+        # Recent fetches are supplied first; coverage still retains read1's identity.
+        self.assertEqual(coverage["sources"][0]["url"], self.urls[3])
+        by_url = {source["url"]: source for source in coverage["sources"]}
+        self.assertEqual(by_url[self.urls[0]]["fetch_attempts"][0]["call_id"], "read1")
+        self.assertEqual(by_url[self.urls[0]]["discovered_by"][0]["call_id"], "search")
         self.finish("turn2")
         projection = self.adapter.prepare_turn("thread", "What did we actually obtain?", turn_id="turn3")
         projected = projection.payload["workflow_execution"]["source_coverage"]

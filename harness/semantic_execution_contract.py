@@ -19,6 +19,7 @@ from runtime.runtime_objects import RuntimeObjectRecord
 from .event_normalizer import TrajectoryEvent
 from .semantic_interpretation import request_record
 from .workflow_continuity import record_attempt, record_outcome
+from .observation_boundary import CapabilityInputError, scoped_failure
 
 SCHEMA = "uaea.execution_contract.v1"
 
@@ -267,10 +268,10 @@ class SharedExecutionBoundary:
             decision.update(allowed=False, reason="request_not_active", retryable=False)
         if expected_state_id is not None and expected_state_id != contract.state_id:
             decision.update(allowed=False, reason="stale_contract", retryable=True)
-        if decision["allowed"] and self.precondition is not None:
+        if self.precondition is not None and action.capability in contract.allowed_capabilities:
             guard = self.precondition(action, deepcopy(decision["effective_parameters"]))
             decision["compatibility_guard"] = deepcopy(guard)
-            if not guard.get("valid"):
+            if decision["allowed"] and not guard.get("valid"):
                 decision.update(allowed=False, reason="legacy_semantic_constraint_conflict", retryable=True)
         tool = self.registry.capability_to_tool.get(action.capability, action.capability)
         step = record_attempt(
@@ -286,6 +287,7 @@ class SharedExecutionBoundary:
         self._record("EXECUTION_DECISION", decision, **facts)
         called = False
         if not decision["allowed"]:
+            guard = decision.get("compatibility_guard") or {}
             result = ToolResult(False, "Rejected before capability execution", {
                 "execution_status": "validation_failed", "execution_succeeded": False,
                 "capability_called": False, "reason": decision["reason"],
@@ -293,6 +295,10 @@ class SharedExecutionBoundary:
                 "capability": action.capability,
                 "effective_state_id": decision["effective_state_id"],
                 "authorization": deepcopy(decision["authorization"]),
+                **({key: deepcopy(guard[key]) for key in ("active_constraints", "semantic_items")
+                    if key in guard}),
+                **({"semantic_resolution_id": guard["effective_state_id"]}
+                   if "effective_state_id" in guard else {}),
                 **({"requested_provider": decision["effective_parameters"].get("provider")}
                    if action.capability == "web.search" else {}),
             })
@@ -308,6 +314,8 @@ class SharedExecutionBoundary:
                 result = ToolResult(succeeded if type(succeeded) is bool else result.ok,
                                     result.message, data)
                 result.data.setdefault("execution_status", "success" if result.ok else "failed")
+            except CapabilityInputError as exc:
+                result = exc.tool_result()
             except Exception as exc:
                 # A handler might have produced effects before raising. Do not auto-retry.
                 result = ToolResult(False, "Capability outcome is unknown", {
@@ -316,6 +324,7 @@ class SharedExecutionBoundary:
                 })
             result.data["capability_called"] = True
         result.data.update(capability=action.capability, tool=tool)
+        result.data = scoped_failure(action.capability, result.data)
         from .recovery_observation import recovery_observation
         recovery = recovery_observation(result.data)
         if recovery is not None:

@@ -4,6 +4,40 @@ from copy import deepcopy
 from typing import Any, Mapping
 
 
+class CapabilityInputError(ValueError):
+    """A handler rejects arguments before external execution, not an unknown effect."""
+
+    def tool_result(self):
+        from runtime.capability import ToolResult
+        return ToolResult(False, str(self), {
+            "execution_status": "validation_failed", "execution_succeeded": False,
+            "http_attempted": False, "reason": "invalid_arguments",
+            "error_kind": "argument_validation", "error": str(self),
+            "failure_stage": "capability_input", "validation_source": "capability_input",
+            "retryable": True,
+        })
+
+
+def scoped_failure(capability: str, data: Mapping[str, Any]) -> dict[str, Any]:
+    """Add only observable scope, without interpreting exception strings or page text."""
+    result = deepcopy(dict(data))
+    if result.get("execution_succeeded") is not False:
+        return result
+    if capability in {"web.search", "web.fetch"}:
+        fallback_rejected = (
+            capability == "web.search"
+            and result.get("reason") in {"authorization_unknown", "authorization_denied"}
+            and "provider_switch" in (result.get("authorization") or {}))
+        result.setdefault("failure_scope", "web.provider_fallback" if fallback_rejected else "this_action_only")
+        result.setdefault("global_web_availability", "not_determined_by_this_failure")
+    elif capability in {"document.read_section", "fs.list"}:
+        result.setdefault("error_kind", "local_file_failure")
+        result.setdefault("failure_scope", "local_filesystem_request")
+        result.setdefault("http_attempted", False)
+        result.setdefault("global_web_availability", "not_determined_by_this_failure")
+    return result
+
+
 def observation_boundary() -> dict[str, str]:
     """Limit inferences from an observation without classifying its cause."""
     return {
@@ -18,7 +52,8 @@ def factual_web_message(capability: str, data: Mapping[str, Any], original: str)
     if capability not in {"web.search", "web.fetch"}:
         return original
     if data.get("execution_succeeded") is False:
-        cause = data.get("failure_explanation") or data.get("error") or original
+        cause = (data.get("failure_explanation") or (data.get("recovery") or {}).get("failure_explanation")
+                 or data.get("error") or original)
         return f"Execution did not succeed. Reported cause: {cause}"
     if capability == "web.search" and data.get("execution_succeeded") is True:
         provider = data.get("actual_provider")

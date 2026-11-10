@@ -438,7 +438,7 @@ class HarnessSemanticStateAdapterTests(unittest.TestCase):
         self.assertEqual(json.loads(projection_value)["schema"], "uaea.semantic_projection.v0")
         self.assertNotIn("topic", json.loads(projection_value))
         self.assertEqual(payload["uaea.semantic_interpretations"]["kind"], "untrusted")
-        self.assertEqual(json.loads(payload["uaea.semantic_interpretations"]["value"])["background"]["topic"], "AI agent research")
+        self.assertEqual(json.loads(payload["uaea.semantic_interpretations"]["value"])["background"]["historical_topic"], "AI agent research")
 
 
 if __name__ == "__main__":

@@ -39,7 +39,9 @@ from .event_normalizer import (  # noqa: E402
     TrajectoryEvent,
     HarnessEventNormalizer,
 )
-from .evidence_provenance import record_model_output, provenance_snapshot
+from .evidence_provenance import (
+    record_model_output, provenance_snapshot, record_source_delivery, source_reading_progress,
+)
 from .scoped_semantics import EffectiveSemanticState, ScopedSemanticResolver  # noqa: E402
 from .request_continuity import (  # noqa: E402
     REQUEST_OPERATIONS, request_inputs, request_snapshot, retain_request_input,
@@ -319,6 +321,19 @@ class HarnessSemanticStateAdapter:
                     item = event.payload.get("item") or {}
                     self._record_attempt(state, event, item, {"command": item.get("command")})
                 return None
+            if event.event_type == TOOL_RESULT:
+                result = _tool_result_payload(item)
+                call_id = _call_identity(event, item, result)
+                step = next((s for s in state.runtime_objects.step_runs
+                             if s.action.get("harness", {}).get("call_id") == call_id
+                             and s.action["harness"].get("turn_id") == event.turn_id), None)
+                identity = result.get("identity") or {}
+                if (step is not None and isinstance(identity, Mapping)
+                        and all(identity.get(k, expected) == expected for k, expected in
+                        (("thread_id", event.thread_id), ("turn_id", event.turn_id), ("call_id", call_id)))):
+                    record_source_delivery(step, result, provenance={
+                        "event_id": event.event_id, "thread_id": event.thread_id, "turn_id": event.turn_id,
+                        "raw_event_reference": dict(event.raw_event_reference)})
             if self._has_observation_event(state, event):
                 return None
             return self._record_observation(state, event)
@@ -544,9 +559,9 @@ class HarnessSemanticStateAdapter:
         import hashlib
         state = self._state_for(thread_id)
         sources = []
-        for step in state.runtime_objects.step_runs:
-            if step.workflow_id != state.current_task_id:
-                continue
+        steps = [step for step in state.runtime_objects.step_runs
+                 if step.workflow_id == state.current_task_id]
+        for step in steps:
             outcome = step.action.get("outcome", {})
             excerpt = outcome.get("source_excerpt") or {}
             text = excerpt.get("text")
@@ -558,15 +573,66 @@ class HarnessSemanticStateAdapter:
                 continue
             supplied = text[:300]
             sources.append({
+                **({key: deepcopy(excerpt[key]) for key in (
+                    "start_char", "extracted_text_chars", "extracted_text_sha256", "snapshot_truncated")
+                    if key in excerpt}),
+                **({"end_char": excerpt["start_char"] + len(supplied),
+                    "next_start_char": (excerpt["start_char"] + len(supplied)
+                                        if excerpt["start_char"] + len(supplied) < excerpt["extracted_text_chars"] else None),
+                    "has_more": excerpt["start_char"] + len(supplied) < excerpt["extracted_text_chars"]}
+                   if "start_char" in excerpt else {}),
                 "source_event_id": outcome["access_event_id"], "url": outcome.get("source_url"),
                 "content_sha256": outcome["content_sha256"],
                 "temporal_facts": deepcopy(outcome.get("temporal_facts")),
                 "text": supplied, "text_sha256": hashlib.sha256(supplied.encode()).hexdigest(),
                 "recorded_excerpt_sha256": excerpt["text_sha256"],
-                "scope": "acquired_excerpt_prefix_not_full_page", "content_support": "not_assessed",
+                "historical_supply": source_reading_progress(
+                    steps, outcome["access_event_id"], outcome["content_sha256"]),
+                "scope": ("acquired_segment_prefix_not_full_page" if "start_char" in excerpt
+                          else "acquired_excerpt_prefix_not_full_page"), "content_support": "not_assessed",
                 "execution_basis": "host_receipt" if "host_execution_receipt" in step.action else "legacy_outcome",
             })
-        return sources[-3:]
+        unique = {}
+        for source in sources:
+            key = (source["source_event_id"], source["content_sha256"],
+                   source.get("start_char", 0), source["recorded_excerpt_sha256"])
+            unique.pop(key, None)
+            unique[key] = source
+        # Keep one recent fragment per URL, not three versions of the same page.
+        # Coverage itself remains scoped to source_event_id + content hash.
+        selected, urls = [], set()
+        for source in reversed(list(unique.values())):
+            if source.get("url") in urls:
+                continue
+            urls.add(source.get("url"))
+            selected.append(source)
+            if len(selected) == 3:
+                break
+        for source in selected:
+            if source["historical_supply"].get("saved_text_fully_supplied") is True:
+                continue
+            # Byte-equal extracted text is not new semantic support. Do not merge
+            # versions; point to the prior receipt and its own historical coverage.
+            prior = next((old for old in reversed(sources)
+                          if old["source_event_id"] != source["source_event_id"]
+                          and old.get("url") == source.get("url")
+                          and old.get("extracted_text_sha256")
+                          and old.get("extracted_text_sha256") == source.get("extracted_text_sha256")
+                          and old.get("extracted_text_chars") == source.get("extracted_text_chars")
+                          and old["historical_supply"].get("saved_text_fully_supplied") is True), None)
+            if prior:
+                source["same_extracted_text_as"] = {
+                    "source_event_id": prior["source_event_id"],
+                    "content_sha256": prior["content_sha256"],
+                    "historical_supply": deepcopy(prior["historical_supply"]),
+                    "scope": "equal_extracted_bytes_not_independent_verification",
+                }
+        return selected
+
+    def recovery_source_index(self, thread_id: str) -> dict[str, Any]:
+        from .evidence_provenance import retained_source_index
+        state = self._state_for(thread_id)
+        return retained_source_index(state.runtime_objects.step_runs, state.current_task_id)
 
     def retained_requests(self, thread_id: str) -> dict[str, Any]:
         from .request_continuity import retained_request_view
@@ -1191,6 +1257,12 @@ class HarnessSemanticStateAdapter:
                 "relation": "new_task",
                 "target_ref": "",
                 "reason": "no prior semantic state",
+            }
+        if _explicit_task_boundary(text):
+            return {
+                "relation": "new_task",
+                "target_ref": "",
+                "reason": "explicit user task boundary",
             }
         if _contains_any(text, ("第一个方向", "第二个方向", "上述", "前面", "这个方向", "该方向")):
             target = _reference_from_input(text)

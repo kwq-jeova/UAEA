@@ -7,7 +7,7 @@ import unittest
 from contextlib import redirect_stdout
 from copy import deepcopy
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from harness.io_contract import turn_context_payload
 from harness.semantic_promotion_audit import build_promotion_audit
@@ -195,7 +195,9 @@ class InteractivePromotionAuditTests(unittest.TestCase):
         app._request = Mock(return_value={"params": {"turn": {"status": "completed"}}})
         return app
 
-    def test_journal_append_flush_and_model_request_are_independent(self):
+    @patch("harness.io_contract.datetime")
+    def test_journal_append_flush_and_model_request_are_independent(self, clock):
+        clock.now.return_value.isoformat.return_value = "2026-11-10T00:00:00+00:00"
         app = self._app()
         app._promotion_audit_file = io.StringIO()
         with redirect_stdout(io.StringIO()):

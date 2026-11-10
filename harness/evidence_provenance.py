@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import hashlib
+import json
 import re
 from typing import Any, Mapping
 
@@ -12,6 +13,151 @@ SCHEMA = "uaea.evidence_provenance.v0"
 def digest(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+
+def retained_source_index(steps, workflow_id: str, *, max_entries: int = 32,
+                          max_bytes: int = 6000) -> dict[str, Any]:
+    """Bounded lookup references, not recovered content or a semantic ranking.
+
+    Only Host acquisition receipts in this Workflow supply identities. Native
+    echoes, summaries and assistant citations cannot populate this index. The
+    existing web.fetch verifies the saved bytes again when a reference is read.
+    """
+    entries, conflicts = {}, set()
+    rejected = 0
+    for step in steps:
+        if step.workflow_id != workflow_id or step.capability != "web.fetch":
+            continue
+        receipt = step.action.get("host_execution_receipt") or {}
+        result = receipt.get("result") if isinstance(receipt, Mapping) else None
+        data = result.get("data") if isinstance(result, Mapping) else None
+        if not isinstance(data, Mapping) or data.get("execution_succeeded") is not True:
+            continue
+        excerpt = data.get("source_excerpt")
+        sid, url, version = (data.get(k) for k in ("access_event_id", "url", "content_sha256"))
+        if (not isinstance(excerpt, Mapping) or not isinstance(sid, str) or not sid
+                or not isinstance(url, str) or not url.startswith(("https://", "http://"))
+                or not isinstance(version, str) or not re.fullmatch(r"[0-9a-f]{64}", version)
+                or excerpt.get("source_event_id") != sid
+                or excerpt.get("content_sha256") != version
+                or not isinstance(excerpt.get("text"), str)
+                or digest(excerpt["text"]) != excerpt.get("text_sha256")):
+            rejected += 1
+            continue
+        identity = {"source_event_id": sid, "url": url, "content_sha256": version}
+        old = entries.get(sid)
+        if old and any(old.get(k) != identity[k] for k in identity):
+            conflicts.add(sid)
+        harness = step.action.get("harness")
+        identity["turn_id"] = harness.get("turn_id", "") if isinstance(harness, Mapping) else ""
+        entries.pop(sid, None)
+        entries[sid] = identity
+    candidates = [e for sid, e in reversed(list(entries.items())) if sid not in conflicts]
+    index = {
+        "workflow_id": workflow_id, "entries": [], "total_sources": len(candidates),
+        "omitted_sources": len(candidates), "invalid_receipts": rejected,
+        "conflicting_identities": len(conflicts),
+        "scope": "host_acquisition_references_not_current_content_or_semantic_support",
+        "read_with": "web_fetch(url, source_event_id, start_char=0, max_chars<=3000)",
+        "availability": "snapshot_revalidated_on_read; missing_or_changed_remains_unknown",
+    }
+    for entry in candidates:
+        if len(index["entries"]) == max_entries:
+            break
+        index["entries"].append(entry)
+        index["omitted_sources"] -= 1
+        if len(json.dumps(index, ensure_ascii=False).encode()) > max_bytes:
+            index["entries"].pop()
+            index["omitted_sources"] += 1
+    return index
+
+
+
+def _verified_delivery(step) -> dict | None:
+    """Verify a result echo against acquisition; hashes prove bytes, not meaning."""
+    delivery = step.action.get("source_delivery")
+    if not isinstance(delivery, dict) or delivery.get("basis") != "tool_result_echo":
+        return None
+    receipt = step.action.get("host_execution_receipt") or {}
+    result = receipt.get("result") if isinstance(receipt, Mapping) else None
+    acquired = result.get("data") if isinstance(result, Mapping) else None
+    if not isinstance(acquired, Mapping):
+        return None
+    original, supplied = acquired.get("source_excerpt"), delivery.get("source_excerpt")
+    if not isinstance(original, Mapping) or not isinstance(supplied, Mapping):
+        return None
+    text, source_text = supplied.get("text"), original.get("text")
+    if (step.capability != "web.fetch" or acquired.get("execution_succeeded") is not True
+            or not isinstance(text, str) or not text or not isinstance(source_text, str)
+            or digest(source_text) != original.get("text_sha256")
+            or digest(text) != supplied.get("text_sha256")
+            or not source_text.startswith(text)
+            or not isinstance(acquired.get("access_event_id"), str) or not acquired["access_event_id"]
+            or not acquired.get("content_sha256")
+            or supplied.get("content_sha256") != acquired["content_sha256"]
+            or original.get("content_sha256") != acquired["content_sha256"]
+            or supplied.get("source_event_id") != acquired.get("access_event_id")
+            or original.get("source_event_id") != acquired.get("access_event_id")):
+        return None
+    keys = ("start_char", "extracted_text_chars", "extracted_text_sha256")
+    if any(supplied.get(k) != original.get(k) for k in keys):
+        return None
+    start, end, total = (supplied.get(k) for k in ("start_char", "end_char", "extracted_text_chars"))
+    if (any(type(v) is not int for v in (start, end, total)) or not 0 <= start < end <= total
+            or end != start + len(text) or not supplied.get("extracted_text_sha256")):
+        return None
+    return supplied
+
+
+def record_source_delivery(step, result: Mapping, *, provenance: Mapping) -> bool:
+    """Attach first verifiable supplied fragment to the existing Step, never its receipt."""
+    if step.action.get("source_delivery") is not None:
+        return False  # Duplicate echoes do not add a new delivery or overwrite history.
+    data = result.get("data")
+    if not isinstance(data, Mapping):
+        return False
+    if (result.get("capability") != "web.fetch" or data.get("execution_succeeded") is not True
+            or not isinstance(data.get("source_excerpt"), dict)):
+        return False
+    candidate = {
+        "basis": "tool_result_echo", "source_excerpt": deepcopy(data["source_excerpt"]),
+        "provenance": deepcopy(dict(provenance)), "model_understanding": "not_established",
+    }
+    step.action["source_delivery"] = candidate
+    if _verified_delivery(step) is None:
+        step.action.pop("source_delivery")
+        return False
+    return True
+
+
+def source_reading_progress(steps, source_event_id: str, content_sha256: str) -> dict:
+    """Exact historical supply coverage for one acquired snapshot version."""
+    delivered = []
+    for step in steps:
+        excerpt = _verified_delivery(step)
+        if (excerpt and excerpt["source_event_id"] == source_event_id
+                and excerpt["content_sha256"] == content_sha256):
+            delivered.append(excerpt)
+    if not delivered:
+        return {"state": "not_established", "saved_text_fully_supplied": None}
+    versions = {(e["extracted_text_sha256"], e["extracted_text_chars"]) for e in delivered}
+    if len(versions) != 1:
+        return {"state": "version_conflict", "saved_text_fully_supplied": None}
+    merged = []
+    for start, end in sorted((e["start_char"], e["end_char"]) for e in delivered):
+        if merged and start <= merged[-1][1]:
+            merged[-1][1] = max(end, merged[-1][1])
+        else:
+            merged.append([start, end])
+    total = delivered[0]["extracted_text_chars"]
+    complete = merged == [[0, total]]
+    cursor = merged[0][1] if merged and merged[0][0] == 0 else 0
+    return {
+        "state": "historical_tool_supply", "supplied_ranges": merged[:8],
+        "omitted_range_count": max(0, len(merged)-8),
+        "supplied_chars": sum(end-start for start, end in merged),
+        "saved_text_fully_supplied": complete, "next_unsupplied_start_char": None if complete else cursor,
+        "scope": "saved_extracted_text_not_full_page_or_semantic_support",
+    }
 
 def source_inventory(steps) -> list[dict[str, Any]]:
     """Accept host-recorded Step outcomes, never assistant text or model source lists."""
@@ -46,10 +192,12 @@ def source_inventory(steps) -> list[dict[str, Any]]:
         source_id = outcome.get("access_event_id") or ref.get("source_id")
         if not outcome.get("result_available") or not source_id:
             continue
-        excerpt = outcome.get("source_excerpt") or {}
+        delivered = _verified_delivery(step)
+        excerpt = delivered or outcome.get("source_excerpt") or {}
         text = excerpt.get("text")
-        # A truncated/rewritten projection cannot prove that the original excerpt was supplied.
-        intact = (outcome.get("excerpt_delivery") != "not_established"
+        # Shared acquisition is not delivery. A verified echo may prove a shorter
+        # fragment, without upgrading the unseen remainder of the acquisition.
+        intact = ((delivered is not None or outcome.get("excerpt_delivery") != "not_established")
                   and isinstance(text, str) and bool(text)
                   and excerpt.get("source_event_id") == source_id
                   and digest(text) == excerpt.get("text_sha256")

@@ -27,7 +27,7 @@ class FetchEvidenceBudgetTests(unittest.TestCase):
     def test_shared_audit_does_not_starve_full_existing_excerpt(self):
         p=self.payload();before=deepcopy(p);d=self.project(p)["data"]
         self.assertEqual(d["source_excerpt"],p["data"]["source_excerpt"])
-        self.assertEqual(d["evidence_extent"]["source_text_chars"],19000)
+        self.assertEqual(d["evidence_extent"]["snapshot_content_chars"],19000)
         self.assertEqual(d["execution_decision"]["full_decision_sha256"],
             hashlib.sha256(json.dumps(p["data"]["execution_decision"],ensure_ascii=False,sort_keys=True).encode()).hexdigest())
         self.assertEqual(d["execution_decision"]["authorization"],{})

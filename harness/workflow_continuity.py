@@ -193,8 +193,22 @@ def source_coverage(steps) -> dict[str, Any]:
                                  "failed" if attempts else "unattempted")
     counts = {state: sum(source["fetch_state"] == state for source in sources.values())
               for state in ("fetched", "failed", "pending", "unattempted")}
+    # Budget trimming removes the tail: retain recent actual fetch attempts
+    # before discovery-only URLs, instead of preserving the earliest results.
+    recent_fetch, recent_discovery = {}, {}
+    for index, step in enumerate(steps):
+        outcome = step.action.get("outcome", {})
+        for candidate in outcome.get("citable_candidates", []):
+            recent_discovery[candidate.get("url")] = index
+        if step.capability == "web.fetch" or step.tool == "web_fetch":
+            arguments = step.action.get("arguments", {})
+            if isinstance(arguments, Mapping):
+                recent_fetch[arguments.get("url")] = index
+    ordered = sorted(sources.values(),
+                     key=lambda source: (recent_fetch.get(source["url"], -1),
+                                         recent_discovery.get(source["url"], -1)), reverse=True)
     return {"unit": "url", "discovered": len(sources), **counts,
-            "sources": list(sources.values()), "other_fetches": other_fetches}
+            "sources": ordered, "other_fetches": other_fetches}
 
 
 def turn_receipt(store, workflow_id: str, turn_id: str, terminal: str) -> dict[str, Any]:
