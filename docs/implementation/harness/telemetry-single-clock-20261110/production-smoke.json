@@ -1,0 +1,57 @@
+{
+  "pass": true,
+  "model_started": false,
+  "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T134254Z-7e945052",
+  "observations": {
+    "guard-smoke-limit.json": {
+      "simulation": true,
+      "state": {
+        "done": true,
+        "exit_code": -15,
+        "guard_reason": "CONTROLLER_STOP",
+        "remaining": [],
+        "ended_utc": 1794318179.2041333,
+        "launch_seq": 2,
+        "baseline_seq": 1
+      },
+      "termination": {
+        "done": true,
+        "exit_code": -15,
+        "guard_reason": "CONTROLLER_STOP",
+        "remaining": [],
+        "ended_utc": 1794318179.2041333,
+        "launch_seq": 2,
+        "baseline_seq": 1
+      },
+      "metric": "GPU48GiB",
+      "PASS": true
+    },
+    "guard-smoke-stale.json": {
+      "simulation": true,
+      "state": {
+        "done": true,
+        "exit_code": -15,
+        "guard_reason": "WINDOWS_SENSOR_STALE",
+        "remaining": [],
+        "ended_utc": 1794318183.8789136,
+        "launch_seq": 4,
+        "baseline_seq": 3
+      },
+      "PASS": true
+    },
+    "completed.json": {
+      "per_stage_attempt_limit": 1,
+      "workflow_completed": false,
+      "model_started": false,
+      "scope": "controller lifecycle only",
+      "no_automatic_retry": true,
+      "completed": true
+    },
+    "metrics-cleanup.json": {
+      "signals": [
+        "SIGTERM"
+      ],
+      "remaining": []
+    }
+  }
+}

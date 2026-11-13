@@ -1,0 +1,239 @@
+param([Parameter(Mandatory=$true)][string]$LaunchRoot,[switch]$Check,[switch]$Smoke,[switch]$Experiment)
+$ErrorActionPreference='Stop'
+$cfg=[IO.File]::ReadAllText((Join-Path $LaunchRoot 'config.json'))|ConvertFrom-Json
+if($cfg.default_service_lifecycle -ne 'manual'){throw 'Default manual lifecycle required'}
+if(($cfg.experiment_timeout_seconds -isnot [long] -and $cfg.experiment_timeout_seconds -isnot [int]) -or $cfg.experiment_timeout_seconds -lt 1 -or $cfg.experiment_timeout_seconds -gt 86400){throw 'Invalid experiment timeout'}
+$Mode=if($Experiment){'experiment'}else{'manual'}
+$ServiceSeconds=if($Experiment){[int]$cfg.experiment_timeout_seconds}else{$null}
+$Policy=@{telemetry_protocol='single_clock_v1';mode=$Mode;service_timeout_seconds=$ServiceSeconds;smoke_timeout_seconds=120;
+ sampler_timeout_seconds=$(if($Experiment){$ServiceSeconds+300}else{$null});
+ windows_fallback_seconds=$(if($Experiment){$ServiceSeconds+10}else{$null})}
+
+$name='manual-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)
+$Root=[string]$cfg.linux_root
+$L=$Root+'/records/'+$name
+$WindowsRoot='\\wsl.localhost\'+$cfg.distro
+$Out=$WindowsRoot+$L.Replace('/','\')
+[void][IO.Directory]::CreateDirectory($Out)
+$dxgiSource=Join-Path $LaunchRoot 'readonly-dxgi.cs'
+Write-Output "Logs: $L"
+Add-Type -TypeDefinition ([IO.File]::ReadAllText($dxgiSource))
+$adapters=[ReadOnlyDxgi]::Read()
+$nvidia=@($adapters|Where-Object {$_.vendor -eq 4318 -and $_.name -like '*RTX Spark N1X*'})
+if($nvidia.Count -ne 1){throw 'Ambiguous Windows GPU identity'}
+$ad=$nvidia[0]
+if([Math]::Abs([double]$ad.dedicated_bytes-64GB) -gt 32MB){throw 'Windows Dedicated capacity differs from verified64GiB layout'}
+$halves=$ad.luid.Split(':')
+$AdapterCounterName='luid_0x'+$halves[0]+'_0x'+$halves[1]+'_phys_0'
+$nativeSource=$WindowsRoot+($Root+'/monitor/windows-native-metrics.cs').Replace('/','\')
+Add-Type -TypeDefinition ([IO.File]::ReadAllText($nativeSource))
+$Counters=[UaeaNativeCounters]::new($AdapterCounterName)
+Start-Sleep -Milliseconds 1100
+$Log=[IO.StreamWriter]::new((Join-Path $Out 'resource-samples.jsonl'),$false)
+$HeartStream=[IO.FileStream]::new((Join-Path $Out 'windows-heartbeats.jsonl'),[IO.FileMode]::Append,[IO.FileAccess]::Write,[IO.FileShare]::ReadWrite)
+$Heart=[IO.StreamWriter]::new($HeartStream,[Text.UTF8Encoding]::new($false));$Heart.AutoFlush=$true
+$Rows=[Collections.Generic.List[object]]::new();$script:Seq=0;$RunId=[guid]::NewGuid().ToString()
+function Save($name,$data){[IO.File]::WriteAllText((Join-Path $Out $name),($data|ConvertTo-Json -Depth 10))}
+Save 'run-policy.json' $Policy
+Write-Output ("Lifecycle: "+$Mode+$(if($Experiment){"; experiment deadline "+$ServiceSeconds+" seconds, including loading"}else{"; no fixed experiment deadline; Ctrl+C stops owned service; all safety guards remain active"}))
+Save 'windows-dxgi-initial.json' @{adapters=$adapters;counter_identity=$AdapterCounterName;budget_scope='diagnostic process only; no WSL budget guarantee'}
+function Linux($Action,$Case=''){
+ $p=[Diagnostics.Process]::new();$p.StartInfo.FileName='wsl.exe'
+ $ctl=if($cfg.controller_linux){[string]$cfg.controller_linux}else{$Root+'/launch/guard_ctl.py'}
+ $p.StartInfo.Arguments="-d Ubuntu-24.04 --exec /usr/bin/python3 -B $ctl $L $Action $Case"
+ $p.StartInfo.UseShellExecute=$false;$p.StartInfo.CreateNoWindow=$true;$p.StartInfo.RedirectStandardOutput=$true;$p.StartInfo.RedirectStandardError=$true
+ [void]$p.Start();$t=$p.StandardOutput.ReadToEndAsync();$e=$p.StandardError.ReadToEndAsync()
+ $deadline=if($Action -eq 'metrics'){2500}else{8000}
+ if(-not $p.WaitForExit($deadline)){$p.Kill();throw "Control timeout $Action; workload state unconfirmed"}
+ $stdout=$t.GetAwaiter().GetResult();$stderr=$e.GetAwaiter().GetResult()
+ if($p.ExitCode -ne 0){throw "Control $Action exit $($p.ExitCode): $stderr"}
+ $j=@($stdout -split '[\r\n]+'|Where-Object {$_.StartsWith('{')})[-1]
+ return ($j|ConvertFrom-Json)
+}
+$script:LinuxRunId='';$script:LinuxSeq=-1
+$script:LastGoodLinux=$null;$script:CurrentWindowsSensor=$null;$script:PrimarySensorFailure=$null
+$script:RequestSeq=0;$script:ConsumedRequestSeq=0;$script:Outstanding=$null
+function Mono {return [Diagnostics.Stopwatch]::GetTimestamp()}
+function Seconds($a,$b){return ([double]($b-$a))/[Diagnostics.Stopwatch]::Frequency}
+function RejectLinux($code,$g,$timing,$detail=''){
+ $script:PrimarySensorFailure=[ordered]@{
+  code=$code;detail=$detail;active=$Active
+  windows_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
+  windows_monotonic=(Mono);windows_frequency=[Diagnostics.Stopwatch]::Frequency
+  expected_run=$script:LinuxRunId;last_accepted_seq=$script:LinuxSeq
+  outstanding=$script:Outstanding;last_consumed_request=$script:ConsumedRequestSeq
+  rejected_sample=$g;last_accepted_sample=$script:LastGoodLinux
+  current_windows_sample=$script:CurrentWindowsSensor;read_timing=$timing
+  action='FAIL_CLOSED';resource_thresholds_changed=$false
+ }
+ [IO.File]::AppendAllText((Join-Path $Out 'telemetry-rejections.jsonl'),
+  ($script:PrimarySensorFailure|ConvertTo-Json -Depth 14 -Compress)+[Environment]::NewLine)
+ throw $code
+}
+function NewChallenge($t0){
+ if($null -ne $script:Outstanding -and -not $script:Outstanding.consumed){
+  RejectLinux 'UNCONSUMED_CHALLENGE' $null @{}
+ }
+ $script:RequestSeq++
+ $nonce=$RunId+':'+$script:RequestSeq+':'+[guid]::NewGuid().ToString('N')
+ $q=[ordered]@{protocol='single_clock_v1';guard_run_id=$RunId;sampler_run_id=$script:LinuxRunId
+  request_seq=$script:RequestSeq;nonce=$nonce;windows_t0_ticks=$t0
+  windows_frequency=[Diagnostics.Stopwatch]::Frequency
+  windows_issue_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0}
+ $script:Outstanding=@{request=$q;consumed=$false}
+ $path=Join-Path $Out 'sample-request.json';$tmp=$path+'.tmp'
+ [IO.File]::WriteAllText($tmp,($q|ConvertTo-Json -Compress))
+ [IO.File]::Move($tmp,$path,$true)
+ [IO.File]::AppendAllText((Join-Path $Out 'challenge-events.jsonl'),
+  (@{event='issued';request=$q}|ConvertTo-Json -Depth 6 -Compress)+[Environment]::NewLine)
+ return $q
+}
+function ReadLinuxMetrics($q){
+ $g=$null;$timing=[ordered]@{request_seq=$q.request_seq;nonce=$q.nonce}
+ if($null -eq $script:Outstanding -or $script:Outstanding.consumed -or $q.request_seq -le $script:ConsumedRequestSeq){
+  RejectLinux 'CHALLENGE_ALREADY_CONSUMED' $g $timing
+ }
+ if($q.nonce -ne $script:Outstanding.request.nonce -or $q.guard_run_id -ne $RunId){
+  RejectLinux 'CHALLENGE_IDENTITY' $g $timing
+ }
+ $ignored=0
+ while($true){
+  $now=Mono;$age=Seconds $q.windows_t0_ticks $now
+  $timing.causal_upper_bound_seconds=$age
+  if($age -lt 0){RejectLinux 'WINDOWS_MONOTONIC_REVERSED' $g $timing}
+  if($age -gt 3){RejectLinux 'CAUSAL_SAMPLE_TIMEOUT' $g $timing}
+  $path=Join-Path $Out 'linux-metrics.json'
+  if(-not [IO.File]::Exists($path)){Start-Sleep -Milliseconds 20;continue}
+  $read=[Diagnostics.Stopwatch]::StartNew()
+  try{$g=[IO.File]::ReadAllText($path)|ConvertFrom-Json}catch{
+   $timing.read_seconds=$read.Elapsed.TotalSeconds
+   RejectLinux 'LINUX_SAMPLE_UNREADABLE' $g $timing $_.Exception.Message
+  }
+  $timing.read_seconds=$read.Elapsed.TotalSeconds
+  if($g.run_id -ne $script:LinuxRunId){RejectLinux 'LINUX_RUN_MISMATCH' $g $timing}
+  if($g.valid -isnot [bool] -or -not $g.valid){RejectLinux 'LINUX_SAMPLE_INVALID' $g $timing $g.error_detail}
+  if($g.protocol -ne 'single_clock_v1' -or $g.guard_run_id -ne $RunId){RejectLinux 'LINUX_GUARD_RUN_MISMATCH' $g $timing}
+  if($g.seq -isnot [long] -and $g.seq -isnot [int]){RejectLinux 'LINUX_SEQUENCE_INVALID' $g $timing}
+  if($g.seq -lt $script:LinuxSeq){RejectLinux 'LINUX_SEQUENCE_REVERSED' $g $timing}
+  if(($g.request_seq -isnot [long] -and $g.request_seq -isnot [int]) -or $g.request_seq -lt 1){RejectLinux 'LINUX_REQUEST_SEQUENCE_INVALID' $g $timing}
+  if($g.request_seq -lt $q.request_seq -and $g.seq -le $script:LinuxSeq){
+   # An old response may still be present while the ONE new request is pending.
+   # It is never accepted or resampled; the original 3s deadline is not refreshed.
+   $ignored++;Start-Sleep -Milliseconds 20;continue
+  }
+  if($g.request_seq -ne $q.request_seq -or $g.nonce -ne $q.nonce){RejectLinux 'LINUX_ACK_MISMATCH' $g $timing}
+  if($g.seq -le $script:LinuxSeq){RejectLinux 'LINUX_RESPONSE_REPLAY' $g $timing}
+  foreach($key in @('utc','sample_seconds','wsl_available','wsl_total','swap_used','gpu_total','gpu_used','gpu_free')){
+   $v=$g.$key
+   if($null -eq $v -or $v -is [bool] -or -not ($v -is [valuetype]) -or [double]::IsNaN([double]$v) -or [double]::IsInfinity([double]$v) -or [double]$v -lt 0){RejectLinux 'LINUX_VALUE_INVALID' $g $timing $key}
+  }
+  if($g.sample_seconds -gt 2){RejectLinux 'LINUX_SAMPLE_DELAY' $g $timing}
+  $t1=Mono;$upper=Seconds $q.windows_t0_ticks $t1
+  $timing.windows_received_ticks=$t1;$timing.causal_upper_bound_seconds=$upper
+  $timing.cross_utc_difference_seconds=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0-[double]$g.utc
+  if($upper -lt 0){RejectLinux 'WINDOWS_MONOTONIC_REVERSED' $g $timing}
+  if($upper -gt 3){RejectLinux 'CAUSAL_SAMPLE_TIMEOUT' $g $timing}
+  $script:ConsumedRequestSeq=$q.request_seq;$script:LinuxSeq=$g.seq
+  $script:Outstanding.consumed=$true;$script:LastGoodLinux=$g
+  [IO.File]::AppendAllText((Join-Path $Out 'challenge-events.jsonl'),
+   (@{event='ack_validated';request_seq=$q.request_seq;nonce=$q.nonce;sampler_seq=$g.seq
+     sampler_run=$g.run_id;guard_run=$RunId;timing=$timing;prior_frames_not_consumed=$ignored}|ConvertTo-Json -Depth 6 -Compress)+[Environment]::NewLine)
+  return $g
+ }
+}
+function Sensor($case){
+ $watch=[Diagnostics.Stopwatch]::StartNew();$t0=Mono
+ $m=[UaeaNativeMemory]::Read()
+ $gp=$Counters.Read()
+ $vm=@(Get-Process -Name 'vmmem*' -ErrorAction SilentlyContinue|ForEach-Object {@{Name=$_.Name;IDProcess=$_.Id;WorkingSet=$_.WorkingSet64;PrivateBytes=$_.PrivateMemorySize64;WorkingSetPrivate=$null}})
+ $script:Seq++
+ $d=[ordered]@{run_id=$RunId;seq=$script:Seq;measurement_seconds=$watch.Elapsed.TotalSeconds;source='windows_native';valid=$true;utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0;commit_limit=[double]$m.CommitLimit;commit_used=[double]$m.CommittedBytes;physical_available=[double]$m.AvailableMBytes*1MB;pages_input_per_sec=[double]$gp.PagesInputPersec;pages_output_per_sec=[double]$gp.PagesOutputPersec;page_reads_per_sec=[double]$gp.PageReadsPersec;page_writes_per_sec=[double]$gp.PageWritesPersec;cache_bytes=[double]$gp.CacheBytes;modified_bytes=[double]$gp.ModifiedPageListBytes;gpu_shared_usage=[double]$gp.SharedUsage;gpu_dedicated_usage=[double]$gp.DedicatedUsage;gpu_total_committed=[double]$gp.TotalCommitted;gpu_counter_identity=$AdapterCounterName;vmmem=$vm}
+ foreach($key in @('commit_limit','commit_used','physical_available','gpu_shared_usage','gpu_dedicated_usage')){if([double]::IsNaN($d[$key]) -or [double]::IsInfinity($d[$key]) -or $d[$key] -lt 0){throw "Invalid metric $key"}}
+ if($d.commit_limit -le 0 -or $d.commit_used -gt $d.commit_limit){throw 'Invalid Commit counters'}
+ $script:CurrentWindowsSensor=$d
+ $q=NewChallenge $t0
+ $g=ReadLinuxMetrics $q
+ if($watch.Elapsed.TotalSeconds -gt 3){RejectLinux 'SENSOR_PUBLICATION_DELAY' $g @{causal_upper_bound_seconds=$watch.Elapsed.TotalSeconds}}
+ $d.measurement_seconds=$watch.Elapsed.TotalSeconds
+ $Heart.WriteLine(($d|ConvertTo-Json -Depth 5 -Compress));$Heart.Flush()
+ $watch.Stop()
+ $x=[pscustomobject]@{case=$case;utc=$d.utc;windows=$d;wsl_gpu=$g;sample_seconds=$watch.Elapsed.TotalSeconds;challenge_seq=$q.request_seq;nonce=$q.nonce;causal_upper_bound_seconds=(Seconds $t0 (Mono))}
+ $Log.WriteLine(($x|ConvertTo-Json -Depth 7 -Compress));$Log.Flush();return $x
+}
+function Reason($x){
+ if($x.sample_seconds -gt 3){return 'SENSOR_DELAY'}
+ if($x.wsl_gpu.gpu_total -ne 64GB){return 'GPU_CAPACITY_CHANGED'}
+ if($x.wsl_gpu.gpu_used -ge 48GB){return 'GPU_48GIB'}
+ if($x.windows.gpu_dedicated_usage -ge 48GB){return 'WDDM_DEDICATED_48GIB'}
+ if(($x.windows.commit_limit-$x.windows.commit_used) -le [Math]::Max(16GB,.2*$x.windows.commit_limit)){return 'WINDOWS_COMMIT'}
+ if($x.windows.physical_available -lt 6GB){return 'WINDOWS_PHYSICAL'}
+ if($x.wsl_gpu.wsl_available -lt 4GB){return 'WSL_MEMORY'}
+ if($x.wsl_gpu.swap_used -gt 256MB){return 'WSL_SWAP'}
+ # Shared counters are fresh mandatory telemetry, not spare capacity to add to Dedicated.
+ # Host physical/Commit stops remain independently active for Shared-backed pressure.
+ return $null
+}
+$Active=$null;$MetricsStarted=$false
+try{
+ $mm=Linux 'metrics_start';$MetricsStarted=$true;$script:LinuxRunId=$mm.run_id
+ $initial=Sensor 'initial';$why=Reason $initial;if($why){throw "Preflight unsafe: $why"}
+ if($Check){Save 'check.json' @{PASS=$true;model_started=$false;thresholds_unchanged=$true};Write-Output 'CHECK PASS; no model started';return}
+ $cases=if($Smoke){@('guard_smoke_limit','guard_smoke_stale')}else{@('guard_smoke_limit','guard_smoke_stale','service')}
+ foreach($case in $cases){
+  if($case -eq 'service'){
+   foreach($f in @('guard-smoke-limit.json','guard-smoke-stale.json')){if(-not ([IO.File]::ReadAllText((Join-Path $Out $f))|ConvertFrom-Json).PASS){throw "Gate failed: $f"}}
+  }
+  $Active=$case;$manifest=Linux 'start' $case;Write-Output "START $case"
+  $sw=[Diagnostics.Stopwatch]::StartNew();$reason=$null;$stopped=$null;$readyShown=$false
+  $fallback=if($case -eq 'service'){$Policy.windows_fallback_seconds}else{130}
+  $lastNotice=-300
+
+  while($true){
+   $sample=Sensor $case;$reason=Reason $sample
+   if($case -eq 'service' -and -not $readyShown -and [IO.File]::Exists((Join-Path $Out 'service/ready.json'))){
+    Write-Output ("[READY] http://127.0.0.1:8003 nemotron-bolt-n1x; lifecycle="+$Mode+$(if($Experiment){"; finite experiment deadline"}else{"; runs until user stop, failure, or safety guard"}))
+    $readyShown=$true
+   }
+   if($case -eq 'guard_smoke_limit' -and [IO.File]::Exists((Join-Path $Out "$case/phase.json"))){
+    $sim=$sample|ConvertTo-Json -Depth 8|ConvertFrom-Json;$sim.wsl_gpu.gpu_used=48GB
+    $reason=Reason $sim
+    if($reason -ne 'GPU_48GIB'){throw 'Simulated dedicated stop failed'}
+   }
+   if($case -eq 'guard_smoke_stale' -and [IO.File]::Exists((Join-Path $Out "$case/phase.json"))){Start-Sleep -Milliseconds 3500}
+   if($reason){$stopped=Linux 'stop' $case}
+   $statePath=Join-Path $Out "$case/state.json"
+   $state=if([IO.File]::Exists($statePath)){[IO.File]::ReadAllText($statePath)|ConvertFrom-Json}else{[pscustomobject]@{done=$false}}
+   if($state.done){break}
+   if($case -eq 'service' -and ($sw.Elapsed.TotalSeconds-$lastNotice) -ge 300){
+    $lastNotice=$sw.Elapsed.TotalSeconds
+    Write-Output ("[SERVICE] elapsed="+[int]$sw.Elapsed.TotalSeconds+"s; "+$(if($Experiment){"remaining="+[Math]::Max(0,[int]($ServiceSeconds-$sw.Elapsed.TotalSeconds))+"s"}else{"manual lifecycle; no experiment deadline"}))
+   }
+   if($null -ne $fallback -and $sw.Elapsed.TotalSeconds -gt $fallback){$reason='WINDOWS_CASE_TIMEOUT';$stopped=Linux 'stop' $case}
+   Start-Sleep -Milliseconds 1000
+  }
+  if($state.remaining.Count -ne 0){throw 'Owned descendants remain'}
+  $row=[pscustomobject]@{case=$case;exit_code=$state.exit_code;resource_stop=$reason;supervisor_guard=$state.guard_reason;elapsed_seconds=$sw.Elapsed.TotalSeconds;remaining=$state.remaining}
+  $Rows.Add($row);Save 'guard-outcomes.json' @($Rows.ToArray());$Active=$null
+  Write-Output "DONE $case exit=$($state.exit_code) guard=$($state.guard_reason) resource=$reason"
+  if($case -eq 'guard_smoke_limit'){
+   if(-not $stopped -or $stopped.remaining.Count -ne 0){throw 'Threshold termination smoke failed'}
+   Save 'guard-smoke-limit.json' @{PASS=$true;simulation=$true;metric='GPU48GiB';state=$state;termination=$stopped}
+  }elseif($case -eq 'guard_smoke_stale'){
+   if($state.guard_reason -ne 'WINDOWS_SENSOR_STALE' -or $state.exit_code -ne -15){throw 'Stale sensor termination failed'}
+   Save 'guard-smoke-stale.json' @{PASS=$true;simulation=$true;state=$state}
+  }elseif($Experiment -and -not $reason -and $state.guard_reason -eq 'CASE_TIMEOUT' -and $state.exit_code -eq -15){
+   Save 'experiment-ended.json' @{reason='experiment_deadline';expected=$true;seconds=$ServiceSeconds;workflow_completed=$false;remaining=$state.remaining}
+   Write-Output '[EXPERIMENT END] finite deadline reached; owned model stopped; this is not Workflow completion.'
+  }elseif($reason -or $state.guard_reason){throw "Safety stop during $case; reason=$reason supervisor=$($state.guard_reason); no automatic retry"}
+ }
+ Save 'completed.json' @{completed=$true;scope='controller lifecycle only';workflow_completed=$false;model_started=(-not $Smoke);per_stage_attempt_limit=1;no_automatic_retry=$true}
+}catch{Save 'monitor-exception.json' @{message=$_.Exception.Message;active=$Active;primary_sensor_failure=$script:PrimarySensorFailure};throw}
+finally{
+ if($Active){try{Save 'final-cleanup.json' (Linux 'stop' $Active)}catch{Save 'cleanup-error.json' @{message=$_.Exception.Message}}}
+ try{[void](Sensor 'postflight')}catch{Save 'postflight-error.json' @{message=$_.Exception.Message}}
+ if($MetricsStarted){try{
+  $cleanup=Linux 'metrics_stop';Save 'metrics-cleanup.json' $cleanup
+  if($cleanup.remaining.Count -ne 0){Save 'metrics-cleanup-error.json' @{message='Sampler descendants remain'}}
+ }catch{Save 'metrics-cleanup-error.json' @{message=$_.Exception.Message}}}
+ $Counters.Dispose();$Heart.Dispose();$Log.Dispose()
+}

@@ -1,0 +1,7 @@
+{
+  "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-20261113T013426Z/profile-initial-journal.jsonl",
+  "sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+  "Global_family_binding": "operator:goal-candidate:098ea60b1c3caf2ca410b22d",
+  "not_model_autonomy": true,
+  "source_result": "verified before previous real readback; excludes later model question and annotation"
+}

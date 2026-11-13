@@ -1,0 +1,175 @@
+--- guard.ps1.before
++++ guard.ps1.candidate
+@@ -5,7 +5,7 @@
+ if(($cfg.experiment_timeout_seconds -isnot [long] -and $cfg.experiment_timeout_seconds -isnot [int]) -or $cfg.experiment_timeout_seconds -lt 1 -or $cfg.experiment_timeout_seconds -gt 86400){throw 'Invalid experiment timeout'}
+ $Mode=if($Experiment){'experiment'}else{'manual'}
+ $ServiceSeconds=if($Experiment){[int]$cfg.experiment_timeout_seconds}else{$null}
+-$Policy=@{mode=$Mode;service_timeout_seconds=$ServiceSeconds;smoke_timeout_seconds=120;
++$Policy=@{telemetry_protocol='single_clock_v1';mode=$Mode;service_timeout_seconds=$ServiceSeconds;smoke_timeout_seconds=120;
+  sampler_timeout_seconds=$(if($Experiment){$ServiceSeconds+300}else{$null});
+  windows_fallback_seconds=$(if($Experiment){$ServiceSeconds+10}else{$null})}
+ 
+@@ -39,7 +39,8 @@
+ Save 'windows-dxgi-initial.json' @{adapters=$adapters;counter_identity=$AdapterCounterName;budget_scope='diagnostic process only; no WSL budget guarantee'}
+ function Linux($Action,$Case=''){
+  $p=[Diagnostics.Process]::new();$p.StartInfo.FileName='wsl.exe'
+- $p.StartInfo.Arguments="-d Ubuntu-24.04 --exec /usr/bin/python3 -B $Root/launch/guard_ctl.py $L $Action $Case"
++ $ctl=if($cfg.controller_linux){[string]$cfg.controller_linux}else{$Root+'/launch/guard_ctl.py'}
++ $p.StartInfo.Arguments="-d Ubuntu-24.04 --exec /usr/bin/python3 -B $ctl $L $Action $Case"
+  $p.StartInfo.UseShellExecute=$false;$p.StartInfo.CreateNoWindow=$true;$p.StartInfo.RedirectStandardOutput=$true;$p.StartInfo.RedirectStandardError=$true
+  [void]$p.Start();$t=$p.StandardOutput.ReadToEndAsync();$e=$p.StandardError.ReadToEndAsync()
+  $deadline=if($Action -eq 'metrics'){2500}else{8000}
+@@ -49,57 +50,99 @@
+  $j=@($stdout -split '[\r\n]+'|Where-Object {$_.StartsWith('{')})[-1]
+  return ($j|ConvertFrom-Json)
+ }
+-$script:LinuxRunId='';$script:LinuxSeq=-1;$script:LinuxSeen=[Diagnostics.Stopwatch]::StartNew()
++$script:LinuxRunId='';$script:LinuxSeq=-1
+ $script:LastGoodLinux=$null;$script:CurrentWindowsSensor=$null;$script:PrimarySensorFailure=$null
++$script:RequestSeq=0;$script:ConsumedRequestSeq=0;$script:Outstanding=$null
++function Mono {return [Diagnostics.Stopwatch]::GetTimestamp()}
++function Seconds($a,$b){return ([double]($b-$a))/[Diagnostics.Stopwatch]::Frequency}
+ function RejectLinux($code,$g,$timing,$detail=''){
+  $script:PrimarySensorFailure=[ordered]@{
+-  code=$code;detail=$detail;active=$Active;windows_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
+-  windows_monotonic=[Diagnostics.Stopwatch]::GetTimestamp();windows_frequency=[Diagnostics.Stopwatch]::Frequency
++  code=$code;detail=$detail;active=$Active
++  windows_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
++  windows_monotonic=(Mono);windows_frequency=[Diagnostics.Stopwatch]::Frequency
+   expected_run=$script:LinuxRunId;last_accepted_seq=$script:LinuxSeq
+-  sequence_age_monotonic=$script:LinuxSeen.Elapsed.TotalSeconds
++  outstanding=$script:Outstanding;last_consumed_request=$script:ConsumedRequestSeq
+   rejected_sample=$g;last_accepted_sample=$script:LastGoodLinux
+   current_windows_sample=$script:CurrentWindowsSensor;read_timing=$timing
+   action='FAIL_CLOSED';resource_thresholds_changed=$false
+  }
+- # Capture the primary error before cleanup can replace the current metrics file.
+- $line=$script:PrimarySensorFailure|ConvertTo-Json -Depth 12 -Compress
+- [IO.File]::AppendAllText((Join-Path $Out 'telemetry-rejections.jsonl'),$line+[Environment]::NewLine)
++ [IO.File]::AppendAllText((Join-Path $Out 'telemetry-rejections.jsonl'),
++  ($script:PrimarySensorFailure|ConvertTo-Json -Depth 14 -Compress)+[Environment]::NewLine)
+  throw $code
+ }
+-function ReadLinuxMetrics {
+- $read=[Diagnostics.Stopwatch]::StartNew();$g=$null
+- $timing=[ordered]@{read_started_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0}
+- try{$raw=[IO.File]::ReadAllText((Join-Path $Out 'linux-metrics.json'));$g=$raw|ConvertFrom-Json}
+- catch{
++function NewChallenge($t0){
++ if($null -ne $script:Outstanding -and -not $script:Outstanding.consumed){
++  RejectLinux 'UNCONSUMED_CHALLENGE' $null @{}
++ }
++ $script:RequestSeq++
++ $nonce=$RunId+':'+$script:RequestSeq+':'+[guid]::NewGuid().ToString('N')
++ $q=[ordered]@{protocol='single_clock_v1';guard_run_id=$RunId;sampler_run_id=$script:LinuxRunId
++  request_seq=$script:RequestSeq;nonce=$nonce;windows_t0_ticks=$t0
++  windows_frequency=[Diagnostics.Stopwatch]::Frequency
++  windows_issue_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0}
++ $script:Outstanding=@{request=$q;consumed=$false}
++ $path=Join-Path $Out 'sample-request.json';$tmp=$path+'.tmp'
++ [IO.File]::WriteAllText($tmp,($q|ConvertTo-Json -Compress))
++ [IO.File]::Move($tmp,$path,$true)
++ [IO.File]::AppendAllText((Join-Path $Out 'challenge-events.jsonl'),
++  (@{event='issued';request=$q}|ConvertTo-Json -Depth 6 -Compress)+[Environment]::NewLine)
++ return $q
++}
++function ReadLinuxMetrics($q){
++ $g=$null;$timing=[ordered]@{request_seq=$q.request_seq;nonce=$q.nonce}
++ if($null -eq $script:Outstanding -or $script:Outstanding.consumed -or $q.request_seq -le $script:ConsumedRequestSeq){
++  RejectLinux 'CHALLENGE_ALREADY_CONSUMED' $g $timing
++ }
++ if($q.nonce -ne $script:Outstanding.request.nonce -or $q.guard_run_id -ne $RunId){
++  RejectLinux 'CHALLENGE_IDENTITY' $g $timing
++ }
++ $ignored=0
++ while($true){
++  $now=Mono;$age=Seconds $q.windows_t0_ticks $now
++  $timing.causal_upper_bound_seconds=$age
++  if($age -lt 0){RejectLinux 'WINDOWS_MONOTONIC_REVERSED' $g $timing}
++  if($age -gt 3){RejectLinux 'CAUSAL_SAMPLE_TIMEOUT' $g $timing}
++  $path=Join-Path $Out 'linux-metrics.json'
++  if(-not [IO.File]::Exists($path)){Start-Sleep -Milliseconds 20;continue}
++  $read=[Diagnostics.Stopwatch]::StartNew()
++  try{$g=[IO.File]::ReadAllText($path)|ConvertFrom-Json}catch{
++   $timing.read_seconds=$read.Elapsed.TotalSeconds
++   RejectLinux 'LINUX_SAMPLE_UNREADABLE' $g $timing $_.Exception.Message
++  }
+   $timing.read_seconds=$read.Elapsed.TotalSeconds
+-  RejectLinux 'LINUX_SAMPLE_UNREADABLE' $g $timing $_.Exception.Message
+- }
+- $timing.read_seconds=$read.Elapsed.TotalSeconds
+- $timing.read_finished_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
+- if(-not $g.valid){RejectLinux 'LINUX_SAMPLE_INVALID' $g $timing}
+- if($g.run_id -ne $script:LinuxRunId){RejectLinux 'LINUX_RUN_MISMATCH' $g $timing}
+- if($g.seq -isnot [long] -and $g.seq -isnot [int]){RejectLinux 'LINUX_SEQUENCE_INVALID' $g $timing}
+- if($g.seq -lt $script:LinuxSeq){RejectLinux 'LINUX_SEQUENCE_REVERSED' $g $timing}
+- foreach($key in @('utc','sample_seconds','wsl_available','wsl_total','swap_used','gpu_total','gpu_used','gpu_free')){
+-  $value=$g.$key
+-  if($null -eq $value -or -not ($value -is [valuetype]) -or [double]::IsNaN([double]$value) -or [double]::IsInfinity([double]$value) -or [double]$value -lt 0){
+-   RejectLinux 'LINUX_VALUE_INVALID' $g $timing $key
+-  }
+- }
+- $now=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
+- $age=$now-[double]$g.utc
+- $timing.validation_utc=$now;$timing.sample_age_seconds=$age
+- # Same gates as before. No retry, grace window, clock correction or stale fallback.
+- if($age -gt 3){RejectLinux 'LINUX_SAMPLE_OLD' $g $timing}
+- if($age -lt -1){RejectLinux 'LINUX_CLOCK_FUTURE' $g $timing}
+- if($g.sample_seconds -gt 3){RejectLinux 'LINUX_SAMPLE_DELAY' $g $timing}
+- if($g.seq -gt $script:LinuxSeq){$script:LinuxSeq=$g.seq;$script:LinuxSeen.Restart()}
+- if($script:LinuxSeen.Elapsed.TotalSeconds -gt 3){RejectLinux 'LINUX_SEQUENCE_STALE' $g $timing}
+- $script:LastGoodLinux=$g
+- return $g
++  if($g.run_id -ne $script:LinuxRunId){RejectLinux 'LINUX_RUN_MISMATCH' $g $timing}
++  if($g.valid -isnot [bool] -or -not $g.valid){RejectLinux 'LINUX_SAMPLE_INVALID' $g $timing $g.error_detail}
++  if($g.protocol -ne 'single_clock_v1' -or $g.guard_run_id -ne $RunId){RejectLinux 'LINUX_GUARD_RUN_MISMATCH' $g $timing}
++  if($g.seq -isnot [long] -and $g.seq -isnot [int]){RejectLinux 'LINUX_SEQUENCE_INVALID' $g $timing}
++  if($g.seq -lt $script:LinuxSeq){RejectLinux 'LINUX_SEQUENCE_REVERSED' $g $timing}
++  if(($g.request_seq -isnot [long] -and $g.request_seq -isnot [int]) -or $g.request_seq -lt 1){RejectLinux 'LINUX_REQUEST_SEQUENCE_INVALID' $g $timing}
++  if($g.request_seq -lt $q.request_seq -and $g.seq -le $script:LinuxSeq){
++   # An old response may still be present while the ONE new request is pending.
++   # It is never accepted or resampled; the original 3s deadline is not refreshed.
++   $ignored++;Start-Sleep -Milliseconds 20;continue
++  }
++  if($g.request_seq -ne $q.request_seq -or $g.nonce -ne $q.nonce){RejectLinux 'LINUX_ACK_MISMATCH' $g $timing}
++  if($g.seq -le $script:LinuxSeq){RejectLinux 'LINUX_RESPONSE_REPLAY' $g $timing}
++  foreach($key in @('utc','sample_seconds','wsl_available','wsl_total','swap_used','gpu_total','gpu_used','gpu_free')){
++   $v=$g.$key
++   if($null -eq $v -or $v -is [bool] -or -not ($v -is [valuetype]) -or [double]::IsNaN([double]$v) -or [double]::IsInfinity([double]$v) -or [double]$v -lt 0){RejectLinux 'LINUX_VALUE_INVALID' $g $timing $key}
++  }
++  if($g.sample_seconds -gt 2){RejectLinux 'LINUX_SAMPLE_DELAY' $g $timing}
++  $t1=Mono;$upper=Seconds $q.windows_t0_ticks $t1
++  $timing.windows_received_ticks=$t1;$timing.causal_upper_bound_seconds=$upper
++  $timing.cross_utc_difference_seconds=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0-[double]$g.utc
++  if($upper -lt 0){RejectLinux 'WINDOWS_MONOTONIC_REVERSED' $g $timing}
++  if($upper -gt 3){RejectLinux 'CAUSAL_SAMPLE_TIMEOUT' $g $timing}
++  $script:ConsumedRequestSeq=$q.request_seq;$script:LinuxSeq=$g.seq
++  $script:Outstanding.consumed=$true;$script:LastGoodLinux=$g
++  [IO.File]::AppendAllText((Join-Path $Out 'challenge-events.jsonl'),
++   (@{event='ack_validated';request_seq=$q.request_seq;nonce=$q.nonce;sampler_seq=$g.seq
++     sampler_run=$g.run_id;guard_run=$RunId;timing=$timing;prior_frames_not_consumed=$ignored}|ConvertTo-Json -Depth 6 -Compress)+[Environment]::NewLine)
++  return $g
++ }
+ }
+ function Sensor($case){
+- $watch=[Diagnostics.Stopwatch]::StartNew()
++ $watch=[Diagnostics.Stopwatch]::StartNew();$t0=Mono
+  $m=[UaeaNativeMemory]::Read()
+  $gp=$Counters.Read()
+  $vm=@(Get-Process -Name 'vmmem*' -ErrorAction SilentlyContinue|ForEach-Object {@{Name=$_.Name;IDProcess=$_.Id;WorkingSet=$_.WorkingSet64;PrivateBytes=$_.PrivateMemorySize64;WorkingSetPrivate=$null}})
+@@ -108,10 +151,13 @@
+  foreach($key in @('commit_limit','commit_used','physical_available','gpu_shared_usage','gpu_dedicated_usage')){if([double]::IsNaN($d[$key]) -or [double]::IsInfinity($d[$key]) -or $d[$key] -lt 0){throw "Invalid metric $key"}}
+  if($d.commit_limit -le 0 -or $d.commit_used -gt $d.commit_limit){throw 'Invalid Commit counters'}
+  $script:CurrentWindowsSensor=$d
+- $g=ReadLinuxMetrics
++ $q=NewChallenge $t0
++ $g=ReadLinuxMetrics $q
++ if($watch.Elapsed.TotalSeconds -gt 3){RejectLinux 'SENSOR_PUBLICATION_DELAY' $g @{causal_upper_bound_seconds=$watch.Elapsed.TotalSeconds}}
++ $d.measurement_seconds=$watch.Elapsed.TotalSeconds
+  $Heart.WriteLine(($d|ConvertTo-Json -Depth 5 -Compress));$Heart.Flush()
+  $watch.Stop()
+- $x=[pscustomobject]@{case=$case;utc=$d.utc;windows=$d;wsl_gpu=$g;sample_seconds=$watch.Elapsed.TotalSeconds}
++ $x=[pscustomobject]@{case=$case;utc=$d.utc;windows=$d;wsl_gpu=$g;sample_seconds=$watch.Elapsed.TotalSeconds;challenge_seq=$q.request_seq;nonce=$q.nonce;causal_upper_bound_seconds=(Seconds $t0 (Mono))}
+  $Log.WriteLine(($x|ConvertTo-Json -Depth 7 -Compress));$Log.Flush();return $x
+ }
+ function Reason($x){

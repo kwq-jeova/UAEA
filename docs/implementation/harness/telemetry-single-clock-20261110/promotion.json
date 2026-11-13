@@ -1,0 +1,14 @@
+{
+  "utc": "2026-11-10T13:42:39.358643+00:00",
+  "validated_no_model_seconds": 3000.874436,
+  "ack_count": 2734,
+  "files": {
+    "guard.ps1": "032755d91acf805037907220eb1541de58a0ac061e73c96f1d71c4d65b0ef4aa",
+    "guard_ctl.py": "614ebbd12e7095824017f60c96b46ae19bad910ea368e0902fc7a594496224a6",
+    "SHA256.json": "a3230e9c6b362fd9a2eac0d06bb20c371644e83d79bc9dab2720da591de27d98"
+  },
+  "resource_reason_unchanged": true,
+  "production_config_not_overwritten": true,
+  "approval": "user explicit single-clock implementation and post-validation restoration authorization",
+  "model_loaded_by_promotion": false
+}

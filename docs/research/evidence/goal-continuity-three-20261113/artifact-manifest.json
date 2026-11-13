@@ -1,0 +1,43 @@
+{
+  "batch": "goal-continuity-three-20261113T030425Z",
+  "kind": "curated derived evidence; not full raw transcript or second Goal authority",
+  "raw_evidence_preserved_outside_git": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z",
+  "artifacts": [
+    {
+      "file": "independent-audit.md",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/independent-audit.md",
+      "sha256": "62e0a980411f7fa9c92262992711846dcaa4c6b8c043456d1492ca3191168f39",
+      "bytes": 9272
+    },
+    {
+      "file": "audit-independent-checks.json",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/audit-independent-checks.json",
+      "sha256": "9764e7fa4423b97a3cf9fc8bd11004e194474a652341f771bb696af0e427a61d",
+      "bytes": 50258
+    },
+    {
+      "file": "manual-review.json",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/manual-review.json",
+      "sha256": "813c4e9c2fa47b56a18b259a5791dd6029b4aee088dd79b0dccac7e5d72f6281",
+      "bytes": 10719
+    },
+    {
+      "file": "cost-summary.json",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/cost-summary.json",
+      "sha256": "2ece4007804af165010d940732d208070a1f3deea06696df8c8cdcde7b3884b9",
+      "bytes": 2188
+    },
+    {
+      "file": "resource-summary.json",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/resource-summary.json",
+      "sha256": "ec4b1227f76ac24914cdab0bb2cfb11370b4e96b7e35af13ffd0377aaded61fb",
+      "bytes": 2526
+    },
+    {
+      "file": "checkpoint-lock.json",
+      "source": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/checkpoint-lock.json",
+      "sha256": "11edc25bd0384e0fd3df77890e07f40b0b8ad23a4d8779e8fe98198166767c74",
+      "bytes": 419
+    }
+  ]
+}

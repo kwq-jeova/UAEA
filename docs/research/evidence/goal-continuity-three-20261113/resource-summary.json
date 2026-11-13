@@ -1,0 +1,80 @@
+{
+  "service_samples": 983,
+  "total_samples_including_smoke": 989,
+  "all_service_samples_valid": true,
+  "unique_challenge_ack_nonces": true,
+  "nvml_peak_GiB": 28.837425231933594,
+  "windows_gpu_dedicated_peak_GiB": 28.836437225341797,
+  "windows_gpu_shared_peak_GiB": 0.2766838073730469,
+  "commit_limit_GiB": [
+    91.48096084594727
+  ],
+  "commit_free_min_GiB": 23.285106658935547,
+  "commit_stop_GiB": [
+    18.296192169189453
+  ],
+  "commit_min_safety_buffer_GiB": 4.988914489746094,
+  "windows_physical_available_min_GiB": 32.313209533691406,
+  "WSL_MemAvailable_min_GiB": 17.634490966796875,
+  "WSL_swap_peak_bytes": 16384,
+  "windows_round_trip_max_seconds": 0.1234362,
+  "linux_sample_max_seconds": 0.005323394000015469,
+  "causal_upper_bound_max_seconds": 0.1234515,
+  "service_observation_seconds": 1051.2180001735687,
+  "not_long_duration_stability_proof": true,
+  "AC_samples": 1090,
+  "AC_all_valid_and_on": true,
+  "AC_health_checks": 68,
+  "AC_health_all_pass": true,
+  "AC_freshness_max_seconds": 1.0255885,
+  "power_observer_end": {
+    "run": "3d6b4de7-c9ec-423f-b9ef-f0ae5eb1fd2d",
+    "error": null,
+    "seconds": 1100.7570837,
+    "samples": 1090,
+    "stop_requested": true
+  },
+  "guard_outcomes": [
+    {
+      "case": "guard_smoke_limit",
+      "exit_code": -15,
+      "resource_stop": "GPU_48GIB",
+      "supervisor_guard": "CONTROLLER_STOP",
+      "elapsed_seconds": 1.4348877,
+      "remaining": []
+    },
+    {
+      "case": "guard_smoke_stale",
+      "exit_code": -15,
+      "resource_stop": null,
+      "supervisor_guard": "WINDOWS_SENSOR_STALE",
+      "elapsed_seconds": 4.6918181,
+      "remaining": []
+    },
+    {
+      "case": "service",
+      "exit_code": -15,
+      "resource_stop": null,
+      "supervisor_guard": "CONTROLLER_STOP",
+      "elapsed_seconds": 1051.2619656,
+      "remaining": []
+    }
+  ],
+  "service_stop": {
+    "returncode": 0,
+    "stdout": "{\"done\": true, \"exit_code\": -15, \"guard_reason\": \"CONTROLLER_STOP\", \"remaining\": [], \"ended_utc\": 1794541038.1273606, \"launch_seq\": 6, \"baseline_seq\": 5}\n",
+    "stderr": "",
+    "utc": "2026-11-13T03:37:18.142816+00:00"
+  },
+  "thresholds": {
+    "GPU_NVML_and_WDDM_GiB": 48,
+    "commit": "max(16GiB,20% current Commit Limit)",
+    "Windows_available_GiB": 6,
+    "WSL_available_GiB": 4,
+    "WSL_swap_MiB": 256,
+    "sample_collection_seconds": 2,
+    "Windows_freshness_seconds": 3
+  },
+  "NVML_is_not_total_UMA_pressure": true,
+  "smoke_injected_failures_not_real_service_resource_failures": true
+}

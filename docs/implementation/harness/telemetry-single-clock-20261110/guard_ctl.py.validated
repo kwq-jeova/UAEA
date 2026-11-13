@@ -1,0 +1,248 @@
+from pathlib import Path
+import os,sys,time,json,subprocess,signal,ctypes
+ROOT=Path("/home/wqkan_wsl/uaea-n1x/nemotron-bolt")
+O=Path(sys.argv.pop(1)).resolve()
+assert O.is_relative_to(ROOT/"records") and O.is_dir()
+def save(p,d):
+ t=p.with_suffix(".tmp");t.write_text(json.dumps(d));t.replace(p)
+def run_policy():
+ policy=json.loads((O/"run-policy.json").read_text())
+ mode=policy.get("mode")
+ seconds=policy.get("service_timeout_seconds")
+ if mode=="manual":
+  if seconds is not None or policy.get("sampler_timeout_seconds") is not None or policy.get("windows_fallback_seconds") is not None:
+   raise ValueError("Manual lifecycle must not contain an experiment deadline")
+ elif mode=="experiment":
+  if type(seconds) is not int or not 1<=seconds<=86400:
+   raise ValueError("Invalid finite experiment deadline")
+  if policy.get("sampler_timeout_seconds")!=seconds+300 or policy.get("windows_fallback_seconds")!=seconds+10:
+   raise ValueError("Inconsistent experiment monitor lifetimes")
+ else:raise ValueError("Explicit manual/experiment lifecycle required")
+ if policy.get("smoke_timeout_seconds")!=120:raise ValueError("Smoke deadline changed")
+ return policy
+
+def heartbeat():
+ # Keep the append-only evidence journal. Read a bounded tail instead of
+ # turning cumulative log size into a service lifetime limit.
+ with (O/"windows-heartbeats.jsonl").open("rb") as stream:
+  stream.seek(0,2);size=stream.tell();start=max(0,size-65536)
+  stream.seek(start);raw=stream.read(65536)
+ lines=raw.splitlines(keepends=True)
+ if start:lines=lines[1:]
+ complete=[line for line in lines if line.endswith(b"\n")]
+ if not complete:raise RuntimeError("no complete bounded heartbeat record")
+ return json.loads(complete[-1])
+def info(pid):
+ try:
+  z=Path(f"/proc/{pid}/stat").read_text().rsplit(")",1)[1].split()
+  return {"pid":pid,"state":z[0],"pgid":int(z[2]),"sid":int(z[3]),"starttime":int(z[19])}
+ except (OSError,ValueError):return None
+def tree(pgid):
+ return [d for p in Path("/proc").iterdir() if p.name.isdigit() and (d:=info(int(p.name))) and d["sid"]==pgid and d["pgid"]==pgid]
+def stop(m):
+ root=info(m["pgid"])
+ if root and root["starttime"]!=m["starttime"]:raise RuntimeError("PID identity mismatch; refusing")
+ signals=[]
+ for sig,grace in [(signal.SIGTERM,1),(signal.SIGKILL,3)]:
+  if not [x for x in tree(m["pgid"]) if x["state"]!="Z"]:break
+  os.killpg(m["pgid"],sig);signals.append(sig.name)
+  end=time.monotonic()+grace
+  while time.monotonic()<end and [x for x in tree(m["pgid"]) if x["state"]!="Z"]:time.sleep(.02)
+ return {"signals":signals,"remaining":tree(m["pgid"])}
+_gpu_sampler=None
+def metrics():
+ global _gpu_sampler
+ # Timestamp the oldest observation, not the end of a potentially delayed query.
+ utc=time.time()
+ if _gpu_sampler is None:
+  from nvml_metrics import NvmlMemory
+  _gpu_sampler=NvmlMemory()
+ mem={l.split(":")[0]:int(l.split()[1]) for l in Path("/proc/meminfo").read_text().splitlines() if ":" in l}
+ started=time.monotonic();gpu=_gpu_sampler.read();query_seconds=time.monotonic()-started
+ return {"utc":utc,"wsl_available":mem["MemAvailable"]*1024,"wsl_total":mem["MemTotal"]*1024,"wsl_cached":mem["Cached"]*1024,"wsl_anon":mem["AnonPages"]*1024,"wsl_mlocked":mem["Mlocked"]*1024,"wsl_unevictable":mem["Unevictable"]*1024,"swap_used":(mem["SwapTotal"]-mem["SwapFree"])*1024,"gpu_query_seconds":query_seconds,**gpu}
+def collect_challenge(request, state, sampler_run, sample_fn=metrics):
+ """Single pinned collection AFTER consuming this run-bound challenge. None means
+ already consumed unchanged request; no cache is returned or sampled again."""
+ import re,math
+ if not isinstance(request,dict) or request.get("protocol")!="single_clock_v1":
+  raise ValueError("REQUEST_PROTOCOL")
+ guard=request.get("guard_run_id");n=request.get("request_seq");nonce=request.get("nonce")
+ if not isinstance(guard,str) or not re.fullmatch(r"[0-9a-f-]{36}",guard):
+  raise ValueError("REQUEST_GUARD_RUN")
+ if request.get("sampler_run_id")!=sampler_run:raise ValueError("REQUEST_SAMPLER_RUN")
+ if type(n) is not int or n<1:raise ValueError("REQUEST_SEQUENCE")
+ if not isinstance(nonce,str) or not re.fullmatch(re.escape(guard+":"+str(n)+":")+r"[0-9a-f]{32}",nonce):
+  raise ValueError("REQUEST_NONCE")
+ identity=(guard,n,nonce)
+ if state.get("guard_run") not in (None,guard):raise ValueError("REQUEST_CROSS_RUN")
+ if n<state.get("last_request",0):raise ValueError("REQUEST_REVERSE")
+ if n==state.get("last_request",0):
+  if identity!=state.get("identity"):raise ValueError("REQUEST_REPLAY_CONFLICT")
+  return None
+ # Consumption precedes ALL observation calls; errors are terminal, not retried.
+ state.update(guard_run=guard,last_request=n,identity=identity)
+ state["sample_seq"]=state.get("sample_seq",0)+1
+ started=time.monotonic();start_utc=time.time()
+ state["attempt_start_monotonic"]=started
+ try:frame=sample_fn()
+ finally:state["attempt_seconds"]=time.monotonic()-started
+ if any(type(v) not in (int,float) or not math.isfinite(v) or v<0 for v in frame.values()):
+  raise ValueError("INVALID_METRIC")
+ elapsed=time.monotonic()-started
+ if elapsed>2:raise TimeoutError("Linux sample exceeded 2s query budget")
+ frame.update(protocol="single_clock_v1",valid=True,run_id=sampler_run,
+  guard_run_id=guard,request_seq=n,nonce=nonce,seq=state["sample_seq"],
+  sample_seconds=elapsed,sample_start_utc=start_utc,
+  sample_start_monotonic=started,request_read_monotonic=state.get("_request_read_monotonic",started),sample_end_utc=time.time(),gpu_source="nvml_persistent")
+ return frame
+
+def metric_watcher():
+ import uuid
+ d=O/"metrics-watch";d.mkdir(exist_ok=True)
+ run_id=str(uuid.uuid4());me=info(os.getpid())
+ save(d/"manifest.json",{"pgid":os.getpid(),"starttime":me["starttime"],
+  "run_id":run_id,"protocol":"single_clock_v1","phase":"WAIT_CHALLENGE"})
+ policy=run_policy();seconds=policy["sampler_timeout_seconds"]
+ deadline=time.monotonic()+seconds if seconds is not None else None
+ owner_last=time.monotonic();owner_identity=None;last_owner_check=-1.0
+ state={};request=None
+ def publish(value,event):
+  save(O/"linux-metrics.json",value)
+  with (O/"linux-publisher.jsonl").open("a") as journal:
+   journal.write(json.dumps({"event":event,"sample":value,"published_utc":time.time(),
+    "published_monotonic":time.monotonic()})+"\n")
+ while deadline is None or time.monotonic()<deadline:
+  if time.monotonic()-last_owner_check>=1:
+   last_owner_check=time.monotonic()
+   try:
+    owner=heartbeat();identity=(owner["run_id"],owner["seq"])
+    if owner.get("valid") and identity!=owner_identity:
+     owner_identity=identity;owner_last=time.monotonic()
+   except (OSError,ValueError,KeyError,RuntimeError):pass
+  if time.monotonic()-owner_last>10:
+   publish({"valid":False,"run_id":run_id,"seq":state.get("sample_seq",0)+1,
+    "utc":time.time(),"error":"SAMPLER_OWNER_GONE"},"failed");return
+  request_path=O/"sample-request.json"
+  if not request_path.exists():time.sleep(.02);continue
+  request=None
+  try:
+   request=json.loads(request_path.read_text())
+   state["_request_read_monotonic"]=time.monotonic()
+   frame=collect_challenge(request,state,run_id,sample_fn=metrics)
+   if frame is not None:publish(frame,"collected_after_challenge")
+  except Exception as ex:
+   publish({"protocol":"single_clock_v1","valid":False,"run_id":run_id,
+    "guard_run_id":request.get("guard_run_id") if isinstance(request,dict) else None,
+    "request_seq":request.get("request_seq") if isinstance(request,dict) else None,
+    "nonce":request.get("nonce") if isinstance(request,dict) else None,
+    "seq":state.get("sample_seq",0),"utc":time.time(),
+    "error":type(ex).__name__,"error_detail":str(ex)[:160],
+    "sample_seconds":state.get("attempt_seconds") if isinstance(request,dict) and state.get("identity")==tuple(request.get(k) for k in ("guard_run_id","request_seq","nonce")) else None},"failed")
+   return
+  time.sleep(.02)
+ publish({"valid":False,"run_id":run_id,"seq":state.get("sample_seq",0)+1,
+  "utc":time.time(),"error":"SAMPLER_TIMEOUT"},"failed")
+def main():
+ action=sys.argv[1]
+ if action=="metrics_watch":metric_watcher();return
+ if action=="metrics_start":
+  d=O/"metrics-watch";d.mkdir()
+  with (d/"sampler.log").open("w") as f:
+   proc=subprocess.Popen([sys.executable,"-B",__file__,str(O),"metrics_watch"],stdin=subprocess.DEVNULL,stdout=f,stderr=f,start_new_session=True)
+  end=time.monotonic()+5
+  while time.monotonic()<end:
+   if (d/"manifest.json").exists():
+    manifest=json.loads((d/"manifest.json").read_text())
+    if manifest.get("protocol")!="single_clock_v1":raise RuntimeError("Sampler protocol mismatch")
+    print(json.dumps(manifest));return
+   if proc.poll() is not None:raise RuntimeError("Linux sampler exited before readiness")
+   time.sleep(.02)
+  os.killpg(proc.pid,signal.SIGKILL)
+  raise TimeoutError("Linux sampler readiness")
+ if action=="metrics_stop":
+  d=O/"metrics-watch";m=json.loads((d/"manifest.json").read_text());result=stop(m)
+  end=time.monotonic()+3
+  while time.monotonic()<end and tree(m["pgid"]):time.sleep(.02)
+  result["remaining"]=tree(m["pgid"]);save(d/"cleanup.json",result);print(json.dumps(result));return
+ if action=="metrics":print(json.dumps(metrics()));return
+ case=sys.argv[2];assert case.replace("_","").isalnum()
+ d=O/case
+ if action=="start":
+  d.mkdir()
+  with (d/"supervisor.log").open("w") as f:
+   subprocess.Popen([sys.executable,"-B",__file__,str(O),"supervise",case],stdin=subprocess.DEVNULL,stdout=f,stderr=f,start_new_session=True)
+  for _ in range(100):
+   if (d/"manifest.json").exists():print((d/"manifest.json").read_text());return
+   time.sleep(.02)
+  raise TimeoutError("supervisor readiness")
+ if action=="supervise":
+  import math
+  ctypes.CDLL(None).prctl(36,1,0,0,0)
+  policy=run_policy()
+  baseline=heartbeat()
+  run_id=baseline["run_id"];seq=baseline["seq"];seen=time.monotonic()
+  m={"case":case,"supervisor":os.getpid(),"phase":"WAIT_NEW_SAMPLE","baseline_seq":seq,"run_id":run_id}
+  save(d/"manifest.json",m)
+  reason=None;p=None;end=time.monotonic()+8
+  def sensor():
+   nonlocal seq,seen
+   h=heartbeat()
+   if not h.get("valid") or h["run_id"]!=run_id:return "WINDOWS_SENSOR_INVALID"
+   if not isinstance(h["seq"],int) or h["seq"]<seq:return "WINDOWS_SEQUENCE_INVALID"
+   for name in ["commit_limit","commit_used","physical_available","measurement_seconds","gpu_shared_usage","gpu_dedicated_usage"]:
+    if not isinstance(h[name],(int,float)) or not math.isfinite(h[name]) or h[name]<0:return "WINDOWS_SENSOR_INVALID"
+   if h["measurement_seconds"]>3:return "WINDOWS_SENSOR_DELAY"
+   if h["seq"]>seq:
+    seq=h["seq"];seen=time.monotonic();save(O/"host-metrics.json",h)
+   age=time.monotonic()-seen
+   save(d/"heartbeat-status.json",{"seq":seq,"age_monotonic":age,"windows_utc":h["utc"],"linux_utc":time.time()})
+   if age>3:return "WINDOWS_SENSOR_STALE"
+   if h["commit_limit"]-h["commit_used"]<=max(16*2**30,.2*h["commit_limit"]):return "WINDOWS_COMMIT"
+   if h["physical_available"]<6*2**30:return "WINDOWS_PHYSICAL"
+   return None
+  while seq==baseline["seq"] and not reason:
+   try:reason=sensor()
+   except Exception as ex:reason="WINDOWS_SENSOR_MISSING:"+type(ex).__name__
+   if (d/"cancel.json").exists():reason="CONTROLLER_STOP"
+   if time.monotonic()>end:reason="START_HANDSHAKE_TIMEOUT"
+   if not reason:time.sleep(.02)
+  if not reason:
+   with (d/"stdout.log").open("w") as out,(d/"stderr.log").open("w") as err:
+    p=subprocess.Popen(["bash",str(ROOT/"launch/run-service.sh"),str(O),case],stdin=subprocess.DEVNULL,stdout=out,stderr=err,start_new_session=True)
+   m.update({"pgid":p.pid,"starttime":info(p.pid)["starttime"],"phase":"RUNNING","launch_seq":seq})
+   seconds=policy["service_timeout_seconds"] if case=="service" else policy["smoke_timeout_seconds"]
+   end=time.monotonic()+seconds if seconds is not None else None
+   m.update({"lifecycle_mode":policy["mode"],"timeout_seconds":seconds})
+   save(d/"manifest.json",m)
+   while p.poll() is None:
+    try:reason=sensor()
+    except Exception as ex:reason="WINDOWS_SENSOR_MISSING:"+type(ex).__name__
+    if (d/"cancel.json").exists():reason="CONTROLLER_STOP"
+    if end is not None and time.monotonic()>end and not reason:reason="CASE_TIMEOUT"
+    if reason:stop(m);break
+    time.sleep(.1)
+   if p.poll() is None:
+    try:p.wait(timeout=3)
+    except subprocess.TimeoutExpired:pass
+   if tree(m["pgid"]):stop(m)
+   for _ in range(100):
+    try:
+     while os.waitpid(-1,os.WNOHANG)[0]>0:pass
+    except ChildProcessError:break
+    time.sleep(.02)
+  save(d/"state.json",{"done":True,"exit_code":p.poll() if p else None,"guard_reason":reason,"remaining":tree(m["pgid"]) if p else [],"ended_utc":time.time(),"launch_seq":m.get("launch_seq"),"baseline_seq":baseline["seq"]});return
+ if action=="status":
+  print((d/"state.json").read_text() if (d/"state.json").exists() else json.dumps({"done":False}));return
+ if action=="stop":
+  save(d/"cancel.json",{"requested_utc":time.time()})
+  deadline=time.monotonic()+6
+  while time.monotonic()<deadline:
+   if (d/"state.json").exists():
+    state=json.loads((d/"state.json").read_text());print(json.dumps(state));return
+   time.sleep(.02)
+  m=json.loads((d/"manifest.json").read_text())
+  if "pgid" in m:result=stop(m)
+  else:result={"remaining":[],"launch":"not started"}
+  print(json.dumps(result));return
+ raise ValueError(action)
+if __name__=="__main__":main()

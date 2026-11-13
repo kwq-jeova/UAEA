@@ -83,3 +83,14 @@ V2保留原CLI的2秒采样预算：调用返回后若完整采样超过2秒，�
 V1源码/pins保存在monitor-executed-v1，最终源码/pins及diff另外锁定。
 任何再次失效仍停止，不因短时PASS放宽阈值或自动重启。
 Memory维持Research Reserved。无Phase-1/Goal/Memory采纳或权限变更，不Commit/Push。
+
+
+### 后续V3诊断与时钟门禁复现（不覆盖前述执行范围）
+
+[2026-11-10连续复测](../../research/finance30-clock-gate-20261110.md)补充拒绝前记录，
+不放宽阈值。新批次完成20轮后捕获LINUX_CLOCK_FUTURE，
+sample_age=-1.0426726秒，NVML查询0.282ms、完整采样0.463ms；
+之后只读括号测量也发现两侧UTC不一致。不得追认无拒绝样本的旧批次具体分支。
+三分钟无模型门禁和CPU注入通过不等于长期可靠性通过。
+当前跨OS UTC拒绝规则仍启用，改变新鲜度证明方式须先评审；未部署替代门禁。
+Goal Shadow长对照未执行，认知价值UNKNOWN。原失败、before/after及pins均保留。

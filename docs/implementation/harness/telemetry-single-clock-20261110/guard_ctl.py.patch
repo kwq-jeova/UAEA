@@ -1,0 +1,145 @@
+--- guard_ctl.py.before
++++ guard_ctl.py.candidate
+@@ -60,51 +60,88 @@
+  mem={l.split(":")[0]:int(l.split()[1]) for l in Path("/proc/meminfo").read_text().splitlines() if ":" in l}
+  started=time.monotonic();gpu=_gpu_sampler.read();query_seconds=time.monotonic()-started
+  return {"utc":utc,"wsl_available":mem["MemAvailable"]*1024,"wsl_total":mem["MemTotal"]*1024,"wsl_cached":mem["Cached"]*1024,"wsl_anon":mem["AnonPages"]*1024,"wsl_mlocked":mem["Mlocked"]*1024,"wsl_unevictable":mem["Unevictable"]*1024,"swap_used":(mem["SwapTotal"]-mem["SwapFree"])*1024,"gpu_query_seconds":query_seconds,**gpu}
++def collect_challenge(request, state, sampler_run, sample_fn=metrics):
++ """Single pinned collection AFTER consuming this run-bound challenge. None means
++ already consumed unchanged request; no cache is returned or sampled again."""
++ import re,math
++ if not isinstance(request,dict) or request.get("protocol")!="single_clock_v1":
++  raise ValueError("REQUEST_PROTOCOL")
++ guard=request.get("guard_run_id");n=request.get("request_seq");nonce=request.get("nonce")
++ if not isinstance(guard,str) or not re.fullmatch(r"[0-9a-f-]{36}",guard):
++  raise ValueError("REQUEST_GUARD_RUN")
++ if request.get("sampler_run_id")!=sampler_run:raise ValueError("REQUEST_SAMPLER_RUN")
++ if type(n) is not int or n<1:raise ValueError("REQUEST_SEQUENCE")
++ if not isinstance(nonce,str) or not re.fullmatch(re.escape(guard+":"+str(n)+":")+r"[0-9a-f]{32}",nonce):
++  raise ValueError("REQUEST_NONCE")
++ identity=(guard,n,nonce)
++ if state.get("guard_run") not in (None,guard):raise ValueError("REQUEST_CROSS_RUN")
++ if n<state.get("last_request",0):raise ValueError("REQUEST_REVERSE")
++ if n==state.get("last_request",0):
++  if identity!=state.get("identity"):raise ValueError("REQUEST_REPLAY_CONFLICT")
++  return None
++ # Consumption precedes ALL observation calls; errors are terminal, not retried.
++ state.update(guard_run=guard,last_request=n,identity=identity)
++ state["sample_seq"]=state.get("sample_seq",0)+1
++ started=time.monotonic();start_utc=time.time()
++ state["attempt_start_monotonic"]=started
++ try:frame=sample_fn()
++ finally:state["attempt_seconds"]=time.monotonic()-started
++ if any(type(v) not in (int,float) or not math.isfinite(v) or v<0 for v in frame.values()):
++  raise ValueError("INVALID_METRIC")
++ elapsed=time.monotonic()-started
++ if elapsed>2:raise TimeoutError("Linux sample exceeded 2s query budget")
++ frame.update(protocol="single_clock_v1",valid=True,run_id=sampler_run,
++  guard_run_id=guard,request_seq=n,nonce=nonce,seq=state["sample_seq"],
++  sample_seconds=elapsed,sample_start_utc=start_utc,
++  sample_start_monotonic=started,request_read_monotonic=state.get("_request_read_monotonic",started),sample_end_utc=time.time(),gpu_source="nvml_persistent")
++ return frame
++
+ def metric_watcher():
+- import uuid,math
++ import uuid
+  d=O/"metrics-watch";d.mkdir(exist_ok=True)
+  run_id=str(uuid.uuid4());me=info(os.getpid())
+- save(d/"manifest.json",{"pgid":os.getpid(),"starttime":me["starttime"],"run_id":run_id})
+- policy=run_policy()
+- seconds=policy["sampler_timeout_seconds"]
+- seq=0;deadline=time.monotonic()+seconds if seconds is not None else None
+- owner_last=time.monotonic();owner_identity=None
++ save(d/"manifest.json",{"pgid":os.getpid(),"starttime":me["starttime"],
++  "run_id":run_id,"protocol":"single_clock_v1","phase":"WAIT_CHALLENGE"})
++ policy=run_policy();seconds=policy["sampler_timeout_seconds"]
++ deadline=time.monotonic()+seconds if seconds is not None else None
++ owner_last=time.monotonic();owner_identity=None;last_owner_check=-1.0
++ state={};request=None
++ def publish(value,event):
++  save(O/"linux-metrics.json",value)
++  with (O/"linux-publisher.jsonl").open("a") as journal:
++   journal.write(json.dumps({"event":event,"sample":value,"published_utc":time.time(),
++    "published_monotonic":time.monotonic()})+"\n")
+  while deadline is None or time.monotonic()<deadline:
++  if time.monotonic()-last_owner_check>=1:
++   last_owner_check=time.monotonic()
++   try:
++    owner=heartbeat();identity=(owner["run_id"],owner["seq"])
++    if owner.get("valid") and identity!=owner_identity:
++     owner_identity=identity;owner_last=time.monotonic()
++   except (OSError,ValueError,KeyError,RuntimeError):pass
++  if time.monotonic()-owner_last>10:
++   publish({"valid":False,"run_id":run_id,"seq":state.get("sample_seq",0)+1,
++    "utc":time.time(),"error":"SAMPLER_OWNER_GONE"},"failed");return
++  request_path=O/"sample-request.json"
++  if not request_path.exists():time.sleep(.02);continue
++  request=None
+   try:
+-   owner=heartbeat();identity=(owner["run_id"],owner["seq"])
+-   if owner.get("valid") and identity!=owner_identity:
+-    owner_identity=identity;owner_last=time.monotonic()
+-  except (OSError,ValueError,KeyError,RuntimeError):pass
+-  # Collector orphan cleanup only. The workload supervisor still uses its
+-  # unchanged 3-second safety freshness gate.
+-  if time.monotonic()-owner_last>10:
+-   save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq+1,"utc":time.time(),"error":"SAMPLER_OWNER_GONE"})
++   request=json.loads(request_path.read_text())
++   state["_request_read_monotonic"]=time.monotonic()
++   frame=collect_challenge(request,state,run_id,sample_fn=metrics)
++   if frame is not None:publish(frame,"collected_after_challenge")
++  except Exception as ex:
++   publish({"protocol":"single_clock_v1","valid":False,"run_id":run_id,
++    "guard_run_id":request.get("guard_run_id") if isinstance(request,dict) else None,
++    "request_seq":request.get("request_seq") if isinstance(request,dict) else None,
++    "nonce":request.get("nonce") if isinstance(request,dict) else None,
++    "seq":state.get("sample_seq",0),"utc":time.time(),
++    "error":type(ex).__name__,"error_detail":str(ex)[:160],
++    "sample_seconds":state.get("attempt_seconds") if isinstance(request,dict) and state.get("identity")==tuple(request.get(k) for k in ("guard_run_id","request_seq","nonce")) else None},"failed")
+    return
+-  started=time.monotonic();start_utc=time.time();seq+=1
+-  frame=None
+-  try:
+-   frame=metrics()
+-   if any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for v in frame.values()):
+-    raise ValueError("invalid Linux metric")
+-   elapsed=time.monotonic()-started
+-   # Preserve the old 2s sample budget without pretending to cancel a C call.
+-   # A blocked call is covered by the independent unchanged 3s freshness guard.
+-   # A late returned call must publish invalid and exit, never overwrite it with
+-   # a subsequent fast frame before the external reader can see the failure.
+-   if elapsed>2:raise TimeoutError("Linux sample exceeded 2s query budget")
+-   frame.update({"valid":True,"run_id":run_id,"seq":seq,"sample_seconds":elapsed,"sample_start_utc":start_utc,"sample_start_monotonic":started,"sample_end_utc":time.time(),"gpu_source":"nvml_persistent"})
+-   save(O/"linux-metrics.json",frame)
+-   with (O/"linux-publisher.jsonl").open("a") as journal:
+-    journal.write(json.dumps({"event":"published","run_id":run_id,"seq":seq,"sample":frame,"published_utc":time.time(),"published_monotonic":time.monotonic()})+"\n")
+-  except Exception as ex:
+-   failed={"valid":False,"run_id":run_id,"seq":seq,"utc":time.time(),"error":type(ex).__name__,"error_detail":str(ex)[:160],
+-    "sample_start_utc":start_utc,"sample_start_monotonic":started,"sample_seconds":time.monotonic()-started,"partial_sample":frame}
+-   save(O/"linux-metrics.json",failed)
+-   with (O/"linux-publisher.jsonl").open("a") as journal:
+-    journal.write(json.dumps({"event":"failed","sample":failed,"published_utc":time.time(),"published_monotonic":time.monotonic()})+"\n")
+-   return
+-  time.sleep(max(.02,1-(time.monotonic()-started)))
+- save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq+1,"utc":time.time(),"error":"SAMPLER_TIMEOUT"})
++  time.sleep(.02)
++ publish({"valid":False,"run_id":run_id,"seq":state.get("sample_seq",0)+1,
++  "utc":time.time(),"error":"SAMPLER_TIMEOUT"},"failed")
+ def main():
+  action=sys.argv[1]
+  if action=="metrics_watch":metric_watcher();return
+@@ -114,10 +151,10 @@
+    proc=subprocess.Popen([sys.executable,"-B",__file__,str(O),"metrics_watch"],stdin=subprocess.DEVNULL,stdout=f,stderr=f,start_new_session=True)
+   end=time.monotonic()+5
+   while time.monotonic()<end:
+-   if (d/"manifest.json").exists() and (O/"linux-metrics.json").exists():
+-    frame=json.loads((O/"linux-metrics.json").read_text())
+-    if not frame.get("valid"):raise RuntimeError("Linux sampler invalid at startup")
+-    print((d/"manifest.json").read_text());return
++   if (d/"manifest.json").exists():
++    manifest=json.loads((d/"manifest.json").read_text())
++    if manifest.get("protocol")!="single_clock_v1":raise RuntimeError("Sampler protocol mismatch")
++    print(json.dumps(manifest));return
+    if proc.poll() is not None:raise RuntimeError("Linux sampler exited before readiness")
+    time.sleep(.02)
+   os.killpg(proc.pid,signal.SIGKILL)

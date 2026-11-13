@@ -1,0 +1,986 @@
+{
+  "schema": "uaea.independent_audit_checks.v1",
+  "audit_UTC": "2026-11-13T03:48:57.481382+00:00",
+  "auditor": "independent subagent audit_goal_ablation",
+  "source_evidence_read_only": true,
+  "no_model_or_GPU_started_by_auditor": true,
+  "no_SQLite_opened_by_auditor": true,
+  "scope": "six pre-registered independently restored Threads; current structured view increment over identical selected historical observations, not all Goal cognition",
+  "historical_entry_checks": [
+    {
+      "index": 0,
+      "role": "historical_user",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 31,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 1,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 35,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 2,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 36,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 3,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 42,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 4,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 43,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 5,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 46,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 6,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 47,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 7,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 51,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 8,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 54,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 9,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 60,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 10,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 61,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 11,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 66,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 12,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl",
+      "source_line": 67,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 13,
+      "role": "historical_user",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-view-increment-20261113T005334Z/checkpoint/app-server-events.jsonl",
+      "source_line": 14,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 14,
+      "role": "historical_model_tool_call",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-view-increment-20261113T005334Z/checkpoint/app-server-events.jsonl",
+      "source_line": 16,
+      "exact_native_content_and_thread_turn": true
+    },
+    {
+      "index": 15,
+      "role": "historical_Host_tool_receipt",
+      "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-view-increment-20261113T005334Z/checkpoint/app-server-events.jsonl",
+      "source_line": 17,
+      "exact_native_content_and_thread_turn": true
+    }
+  ],
+  "frozen_source_checks": [
+    {
+      "relative_path": "ledger.md",
+      "sha256": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+      "original_frozen_current_fixture_equal": true
+    },
+    {
+      "relative_path": "README.md",
+      "sha256": "adb802c9eca5645cbbe9c6f92cd40e4073e1d71f152542735ae6e131f4ce6fd4",
+      "original_frozen_current_fixture_equal": true
+    },
+    {
+      "relative_path": "sources/official-aapl.md",
+      "sha256": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+      "original_frozen_current_fixture_equal": true
+    },
+    {
+      "relative_path": "sources/official-intc.md",
+      "sha256": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+      "original_frozen_current_fixture_equal": true
+    },
+    {
+      "relative_path": "sources/official-googl.md",
+      "sha256": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+      "original_frozen_current_fixture_equal": true
+    }
+  ],
+  "checkpoint_bytes": 44867,
+  "checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+  "six_distinct_new_Threads": true,
+  "live_pair_first_request_checks": [
+    {
+      "pair": [
+        "f1",
+        "f2"
+      ],
+      "normalized_first_request_equal": true,
+      "normalized_sha256": "d15ecf9bd6e0463c2a2ce63b049f527c55c2362be2c7cbaa7de2e4c6f96d4a65",
+      "audit_only_removal": [
+        "ON current Goal view"
+      ],
+      "audit_only_normalizations": [
+        "client_metadata",
+        "message IDs",
+        "fresh Thread ID",
+        "fresh registered Input ID",
+        "fresh Workflow/Task ID",
+        "fresh effective_state ID",
+        "Host observed UTC",
+        "neutral per-case Native home path"
+      ],
+      "actual_wire_not_rewritten": true
+    },
+    {
+      "pair": [
+        "f4",
+        "f5"
+      ],
+      "normalized_first_request_equal": true,
+      "normalized_sha256": "d15ecf9bd6e0463c2a2ce63b049f527c55c2362be2c7cbaa7de2e4c6f96d4a65",
+      "audit_only_removal": [
+        "ON current Goal view"
+      ],
+      "audit_only_normalizations": [
+        "client_metadata",
+        "message IDs",
+        "fresh Thread ID",
+        "fresh registered Input ID",
+        "fresh Workflow/Task ID",
+        "fresh effective_state ID",
+        "Host observed UTC",
+        "neutral per-case Native home path"
+      ],
+      "actual_wire_not_rewritten": true
+    }
+  ],
+  "cases": {
+    "f0": {
+      "condition": {
+        "id": "f0",
+        "scenario": "A",
+        "view": "ON"
+      },
+      "result": {
+        "id": "f0",
+        "scenario": "A",
+        "view": "ON",
+        "CPU": false,
+        "completed_turns": 1,
+        "error": null,
+        "seconds": 116.19671758699997,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2ec-c283-7c43-921b-7462ee512ffa",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 1,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "fecdb624-3264-43ff-b31f-70ceffff200c",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 24773,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 296,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 25069
+          },
+          "identical_upstream_downstream_sse_sha256": "a1a2137d4757ae20efaf384808d0e0690b0854689dc30ebeaa743c5801aa86c9",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "49d505a7-2268-4c90-962f-9912e37e3e0d",
+          "sequence": 2,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 25417,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 363,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 25780
+          },
+          "identical_upstream_downstream_sse_sha256": "051cba4758cf0b9ba3306773c83366e93934bc5c5a6fb1f461595bff153362e8",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [],
+      "Goal_call_checks": [
+        {
+          "call_id": "chatcmpl-tool-98f84c205dd46177",
+          "operation": "revise",
+          "candidate_id": "goal-candidate:76fe2c341f981c349d539f56",
+          "parent": "goal-candidate:ff2a010b338474f6ea3f66f5",
+          "committed": true,
+          "native_record_source_parent_receipt_bound": true,
+          "semantic_truth_proven_by_binding": false
+        }
+      ],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    },
+    "f1": {
+      "condition": {
+        "id": "f1",
+        "scenario": "C",
+        "pair": 1,
+        "view": "ON"
+      },
+      "result": {
+        "id": "f1",
+        "scenario": "C",
+        "view": "ON",
+        "CPU": false,
+        "completed_turns": 1,
+        "error": null,
+        "seconds": 167.45150681500002,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2ee-87b6-7ab0-a0ff-7d0a538bd725",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 0,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "7f1169b7-b1c3-4ee6-a977-9c4a731e32b5",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 24568,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 1423,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 25991
+          },
+          "identical_upstream_downstream_sse_sha256": "a4fd2512109ad5b1e28c5cb695cc4d4c81ef31fb5b54c574377a587a0d048060",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [],
+      "Goal_call_checks": [],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    },
+    "f2": {
+      "condition": {
+        "id": "f2",
+        "scenario": "C",
+        "pair": 1,
+        "view": "OFF"
+      },
+      "result": {
+        "id": "f2",
+        "scenario": "C",
+        "view": "OFF",
+        "CPU": false,
+        "completed_turns": 0,
+        "error": "RuntimeError: Native terminal not completed",
+        "seconds": 241.50336567,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2f1-17cd-7472-a988-1ed4bf0965c6",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 1,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "100d98b5-217e-4acf-95c1-97d070162f5a",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 23079,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 340,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 23419
+          },
+          "identical_upstream_downstream_sse_sha256": "89138e943c3f35ec11c1c1c2298c89b418ad44728838064bde918fb178bd12df",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "cf52dbf9-2e9e-49f0-9d27-1d0f5140101e",
+          "sequence": 2,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 29358,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 274,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 29632
+          },
+          "identical_upstream_downstream_sse_sha256": "1ddb64a92c345b2afe356b4eea046aa2e8cedd3d67f27dafb655826ef157e1d7",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "86233b4c-98f5-4070-88f6-53d66ec90dd6",
+          "sequence": 3,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 29432,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 252,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 29684
+          },
+          "identical_upstream_downstream_sse_sha256": "c6b9d65934eb0ddff1a58d38bdd06c2cdf1c5ffd18200caa2f9447cb4211b0c9",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "4b8de925-3e6b-4aac-afae-d4c93a36885b",
+          "sequence": 4,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 30088,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 252,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 30340
+          },
+          "identical_upstream_downstream_sse_sha256": "bf2bb0e0307074f96a3f09621e5a409ab6aeed08f9dc88ea3a5c5a715878d2b4",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [
+        {
+          "call_id": "chatcmpl-tool-8bafc4de9fd66cca",
+          "thread_id": "01a1d2f1-17cd-7472-a988-1ed4bf0965c6",
+          "turn_id": "01a1d2f1-17f7-7593-98a7-61c47db32481",
+          "observation_id": "execution:d18467d51e1c089cedfe8855120ef691a48e3e276532c5207b3801316be54842",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/ledger.md",
+          "source_sha256": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+          "content_sha256": "c273639c5eb324168dbd7900db2562ac71fe4c93fa3458104ec65a573f406fcd",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-81903b17092d9013",
+          "thread_id": "01a1d2f1-17cd-7472-a988-1ed4bf0965c6",
+          "turn_id": "01a1d2f1-17f7-7593-98a7-61c47db32481",
+          "observation_id": "execution:3cd0c72ca6216cd651961f32ff68831a7fa2f8bfe339a1c621984bee29e7ca34",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-intc.md",
+          "source_sha256": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+          "content_sha256": "795a7fd1c2ed5b05901c422522d366e6bfb4a301bb90778ded68d502d6a905a4",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-a39ca042880a249f",
+          "thread_id": "01a1d2f1-17cd-7472-a988-1ed4bf0965c6",
+          "turn_id": "01a1d2f1-17f7-7593-98a7-61c47db32481",
+          "observation_id": "execution:d10b8a6aa36087d74a77789273eb06e35861550d8f85cf370914f29338940912",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-aapl.md",
+          "source_sha256": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+          "content_sha256": "33c79cd90687f1e86ff14e212f1441b8b74e1e52dcd30cf886e22bdb251cdf40",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-9ae2a318f96e7c1c",
+          "thread_id": "01a1d2f1-17cd-7472-a988-1ed4bf0965c6",
+          "turn_id": "01a1d2f1-17f7-7593-98a7-61c47db32481",
+          "observation_id": "execution:97f220ccffc8d00784682bde002ce2b87ed9e3881cdd5962c4c0571177df14ec",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-googl.md",
+          "source_sha256": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+          "content_sha256": "e441a961eed0e06b78fb3a3a93533ba7a4b6cd4567d9a806ad99f1448be786c8",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        }
+      ],
+      "Goal_call_checks": [
+        {
+          "call_id": "chatcmpl-tool-aac5e00c9a88d667",
+          "operation": "form",
+          "candidate_id": "goal-candidate:e9984f150574d66b2b7ba992",
+          "parent": null,
+          "committed": true,
+          "native_record_source_parent_receipt_bound": true,
+          "semantic_truth_proven_by_binding": false
+        },
+        {
+          "call_id": "chatcmpl-tool-b05fcbda9c5b6b4a",
+          "operation": "form",
+          "committed": false,
+          "reason": "form needs new hypothesis and null candidate_id",
+          "native_and_rejection_bound": true
+        },
+        {
+          "call_id": "chatcmpl-tool-b7f03cd5d4910d08",
+          "operation": "form",
+          "committed": false,
+          "reason": "form needs new hypothesis and null candidate_id",
+          "native_and_rejection_bound": true
+        }
+      ],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    },
+    "f3": {
+      "condition": {
+        "id": "f3",
+        "scenario": "B",
+        "view": "ON"
+      },
+      "result": {
+        "id": "f3",
+        "scenario": "B",
+        "view": "ON",
+        "CPU": false,
+        "completed_turns": 1,
+        "error": null,
+        "seconds": 65.79622776500003,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2f4-c858-7652-a66c-5ea4d658a27f",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 0,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "f2d280e7-2a0c-4894-8a41-26e488d27d6f",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 24421,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 409,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 24830
+          },
+          "identical_upstream_downstream_sse_sha256": "21dc77846698baa693532bde7b7239ebcc1253dadebe9e4fc2aa3903123a4e2c",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [],
+      "Goal_call_checks": [],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    },
+    "f4": {
+      "condition": {
+        "id": "f4",
+        "scenario": "C",
+        "pair": 2,
+        "view": "OFF"
+      },
+      "result": {
+        "id": "f4",
+        "scenario": "C",
+        "view": "OFF",
+        "CPU": false,
+        "completed_turns": 1,
+        "error": null,
+        "seconds": 164.78307367999992,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 0,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "5c585b36-3f96-4afe-b239-db59312ae795",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 23103,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 455,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 23558
+          },
+          "identical_upstream_downstream_sse_sha256": "469a021953c6513ba79dff7fe04bac7197a1fa3462341ba6f3f6231ce047b5df",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "9ba34661-3de9-4e0e-b5ea-bb16f67216a9",
+          "sequence": 2,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 30634,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 664,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 31298
+          },
+          "identical_upstream_downstream_sse_sha256": "54cd5300f78b457a7bee5bf28348ecd85d555ac8bc8adfa76cf943ff4dcfa007",
+          "current_Goal_view_count": 0,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [
+        {
+          "call_id": "chatcmpl-tool-95295c6559f722a3",
+          "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+          "turn_id": "01a1d2f5-ca4d-7dc3-9583-a1245044c64e",
+          "observation_id": "execution:640c194fe104652d9789a255e94b7faee17caba9a70e4b60e001d0265d2acf4b",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/ledger.md",
+          "source_sha256": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+          "content_sha256": "c273639c5eb324168dbd7900db2562ac71fe4c93fa3458104ec65a573f406fcd",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-b089172a670ea88c",
+          "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+          "turn_id": "01a1d2f5-ca4d-7dc3-9583-a1245044c64e",
+          "observation_id": "execution:f56389fecdeeced6cb643f0d811ef2eeed694fc289492f6d8da3271cd41d493d",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-intc.md",
+          "source_sha256": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+          "content_sha256": "795a7fd1c2ed5b05901c422522d366e6bfb4a301bb90778ded68d502d6a905a4",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-95ce7b05e583bf69",
+          "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+          "turn_id": "01a1d2f5-ca4d-7dc3-9583-a1245044c64e",
+          "observation_id": "execution:598d94db303377d6012058b9e1166d088caec358994844c086041ca324280142",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-aapl.md",
+          "source_sha256": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+          "content_sha256": "33c79cd90687f1e86ff14e212f1441b8b74e1e52dcd30cf886e22bdb251cdf40",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-bfe2e615a75bd9bf",
+          "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+          "turn_id": "01a1d2f5-ca4d-7dc3-9583-a1245044c64e",
+          "observation_id": "execution:5fd3460e522d44b4111c17e183760c37bd4746d5d5441ab11a602bab640c2d42",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-googl.md",
+          "source_sha256": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+          "content_sha256": "e441a961eed0e06b78fb3a3a93533ba7a4b6cd4567d9a806ad99f1448be786c8",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-af77f5c0c426b198",
+          "thread_id": "01a1d2f5-ca25-7da2-a001-1f8e4dcf5e52",
+          "turn_id": "01a1d2f5-ca4d-7dc3-9583-a1245044c64e",
+          "observation_id": "execution:8caf46efe9509090873d9e8e0b623e6038ee15766d4fc25265409f319c78e301",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/README.md",
+          "source_sha256": "adb802c9eca5645cbbe9c6f92cd40e4073e1d71f152542735ae6e131f4ce6fd4",
+          "content_sha256": "db762366c633f2f0bb4fdf43a3ec0852b37cea79df81d6ee3246771337bbb309",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        }
+      ],
+      "Goal_call_checks": [],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    },
+    "f5": {
+      "condition": {
+        "id": "f5",
+        "scenario": "C",
+        "pair": 2,
+        "view": "ON"
+      },
+      "result": {
+        "id": "f5",
+        "scenario": "C",
+        "view": "ON",
+        "CPU": false,
+        "completed_turns": 1,
+        "error": null,
+        "seconds": 186.651751074,
+        "no_operator_retry": true
+      },
+      "thread_id": "01a1d2f8-5010-7522-accd-d50608c70d1d",
+      "same_checkpoint_sha256": "a8d1973aad1aae9bb15af7d11ebbe8ecb52ad5635a898b32d8da0c75763fdd7f",
+      "initial_journal_prefix_unchanged": true,
+      "all_original_versions_still_present": true,
+      "new_version_count": 0,
+      "active_goal": null,
+      "requests": [
+        {
+          "request_id": "db5f10e8-a55e-41b4-b7aa-fd3a417d3834",
+          "sequence": 1,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 24579,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 340,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 24919
+          },
+          "identical_upstream_downstream_sse_sha256": "1df8e79cb37aa1dbb4880d6c0979479d50bbbc1f38413efa46f16c468bab4314",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        },
+        {
+          "request_id": "35f7de44-e6c9-43fc-893d-28fd21503a84",
+          "sequence": 2,
+          "http_framing_complete": true,
+          "response_complete": true,
+          "terminal": "response.completed",
+          "usage": {
+            "input_tokens": 30895,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "input_tokens_per_turn": [],
+              "cached_tokens_per_turn": []
+            },
+            "output_tokens": 995,
+            "output_tokens_details": {
+              "reasoning_tokens": 0,
+              "tool_output_tokens": 0,
+              "output_tokens_per_turn": [],
+              "tool_output_tokens_per_turn": []
+            },
+            "total_tokens": 31890
+          },
+          "identical_upstream_downstream_sse_sha256": "5d51ed7ba34e98eb3e0a815ebd449b94e822cad35f105c84fcbf980b4de23eb9",
+          "current_Goal_view_count": 1,
+          "exact_same_relevant_history": true,
+          "tool_schema_unchanged": true
+        }
+      ],
+      "actual_read_checks": [
+        {
+          "call_id": "chatcmpl-tool-9123eba3e4d47890",
+          "thread_id": "01a1d2f8-5010-7522-accd-d50608c70d1d",
+          "turn_id": "01a1d2f8-5037-7883-a71b-90219a34a6c7",
+          "observation_id": "execution:bc948fd280a8cb01a17c1d8ae7b7ddb9a319a1da9d42dc33335d8817063a24d2",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/ledger.md",
+          "source_sha256": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+          "content_sha256": "c273639c5eb324168dbd7900db2562ac71fe4c93fa3458104ec65a573f406fcd",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-a35147d785f9f7e2",
+          "thread_id": "01a1d2f8-5010-7522-accd-d50608c70d1d",
+          "turn_id": "01a1d2f8-5037-7883-a71b-90219a34a6c7",
+          "observation_id": "execution:a83c5d2dc0852d8e5c7304ff09cb4759696341e03354bad383603ee3b241ec5f",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-intc.md",
+          "source_sha256": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+          "content_sha256": "795a7fd1c2ed5b05901c422522d366e6bfb4a301bb90778ded68d502d6a905a4",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-898ff5ac361d09f4",
+          "thread_id": "01a1d2f8-5010-7522-accd-d50608c70d1d",
+          "turn_id": "01a1d2f8-5037-7883-a71b-90219a34a6c7",
+          "observation_id": "execution:e968b4de0ed73103cd1678e3a4c3536154daba078533c628573833cac20aad88",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-aapl.md",
+          "source_sha256": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+          "content_sha256": "33c79cd90687f1e86ff14e212f1441b8b74e1e52dcd30cf886e22bdb251cdf40",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        },
+        {
+          "call_id": "chatcmpl-tool-a1bc6566992058c4",
+          "thread_id": "01a1d2f8-5010-7522-accd-d50608c70d1d",
+          "turn_id": "01a1d2f8-5037-7883-a71b-90219a34a6c7",
+          "observation_id": "execution:c751c24457e149da2cb11ffa0141abb07be68956ae4ce3c115ee90a068345bc7",
+          "source_path": "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-googl.md",
+          "source_sha256": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+          "content_sha256": "e441a961eed0e06b78fb3a3a93533ba7a4b6cd4567d9a806ad99f1448be786c8",
+          "identity_arguments_receipt_body_file_bound": true,
+          "independent_new_external_information": false
+        }
+      ],
+      "Goal_call_checks": [],
+      "native_cleanup_group_absent": true,
+      "compaction_count": 0
+    }
+  },
+  "total_complete_HTTP_and_model_responses": 12,
+  "total_actual_source_reads_identity_bound": 13,
+  "source_and_safety_pins": [
+    {
+      "name": "source-lock.json",
+      "checked": 136,
+      "changed": []
+    },
+    {
+      "name": "original-pins.json",
+      "checked": 15,
+      "changed": []
+    }
+  ],
+  "read_originals_snapshot_sha256": {
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/app-server-events.jsonl": "a140369f8299d9d8c579dd49c70fda1e512228f133947057c2d17a7a9792af9f",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-view-increment-20261113T005334Z/checkpoint/app-server-events.jsonl": "e0dda5d1064b6f03214d9cfc8ead5356bff766965cfe062efaf5350ab7c6ceab",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/adapter/sandbox/ledger.md": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/frozen-sources/ledger.md": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/ledger.md": "465bf9271122e4125eef573c524e3ba98886a3d651fc22017735ff594512c76c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/adapter/sandbox/README.md": "adb802c9eca5645cbbe9c6f92cd40e4073e1d71f152542735ae6e131f4ce6fd4",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/frozen-sources/README.md": "adb802c9eca5645cbbe9c6f92cd40e4073e1d71f152542735ae6e131f4ce6fd4",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/README.md": "adb802c9eca5645cbbe9c6f92cd40e4073e1d71f152542735ae6e131f4ce6fd4",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/adapter/sandbox/sources/official-aapl.md": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/frozen-sources/sources/official-aapl.md": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-aapl.md": "cb57de86e5624a0f48b2bae88790e70ece1d9c6643f3e0b5d2bee315198aac95",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/adapter/sandbox/sources/official-intc.md": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/frozen-sources/sources/official-intc.md": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-intc.md": "a5edb18dacba1e5b4c27647dca2711ea123cc040968d502d7d1d4e735ee0c40d",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-intent-lifecycle-20261112T031832Z/B/adapter/sandbox/sources/official-googl.md": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/frozen-sources/sources/official-googl.md": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/study-files/sandbox/sources/official-googl.md": "746fa5b2bf751980d522aba31d7156f58803166f516b4322feac4846aebac11c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/profile/goal-journal.jsonl": "e00a36df22fe85e0170f1d6c823a79095fd6ce804cec33111089b91519264afa",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/app-server-events.jsonl": "2589ccf72e50d51e669e84b23524d3f76b6eb2e5d7b77d95bf3c195efd40d52c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/model-http-audit.jsonl": "acfb2bb1e7591e73e363e2e46410bb54136b415913f58c6fe0fd1b52859704bf",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/streams/fecdb624-3264-43ff-b31f-70ceffff200c/upstream.sse": "a1a2137d4757ae20efaf384808d0e0690b0854689dc30ebeaa743c5801aa86c9",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/streams/fecdb624-3264-43ff-b31f-70ceffff200c/downstream.sse": "a1a2137d4757ae20efaf384808d0e0690b0854689dc30ebeaa743c5801aa86c9",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/streams/49d505a7-2268-4c90-962f-9912e37e3e0d/upstream.sse": "051cba4758cf0b9ba3306773c83366e93934bc5c5a6fb1f461595bff153362e8",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f0/streams/49d505a7-2268-4c90-962f-9912e37e3e0d/downstream.sse": "051cba4758cf0b9ba3306773c83366e93934bc5c5a6fb1f461595bff153362e8",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f1/profile/goal-journal.jsonl": "c0508ab24c456eeb983fb64fc8bb80c8cab0974ba2ab1c85b97db7c647ee4d04",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f1/app-server-events.jsonl": "fe2159f15e5860501464be201fa7e20c6dff3aeea92aafad31eb96a54b4a66cf",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f1/model-http-audit.jsonl": "01e5a70b8d828276313a1fdfb45765536d4fc8f84becce4fb899ae92abe0b712",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f1/streams/7f1169b7-b1c3-4ee6-a977-9c4a731e32b5/upstream.sse": "a4fd2512109ad5b1e28c5cb695cc4d4c81ef31fb5b54c574377a587a0d048060",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f1/streams/7f1169b7-b1c3-4ee6-a977-9c4a731e32b5/downstream.sse": "a4fd2512109ad5b1e28c5cb695cc4d4c81ef31fb5b54c574377a587a0d048060",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/profile/goal-journal.jsonl": "6b98378bfb283a03c2f0ce027cf13decd19e39a19860c8152f4cd2e3bef514cb",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/app-server-events.jsonl": "7a639c4dcc0a84d9d3fbd39be914b715285054f444bc2bbf3c26bc3c0b05b028",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/model-http-audit.jsonl": "9d3ba320be5262db5872c36996f5032ca0c9dcb3b3b94b30024cce866d9f2cad",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/execution-contract.trajectory.jsonl": "a40ccc7d7d79943ce2ba835462e4eb609c426eda9a14ec7516dbc36a48b85a0c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/100d98b5-217e-4acf-95c1-97d070162f5a/upstream.sse": "89138e943c3f35ec11c1c1c2298c89b418ad44728838064bde918fb178bd12df",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/100d98b5-217e-4acf-95c1-97d070162f5a/downstream.sse": "89138e943c3f35ec11c1c1c2298c89b418ad44728838064bde918fb178bd12df",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/cf52dbf9-2e9e-49f0-9d27-1d0f5140101e/upstream.sse": "1ddb64a92c345b2afe356b4eea046aa2e8cedd3d67f27dafb655826ef157e1d7",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/cf52dbf9-2e9e-49f0-9d27-1d0f5140101e/downstream.sse": "1ddb64a92c345b2afe356b4eea046aa2e8cedd3d67f27dafb655826ef157e1d7",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/86233b4c-98f5-4070-88f6-53d66ec90dd6/upstream.sse": "c6b9d65934eb0ddff1a58d38bdd06c2cdf1c5ffd18200caa2f9447cb4211b0c9",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/86233b4c-98f5-4070-88f6-53d66ec90dd6/downstream.sse": "c6b9d65934eb0ddff1a58d38bdd06c2cdf1c5ffd18200caa2f9447cb4211b0c9",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/4b8de925-3e6b-4aac-afae-d4c93a36885b/upstream.sse": "bf2bb0e0307074f96a3f09621e5a409ab6aeed08f9dc88ea3a5c5a715878d2b4",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f2/streams/4b8de925-3e6b-4aac-afae-d4c93a36885b/downstream.sse": "bf2bb0e0307074f96a3f09621e5a409ab6aeed08f9dc88ea3a5c5a715878d2b4",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f3/profile/goal-journal.jsonl": "00955c08b92a4346304b5f5dd7ca3969496de78cbc3a42e299b0bd2c0084e88d",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f3/app-server-events.jsonl": "f8932009dff8480c66ba3a916dd41970a054b1c11295afe1c8552fd4dfd6fdb5",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f3/model-http-audit.jsonl": "e6411e765ea32c6ad5f57a71405104adda45032557c621165df74b102d721fe1",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f3/streams/f2d280e7-2a0c-4894-8a41-26e488d27d6f/upstream.sse": "21dc77846698baa693532bde7b7239ebcc1253dadebe9e4fc2aa3903123a4e2c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f3/streams/f2d280e7-2a0c-4894-8a41-26e488d27d6f/downstream.sse": "21dc77846698baa693532bde7b7239ebcc1253dadebe9e4fc2aa3903123a4e2c",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/profile/goal-journal.jsonl": "42803f57a00b0bffba63ebd40914343fec3bdbd91a9d26312195da533ea6374a",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/app-server-events.jsonl": "f0d62fe3f63d34b0980ac77f1d7eb284d97c6bc731c5c1605d7a1b662967aec7",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/model-http-audit.jsonl": "f0bca9e49e42b55a6f98de2f2b40d3c55e9ed24f4df2a3e48c7feb3fdddc7879",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/execution-contract.trajectory.jsonl": "a5326196fea8fa7b31e97a8c36f0c810e77436e7e130109508960da2be3b51af",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/streams/5c585b36-3f96-4afe-b239-db59312ae795/upstream.sse": "469a021953c6513ba79dff7fe04bac7197a1fa3462341ba6f3f6231ce047b5df",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/streams/5c585b36-3f96-4afe-b239-db59312ae795/downstream.sse": "469a021953c6513ba79dff7fe04bac7197a1fa3462341ba6f3f6231ce047b5df",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/streams/9ba34661-3de9-4e0e-b5ea-bb16f67216a9/upstream.sse": "54cd5300f78b457a7bee5bf28348ecd85d555ac8bc8adfa76cf943ff4dcfa007",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f4/streams/9ba34661-3de9-4e0e-b5ea-bb16f67216a9/downstream.sse": "54cd5300f78b457a7bee5bf28348ecd85d555ac8bc8adfa76cf943ff4dcfa007",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/profile/goal-journal.jsonl": "1f640270d99bbc030f47d91701f29141db557f1771dca8e24dd41ccb9e4e0068",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/app-server-events.jsonl": "9ab93073f728be6d5cecddfda2a18ac132b911c0b70ab030f2347e7c6b0a1e37",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/model-http-audit.jsonl": "79e6663808055032b223c42c8c8b6ea07f39188ec54884838c98f7b9f404bf7a",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/execution-contract.trajectory.jsonl": "ed8456bf2a0e7e74009125401c125021e23e001775a2feac051cea944b10de29",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/streams/db5f10e8-a55e-41b4-b7aa-fd3a417d3834/upstream.sse": "1df8e79cb37aa1dbb4880d6c0979479d50bbbc1f38413efa46f16c468bab4314",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/streams/db5f10e8-a55e-41b4-b7aa-fd3a417d3834/downstream.sse": "1df8e79cb37aa1dbb4880d6c0979479d50bbbc1f38413efa46f16c468bab4314",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/streams/35f7de44-e6c9-43fc-893d-28fd21503a84/upstream.sse": "5d51ed7ba34e98eb3e0a815ebd449b94e822cad35f105c84fcbf980b4de23eb9",
+    "/home/wqkan_wsl/uaea-n1x/research-records/goal-continuity-three-20261113T030425Z/f5/streams/35f7de44-e6c9-43fc-893d-28fd21503a84/downstream.sse": "5d51ed7ba34e98eb3e0a815ebd449b94e822cad35f105c84fcbf980b4de23eb9"
+  },
+  "read_originals_unchanged_through_audit": true,
+  "limits": [
+    "A new head is not inherited by B/C: do not concatenate an A-to-B/C M2-M3 trajectory",
+    "manual global family binding is not autonomous scope inference",
+    "two pairs, fixed counterbalanced order and fresh identity/time/home/length-position nuisances do not establish general causal benefit",
+    "f2 has no final answer; actual local 502 exception text not preserved, cap explanation consistent but exact local cause UNKNOWN; final quality CENSORED, observed Goal errors and budget task noncompletion remain evidence",
+    "C numerical comparisons are actions even without a fresh Tool Call; tool count and Goal recitation are not value",
+    "all material is frozen researcher source excerpts, not live official-source revalidation or real decision outcomes",
+    "ON/OFF costs and answer quality are mixed; M5 UNKNOWN",
+    "32 version bound concerns current Thread visible records; 16 MiB journal bound remains; hashchain is not anti-rollback proof"
+  ],
+  "overall": "PARTIAL",
+  "engineering_new_blocking_issue_observed": false
+}

@@ -1,0 +1,31 @@
+--- guard_ctl.py.before
++++ guard_ctl.py
+@@ -80,7 +80,8 @@
+   if time.monotonic()-owner_last>10:
+    save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq+1,"utc":time.time(),"error":"SAMPLER_OWNER_GONE"})
+    return
+-  started=time.monotonic();seq+=1
++  started=time.monotonic();start_utc=time.time();seq+=1
++  frame=None
+   try:
+    frame=metrics()
+    if any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for v in frame.values()):
+@@ -91,10 +92,16 @@
+    # A late returned call must publish invalid and exit, never overwrite it with
+    # a subsequent fast frame before the external reader can see the failure.
+    if elapsed>2:raise TimeoutError("Linux sample exceeded 2s query budget")
+-   frame.update({"valid":True,"run_id":run_id,"seq":seq,"sample_seconds":elapsed,"gpu_source":"nvml_persistent"})
++   frame.update({"valid":True,"run_id":run_id,"seq":seq,"sample_seconds":elapsed,"sample_start_utc":start_utc,"sample_start_monotonic":started,"sample_end_utc":time.time(),"gpu_source":"nvml_persistent"})
+    save(O/"linux-metrics.json",frame)
++   with (O/"linux-publisher.jsonl").open("a") as journal:
++    journal.write(json.dumps({"event":"published","run_id":run_id,"seq":seq,"sample":frame,"published_utc":time.time(),"published_monotonic":time.monotonic()})+"\n")
+   except Exception as ex:
+-   save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq,"utc":time.time(),"error":type(ex).__name__,"error_detail":str(ex)[:160]})
++   failed={"valid":False,"run_id":run_id,"seq":seq,"utc":time.time(),"error":type(ex).__name__,"error_detail":str(ex)[:160],
++    "sample_start_utc":start_utc,"sample_start_monotonic":started,"sample_seconds":time.monotonic()-started,"partial_sample":frame}
++   save(O/"linux-metrics.json",failed)
++   with (O/"linux-publisher.jsonl").open("a") as journal:
++    journal.write(json.dumps({"event":"failed","sample":failed,"published_utc":time.time(),"published_monotonic":time.monotonic()})+"\n")
+    return
+   time.sleep(max(.02,1-(time.monotonic()-started)))
+  save(O/"linux-metrics.json",{"valid":False,"run_id":run_id,"seq":seq+1,"utc":time.time(),"error":"SAMPLER_TIMEOUT"})

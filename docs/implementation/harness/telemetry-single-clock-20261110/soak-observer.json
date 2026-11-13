@@ -1,0 +1,25 @@
+{
+  "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125223Z-6d88e915",
+  "samples": 2734,
+  "acks": 2734,
+  "sample_span_utc_for_display_only": 2999.7789998054504,
+  "max_causal_upper_seconds": 0.7410859,
+  "max_linux_sample_seconds": 0.22990148499999918,
+  "max_windows_collection_seconds": 0.739352,
+  "unique_consumptions": true,
+  "all_ordered_joins_valid": true,
+  "cross_utc_range": [
+    -0.8939692974090576,
+    1.3576924800872803
+  ],
+  "would_hit_old_future_rule": 0,
+  "unexpected_rejection": false,
+  "model_loaded": false,
+  "final_result": {
+    "pass": true,
+    "requested_seconds": 3000,
+    "model_loaded": false,
+    "samples": 2734,
+    "seconds": 3000.874436
+  }
+}

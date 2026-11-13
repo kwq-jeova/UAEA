@@ -7,6 +7,85 @@ Information boundary checkpoint: 2026-10-05（最新 authority 人工未验收�
 
 版本维护：[2026-11-10本地Git检查点与验证范围](../implementation/checkpoints/goal-research-checkpoint-20261110.md)。
 
+## 2026-11-10 N1X时钟门禁定位与连续复测
+
+[直接拒绝证据与待评审方案](finance30-clock-gate-20261110.md)：
+诊断保存后新批次确认LINUX_CLOCK_FUTURE（样本年龄约-1.043秒）；
+查询/完整采样均不足1毫秒，跨侧UTC偏差另获只读测量支持，底层来源UNKNOWN。
+独立History完成20轮、两次自然和一次受控压缩；第21轮中断，Goal Shadow未运行。
+不拼接旧14轮，不以NOT RUN作为零候选。现有未来拒绝线仍启用，
+因果采样确认仅有隔离条件原型，需资源安全契约评审后才能实际切换。
+Goal成熟度和增量价值不提高。
+
+## 2026-11-10 真实金融30轮连续Goal研究
+
+[来源、执行与中断审计](finance30-goal-continuity-20261110.md)：16条原始人工输入适配前15轮，
+后15轮研究扩展；冻结资料按轮开放，保留版本和历史适用性UNKNOWN。
+118项离线回归通过；真实短控制3轮、Relevant History完成14轮，
+第15轮因Linux遥测时效校验触发Fail-Closed中断，Goal组**未执行**。
+8次实际读取与正文供给限定PASS；没有两组增量价值结论，
+不是零自然Goal候选或Proposal Interface失败证据。不改变Sideband及正式权威边界。
+
+## 2026-11-10 Goal Proposal 协同研究
+
+[有限协同研究](goal-proposal-cooperation-20261110.md)：A原Sideband、B只评估、C可选判断+显式原工具，
+H为Relevant History。修正实验标点门禁及共同工具回执预算后，四组各7轮共28轮完整；预试16轮另存。
+三组真实form后均无成功修订。C仅在明确提交轮产生合理revise，却把真实用户input ID误放evidence_ids，
+被正确拒绝，随后误述为权限限制/maintain。A把不可采纳ActiveGoal误读为不可修订候选。
+B/C无约定结构化final评估，不拿空集合判协同PASS。A/B/H虚称读取无实际IO；C真读却选错资料，
+所读235字符全文/哈希/成功出站PASS，不等于任务PASS。四个末轮Workflow均FAIL。
+C比H累计输入多约78.1%，未见完成任务增益；单样本、提示/调用/历史成本混合，不作因果收益结论。
+**总体PARTIAL**：保留Sideband，不新增协同层/Goal Engine/第二Loop，不放宽来源与采纳；
+下一研究若继续，仅聚焦提案者对权限对象与引用类型的理解/纠正。112项研究回归PASS（冻结前110项），
+两次保护与清理限定PASS，无Commit/Push，Memory保持Research Reserved。
+
+## 2026-11-10 Goal State Inference 与 Proposal Interface
+
+[隔离接口研究](goal-state-inference-interface-20261110.md)：共同中性资料，Sideband与可选final envelope
+复用同一候选验证；普通文字不自动提交，模型Agent Loop仍由Harness拥有。
+首次1轮误称无通道；另一预登记载荷控制中T0完成5轮、S0只完成首轮即种子门禁停止。
+T0 form保存/出站PASS，Task/条件区别合理，换长期方向后无修订；末轮如实报旧候选但虚称读取。
+S0给出正确JSON片段却包普通文字且虚称已保存，Host保留空候选；两次多余目录读取失败均有Observation。
+未完成相同种子的2×2及Relevant History对照，邀请效应、接口优劣、增量价值均UNKNOWN，
+不把显式内容或合成裸JSON通过计自然形成/真实提交。96项确定性回归PASS（冻结前95项），资源保护与清理限定PASS。
+**总体PARTIAL**：不建议替换正式接口，不自动抽取回答、不增加Engine/采纳权限；
+Memory保持Research Reserved，停止提交架构评审。
+
+## 2026-11-10 共同种子的修订时机与价值对照
+
+[有限真实对照](goal-revision-timing-abstraction-20261110.md)：H/N/E/X四会话20轮，N/E/X由真实form建立
+相同干净语义种子，前三轮与末轮探针相同；仅T4邀请层级不同。三组均无后续修订，
+X能给出合理草案和revise计划但未调用；N/E选择旧候选历史保留，不仅用调用数判认知错。
+四组均实际读取适用档案卡，旧head未见当前动作损害；N/E/X多15.4%/14.6%/30.3%累计输入，
+没有对应行动增益证据，长期价值UNKNOWN。种子为给定控制，不计自然形成/抽象成功。
+夹具编号试运行中止且排除；离线auditor的strip造成节尾空行误失败与去空行伪造误通过，
+一行修正+两反例后85项研究回归PASS；原审计保留，新精确源审计4/4，认知结论不变。
+**PARTIAL**：sideband把语义表达与工具选择耦合，暂不能从空版本链判无语义提案。
+停于提案入口/候选用途评审；若继续，只做既有结构化入口或替换生产者的有限对照，
+不自动抽取普通文字、不补发、不改正式采纳，不新增Engine/Memory层。Memory保持Research Reserved。
+
+## 2026-11-10 有种子自主维护结果与显式修订正控
+
+[真实结果与原件](goal-autonomous-maintenance-results-20261110.md)：升级结束后主对照2会话10轮完成，
+Shadow真实种子在Task取消/条件变化后保持，但明确更换长期方向时无Goal更新，
+请求5/6仍供给旧head。模型把旧候选作历史，未明确虚称已撤回/新建，文字历史化不等于Host修订。
+附加180秒诊断2次字符串None拒绝、null纠正后提交，但Turn未完成、BrokenPipe不计供给PASS。
+另一次隔离420秒显式3轮正控真实form→revise，父版本、请求4/5及下一轮新ID反馈通过；
+实际各轮均低于180秒，不把新会话成功归因于延长等待。两个hypothesis仍复制了整段操作指令，
+语义质量PARTIAL。基线也能接受换方向且真正重读，Shadow末轮未重读，不能用较低Token数证明收益。
+**总体PARTIAL**：显式记录闭环限定PASS，自主修订未建立、长期增益UNKNOWN。
+实际门槛在语义判断到可选提交，非已证实存储/权限故障；停于路线评审，不增加Engine/Memory或自动补发。
+
+## 2026-11-10 有种子自主维护对照：外部WSL升级中断
+
+[预登记与中断原件](goal-autonomous-maintenance-20261110.md)：同脚本5轮History/Shadow，
+首轮显式form，后续无具体操作提示；一次32K真实加载READY，History仅2轮完成，
+第三轮中断，Shadow未启动。MsiInstaller/RestartManager同期记录WSL3.0.5升级，
+后续Guest新启动且无正常退出回执；高置信外部环境中断，不是Goal失败或已证明OOM。
+276个V2有效service样本未记录资源越界；不能替代异常退出安全闭环。
+83项离线回归PASS；真实自主维护、最新head利用与增量价值均UNKNOWN。
+**PARTIAL/真实实验BLOCKED**：先确认宿主更新窗口再核查保护，不自动重载，不改Goal/Memory/权限。
+
 ## 2026-11-10 遥测修正与Goal最小措辞对照
 
 [监控证据](../implementation/harness/n1x-telemetry-reliability-20261110.md)：
@@ -441,3 +520,279 @@ Phase-1 L0 benchmark 是既有路由/能力验证，不是通用 L0 meta-cogniti
 
 当前 execution/hook 以 [Harness baseline](../current/runtime/harness-runtime-baseline-20260926.md) 为准；
 新增 cognition 要从这些真实边界读取证据，不以文档治理授权实现。
+
+
+## 2026-11-10 单时钟采样门禁与新NVML阻塞
+
+[独立验证及金融恢复报告](finance30-single-clock-validation-20261110.md)：
+**VERIFIED（有限区间）**：run绑定的一次性采样标记、Windows单调时钟3秒因果上界、
+Linux2秒采集预算与原资源门限保持；10/16项CPU、7种IPC进程故障、
+50分钟2734次确认及正式smoke通过后安装。
+真实负载中6次旧UTC未来判据会拒绝的样本，凭独立新鲜度确认通过，没有放宽阈值。
+
+**PARTIAL/BLOCKED**：新批次History完成14/30、两次自然Compaction后，
+NVML返回17（本机解释为OS阻止GPU访问），正确Fail-Closed并清理；
+底层原因UNKNOWN，不是已证明的资源超限。Goal Shadow **NOT RUN**。
+与前两批14/20轮独立，不拼接，不提高Goal或长期决策收益成熟度。
+保留全部失败与原Evaluator输出；无自动重载、不Commit/Push。Memory仍Research Reserved。
+
+
+## 2026-11-11 稳定AC下金融实验恢复
+
+[本轮结果及原始证据索引](finance30-acstable-results-20261111.md)：
+**VERIFIED（窗口限定）**：AC2674有效样本均在线、2360次因果采样确认、无NVML17/遥测拒绝，
+原守卫/阈值不变。未证明电源切换是上次错误17的底层机制。
+新History完成30轮，1次自然+1次受控Compaction；
+Goal Shadow完成3轮，第4轮因模型工具误用/恢复循环及420秒实验等待期限停止，非安全中断。
+
+首次观察到无显式Goal邀请的真实goal_hypothesis调用，但它将SIM文件记录当候选，
+form填入非null ID，被合法拒绝；没有保存或版本投影。不能继续表述为“从未自然调用”，
+也不能提升为“有效自然Goal形成”。后续目录读取失败和创建计划未完成保留。
+**PARTIAL**：连续行为/候选表达；**UNKNOWN**：有效演化与相对History决策收益。
+未取得完整30×2，禁止拼接或用来源/格式PASS替代语义与Workflow。
+不新增Goal/Memory维护层，Memory仍Research Reserved；不Commit/Push。
+
+
+## 2026-11-11 能力投影与完整传输审计收敛
+
+[修复、短验证与金融长批次证据](finance30-capability-transport-20261111.md)：
+**VERIFIED（限定）**：native Shell按实际配置投影；研究预置文件可用性与真实读取分离；
+HTTP开始、部分和完整转发分开，BrokenPipe不计完整成功，旧证据不足保持UNKNOWN。
+限定回归727 PASS/2 SKIP；短配对4会话10轮完成，算术及措辞反例保留。
+只证明组合说明条件下的准入，不宣称单项因果或普遍认知改进。
+
+**PARTIAL**：新History13/30，14轮自然压缩后摘要含错误sandbox相对路径；
+正确绝对路径与只读状态已完整送达，但连续6次错误读取，达到实际180秒研究等待期限。
+登记420秒与实际180秒偏差单独保留，不能据此断言永久卡住或拼接旧批次。
+Goal长组**NOT RUN**，自主候选演化与增量决策价值**UNKNOWN**；
+无遥测拒绝/NVML17，服务由控制器清理。未改权限、Goal/Memory采纳、守卫或模型环境。
+保留32K默认/64K实验与Sideband；Memory仍Research Reserved；不自动重跑、不Commit/Push。
+
+
+## 2026-11-11 长任务恢复与HTTP framing收敛
+
+[本轮代码、短对照、长批次失败及原始证据](context-task-recovery-results-20261111.md)：
+**VERIFIED（限定）**：Content-Length100/实际3字节为IncompleteRead/partial；冻结420秒
+贯通预登记、Runner、Manifest及实测，738项限定回归736 PASS/2 SKIP。
+真实Apple受控回放中，旧说明首轮420秒未完成、20次重复读取；澄清组2轮完成并持续当前任务，
+但多余读取和“全读完”声明反例保留。pilot错误放置历史导致413，单独排除，不改24KB预算。
+
+**PARTIAL/UNKNOWN**：全新金融History首轮流式输出重复121次相同日期/数字片段，
+420秒未终止；没有Compaction/遥测拒绝/资源越界证据。最终HTTP200+BrokenPipe为partial。
+History0/30、Goal长组**NOT RUN**，不能评价Goal演化或增量价值。
+原生delta未替代底层token/SSE证据，生成端与parser/流处理确切归因UNKNOWN。
+未改Goal/Memory采纳、Guard、模型环境或权限；Memory仍Research Reserved，不Commit/Push。
+
+
+## 2026-11-11 HTTP framing消费判据与重复输出诊断
+
+[代码修复、单请求四层对照与复核边界](http-framing-repetition-diagnostic-20261111.md)：
+**VERIFIED（限定）**：transport_state要求显式framing=true；缺字段UNKNOWN、false不得PASS。
+744项限定回归742 PASS/2 SKIP。第3请求正文恢复至原forwarded字节hash，唯一模型请求46秒正常结束。
+引擎Parser前文本/token、原始SSE、Bridge字节和Native无GPU回放一致，没有本次重复放大。
+**UNKNOWN**：旧121次异常未复现、缺同期上游数据，不能定位历史首次层级或宣布修复。
+保留单位错误等模型反例；不建议据正常单样本恢复30×2，先交Audit Agent独立复核。
+未改采样/Backend/Context/KV或权限，Goal/Memory及安全边界不变，Memory仍Research Reserved。
+
+
+独立Audit附注：本次诊断v1的下游硬限额、超限后prefix和marker预算存在已复现缺陷，
+实际小样本未触发，四层限定结论仍成立。原件保留；隔离v2经CPU与IO故障复核，未实机部署。
+总体仍PARTIAL，旧重复首次层级UNKNOWN，不据正常单样本恢复长实验。
+
+
+## 2026-11-11 推理流v2收尾、回执预算与Goal长实验恢复
+
+[有限诊断、两批失败与最小修正报告](finance30-flow-v2-results-20261111.md)：
+**VERIFIED（限定）**：锁定v2，冷启动/紧邻两次冻结请求自然结束，四层一致；旧121次异常仍**UNKNOWN**。
+Shadow前段6轮、7次真实读取、自然Compaction及Goal工具9/9普通请求送达，零候选；
+自然压缩误算缺Goal投影的Evaluator假阴性经Native起止/Host暂存交叉证据修正，不上调认知评价。
+
+**PARTIAL**：原History20/30，第21轮Context400；10回执的完整决定重复占约3万字符。
+成功允许回执改为摘要+原件hash，正文/身份/完整Host记录不变，反例少12171个function-output Tokens。
+同版修正版新History25/30，批量回传后压缩23871输入Tokens成功；
+第26轮多次生成/读取后达到420秒实验期限，无完整Native终止。
+两批不拼接；长Goal均**NOT RUN**，自然演化与相对History收益仍**UNKNOWN**。
+
+最终限定回归749 PASS/2 SKIP，10项既有外部语料前置排除明列；资源守卫、模型配置及采纳权限未变。
+无实际资源/遥测停止，owned服务/端口清理，Memory保持Research Reserved。
+停止本轮追加；建议下批独立调度Goal/History、先取得Goal观察，不以无限加时、补提案或新语义层追求PASS。
+
+
+## 2026-11-11 当前回执版本的64K最小验证
+
+[容量、短回放及32K准入拒绝](context64-minimal-validation-20261111.md)：
+**VERIFIED（限定）**：64K+1GiB KV，实际逻辑容量109817 Tokens；
+API40953输入与Harness51980输入请求完成；Native有效窗口62259、自动压缩阈值49152，
+Host恢复仍限24KB。六轮、一次自然压缩、20次真实读取，锚点4/4及缺失文件UNKNOWN正确。
+
+**PARTIAL**：A额外JSON键遗漏，原严格门禁FAIL保留，容量与格式事后分项；
+六轮末模型漏报已读历史，来源身份PASS不等于状态回顾正确。
+**BLOCKED/UNKNOWN**：32K在36GiB预算准入处因Commit余量不足拒绝，未重试；
+本轮CommitLimit83.481GiB，需余量>52.696GiB，拒绝附近约46.2GiB。
+没有有效的新32/64收益比较，不混旧数据，不据此归因为Context/KV故障。
+
+保留32K默认、64K显式实验选项；默认切换和增KV均无充分证据。
+正式Runtime/权限/Goal/Memory及Fail-Closed不变，Memory仍Research Reserved。
+达到限定验证及安全准入阻断边界，停止追加实机，待评审，不Commit/Push。
+
+
+## 2026-11-11：64K渐进负载与64/64资源评估
+
+- [64K Context初步验证与资源评估](context64-resource-assessment-20261111.md)：一次新加载、34,017/40,016/48,016真实输入及六轮Harness最大52,296 Tokens通过容量限定验证；1GiB KV保持不变。全程Commit最低余量20.136GiB、距原停止线3.439GiB。压缩后来源核对仅1/4，失败保留，不将容量PASS升级为来源/Goal/长期稳定性PASS。保持32K默认和64/64；56/72收益UNKNOWN，不重启、不调整资源保护、不Commit/Push。
+
+
+## 2026-11-11：GPU56/Host72 UMA对照的启动前阻塞
+
+- [UMA无模型核查与阻塞报告](uma56-preflight-assessment-20261111.md)：实际NVML72GiB、DXGI约71.986GiB、Windows可见54.481GiB，方向与目标GPU56/Host72相反。新驱动621.14与历史617.42不同；零模型加载，56/72资源和64K表现UNKNOWN。另核查既有64GiB身份绑定及固定36GiB/0.6与目标56GiB的33.6GiB规划上限冲突。保持所有阈值/参数，停止待评审；不把反向布局或无模型余量当作目标收益。
+
+
+## 2026-11-11：56/72修正后的真实硬件与准入冲突
+
+- [GPU56/Host72已生效后的准入核查](uma56-corrected-admission-20261111.md)：NVML56GiB、DXGI55.986GiB、Windows可见70.481GiB，硬件VERIFIED；CommitLimit91.481GiB。但原Guard真实拒绝64GiB身份不匹配，36GiB/0.6又超过56GiB的33.6GiB上限，零模型加载。容量身份适配及隔离util0.65提案仅供评审、未应用；所有停止阈值和默认配置不变。当前运行收益UNKNOWN，待用户决定是否允许这项原约束之外的最小兼容差异。
+
+
+## 2026-11-11：56/72隔离兼容适配后的真实64K负载
+
+- [GPU56/Host72受控64K负载与历史对照](uma56-controlled-load-20261111.md)：获批后仅实验容量身份及util0.65生效，已安装策略与64/64原件不变。真实36GiB规划/1GiB KV、三档冻结API及最大53,196 Tokens Harness完成；Commit最低余量29.199GiB、缓冲10.903GiB，比历史20.136/3.439改善。原生API未见明显退化，但Agent全16重读、两次Compaction使六轮805.58秒，整体PARTIAL；驱动/利用率兼容及轨迹差异不支持严格A/B因果归因。建议评审后再做长时稳定性，未切正式默认或自动恢复30×2。
+
+
+## 2026-11-12：56/72与64K连续金融研究Phase1
+
+- [30轮真实Harness、自然压缩、资源与行为报告](phase1-finance64-continuity-20261112.md)：**VERIFIED（限定）**同一Thread30/30原生完成、42完整请求、最大49,542输入Tokens、一次自然Compaction、23次实际读取；Commit最低余量28.247GiB、距原停止线9.951GiB，无真实安全停止。164输入锁/131源码/15正式原件未变。
+- **PARTIAL**：任务/SIM/现金条件继续，但单位换算错误、读取历史漏报及旧Apple暂停范围仍影响叙述；hash/传输PASS不替代语义或Workflow。只读三份冻结小摘录与SIM，非实时金融/全文Web/11-04严格回测。
+- **UNKNOWN / NOT RUN**：32K因果收益、真实长期决策价值、Goal增量收益；本轮Goal Off，没有Shadow。保留32K默认、64K显式入口和原资源/授权边界；Memory仍Research Reserved。阶段结束待评审，不自动Phase2，不Commit/Push。
+
+
+## 2026-11-12：Goal 64K短准入与独立30轮长对照
+
+- [短段准入、双组长对照与成本报告](goal64-admission-long-comparison-20261112.md)：**VERIFIED（限定）**短段7轮、一次显式form经自纠错保存并真实送达；复用匹配History30轮，新Shadow30轮38完整响应、最大48,826输入、14次读取、零自然提案、零自然Compaction。不能以空状态结构PASS替代生命周期或Goal恢复。
+- **PARTIAL**：短段混入临时条件、目的变化后未修订但如实保留旧状态；长组单位/公司/版本错配和读回自相矛盾仍在。工具类型/枚举一致，但Host长度/数组边界未出现在出站Schema，精确等价PARTIAL。
+- **UNKNOWN**：自然Goal形成、自主维护、真实决策增益。Shadow输入+3.81%、用时-18.61%，轨迹/时段不同且无候选，不能归因Goal维护收益。不新增语义裁判、Goal Engine或Memory层。
+- 新隔离入口补AC同钟新鲜度/进程身份准入，CPU10种反例拒绝，资源原门限不变。全服务Commit最低缓冲10.057GiB、无真实安全停止，正常清理。阶段完成停止待评审，不自动重跑、不Commit/Push；Memory仍Research Reserved。
+
+
+## 2026-11-12：Goal Hypothesis归属边界设计评审
+
+- [用户目的、Agent计划与认可Scope审查](goal-hypothesis-ownership-review-20261112.md)：**VERIFIED / PARTIAL**真实E1/E2候选将资料条件/接口说明写成目标限制，E3文件型提案因参数被拒、未保存，E4缺口表仅是文字。来源正确不证明意图主体或语义支持；未发现正式Goal/Memory采纳证据。
+- 7个隔离CPU探针：合法quote/父版本仍可配错误计划型候选、错误withdraw/refine；编造quote和Observation被拒，旧版本/输入保留。它们验证职责边界，不是认知准确率。
+- **HYPOTHESIS**：分开用户目的G、模型解释H、Task/条件、Agent计划及认可；先审语义与16个成对/UNKNOWN前缀，不靠新增主体字段冒充识别。**UNKNOWN**：认可场景泛化、自然形成及真实价值；本轮无新模型。
+- 保留Sideband、5操作、Harness Loop、Phase-1/Memory/授权；暂无新增引擎或Schema必要。停止等待设计评审，不Commit/Push，Memory仍Research Reserved。
+
+
+## 2026-11-12：用户意图归属与双范围Goal种子实验
+
+- [实验A：归属、认可与当前澄清](goal-intent-attribution-experiment-20261112.md)：8/8真实用户轮、9/9完整响应、4次读取、零Goal调用；受邀文字部分区分建议/待办与用户认可，但有目的扩展、历史轮次错配，整体**PARTIAL**。零调用不证明自然形成/抗污染；无Compaction，恢复未测。
+- [实验B：双种子及生命周期准入](goal-scope-lifecycle-experiment-20261112.md)：显式form两个根、Call/保存/hash/成功请求4投影一致；宽候选混入查询需求及保存操作，来源合法不证明支持。预登记清洁种子未通过，B仅1轮，B2–10 **NOT RUN**；未改写种子、补调用或重跑。
+- **VERIFIED**非权威错误候选已进入Context并在回答重述；ActiveGoal仍null，无Memory/来源权威提升。认知影响的因果强度、生命周期维护、自然形成及相对Relevant History收益**UNKNOWN**，结构成功不代表闭环。
+- 220输入锁、131执行源码、15正式原件未变；服务1382有效采样，Commit最低缓冲9.591GiB，owned进程清理。保留Sideband/保护及Memory Research Reserved，不新增正式对象/Schema，不Commit/Push。停止提交最小纠错研究建议，未自动新批次。
+
+
+## 2026-11-12：候选纠正研究的评价v2与种子前置
+
+- [评价修订、真实种子尝试及M1–M5判断](goal-correction-feedback-study-20261112.md)：分别标注表达源/意图主体/认可Scope，区分目的扭曲、手段混入和无害背景；无真实当前种子及Scope不得评分生命周期。16项合成标注检查通过，不是Bolt认知准确率。
+- 新独立批次1轮、2/2完整响应、4次真实读取、Goal定义2/2送达却零调用/零候选；模型误称旧解释在ledger中，实际hash/正文反证。普通回答保留与Host提交未清楚区分，不能据此编造具体回执。
+- M1 **PARTIAL**；M2/M3/M4 **NOT RUN**，唯一纠正反馈未发送；M5 **UNKNOWN**。旧真实候选/Journal保留，不以旧ID或空状态PASS补齐本轮闭环。
+- 服务329有效样本，Commit最低缓冲7.991GiB；174输入锁/131源码/15正式原件未变，owned清理。保持Sideband/现有架构/权限及Memory Research Reserved，不Commit/Push。不因种子前置失败新增正式引擎或Schema。
+
+
+## 2026-11-12：真实Goal历史恢复与一次反馈纠正
+
+- [恢复工程、九项对应及纠正反例](goal-history-recovery-correction-20261112.md)：嵌套request_continuity.inputs/attempts提供完整原输入与Step；Journal/Native/完整HTTP验证2条历史候选、4个Observation、幂等记录。隔离恢复同Thread/Scope，Goal dossier与历史成功请求4一致；无模型Native恢复0请求/0旧工具执行，原件不变。**VERIFIED限定Goal闭包**，非通用Runtime恢复。
+- SQLite工具表为空但rollout session_meta保留定义；只在副本定位rollout，不新增表或伪造Goal。最终6组CPU/18项篡改反例通过；冻结运行v1与事后校验v2分列，v2复核同一bundle，不重跑模型。
+- 真实单次反馈：1完整响应、0新Goal调用/提交/拒绝，旧head全文不变；模型却称工作需求不属保存内容且已去掉。M1 **PARTIAL**，M2 **FAIL本样本**，后续Task/M3跨轮 **NOT RUN**，M5 **UNKNOWN**。恢复不是自然形成或辅助新种子。
+- 173输入锁/132冻结源与131原执行源/15正式原件保持；Commit最低缓冲8.084GiB，owned清理。保留Sideband/正式边界与Memory Research Reserved，不Commit/Push。停止追加反馈，不新增语义裁判或自动提交。
+
+
+## 2026-11-12：历史恢复审计后进度同步（M2分支验证前）
+
+证据批次：goal-history-recovery-20261112T061038Z；关联研究恢复器scripts/research/recover_goal_history.py及该批session/app-server-events.jsonl行385。
+历史候选恢复仅在实际案例限定PASS；恢复器缺少逐Step Call–Observation绑定，通用校验发现缺口，当前待修复。
+两个真实候选全文和用户纠正送达，但没有新Goal调用或Host版本变化；模型保存状态误述保留为负面证据，不能写为已完成修订。
+M2受反馈纠正已有一次失败观察，尚未分离准确读回与提交行为；M3未闭环；M4自主生命周期UNKNOWN；M5相对Relevant History增益UNKNOWN。
+当前节点只登记研究事实，不是正式架构或采纳授权；后续先修绑定，再独立M2-A/M2-B，必要时M3。Memory仍Research Reserved。
+
+
+### 同节点工程补证：Step–Observation绑定修复
+
+已复现旧校验接受交换两个Observation引用；研究恢复器现按原执行轨迹建立Observation→Call/Turn/Thread/Workflow/Input映射并逐Step核对。
+正常历史通过；8项新增绑定反例拒绝，7组CPU测试通过。临时目录独立重建的Goal/输入/Step内容与此前真实基线完全一致，仅新增审计映射；Goal投影与历史成功请求4一致，原文件未改。
+这只收敛研究恢复校验，不上调M2/M3/M4/M5；独立模型分支尚NOT RUN。
+
+### 2026-11-12：恢复绑定收敛与 M2 独立分支结果
+
+- 新节点：[工程/阶段报告](goal-m2-branches-20261112.md)、[M2-A读回](goal-m2-readback-20261112.md)、[M2-B明确纠正](goal-m2-correction-20261112.md)，批次 goal-m2-branches-20261112T073526Z。
+- VERIFIED：Step–Observation绑定修复，7方法/新增8错配反例，合法历史重建保持；原历史不变。上面“待修复”是修复前登记，不是当前未解决事项。
+- M2-A：两条全文与head准确读回限定PASS，表达来源/意图归属PARTIAL。
+- M2-B：一次明确纠正后6次真实revise均因当前quote规则被拒，0新版本；模型虚称已保存精简内容。该失败为VERIFIED，不改写为认知修订成功。
+- M3 NOT RUN（无修订head）；M4、M5 UNKNOWN。5请求完整、0Compaction、资源正常；无新的正式架构变更依据。
+- 先前 goal-history-recovery-20261112T061038Z 无调用且误述保存内容的负面证据继续保留；本轮读回成功不覆盖它。Memory仍Research Reserved。
+
+### 2026-11-12：M2 CURRENT / 历史依据分离与失败反馈专项（启动前）
+
+批次 goal-m2-current-feedback-20261112T083318Z。上一批真实拒绝/无新版本/最终错误状态声明继续保留；追加勘误：模型收到terminal_attempt_fact，不能声称完整committed=false Goal回执已送达。现有quote（当前触发）、input_ids（原目的依据）、candidate_id（被修正head）足以表达本例，正式Schema不改。计划一次独立B纠正，首次拒绝即停止；若未闭环，再以同一冻结真实失败请求只改变反馈表达作双组诊断；M3仅在真实修订后运行。M1 PARTIAL，M2-A限定通过，M2-B尚待本批次，M3未闭环，M4/M5 UNKNOWN；Memory Research Reserved。
+
+### 2026-11-12：M2 引用/真实保存已推进，语义纠正与 M3 尚未闭环
+
+- [M2实际修订及准入报告](goal-m2-current-correction-20261112.md)，批次 goal-m2-current-feedback-20261112T083318Z：一次反馈、2个合法revise，CURRENT quote与历史purpose input_ids分离，真实Host保存及后续同Turn投影、新ID报告VERIFIED；不是自然形成/M4。
+- **M2-B PARTIAL**：新文本加入“不需要任何长期限制”，不能由“不自行添加长期限制”直接推出。M3语义门未过，下一用户Task NOT RUN；不把同Turn新head送达冒充M3。
+- 本地研究工具说明准备了但未进入恢复Thread的实际请求，实际工具定义与上一批相同；不得把成功归因于说明改善。正式Schema不变。
+- [失败反馈独立对照](goal-m2-failure-feedback-20261112.md)：旧“完整committed=false反馈已送达”表述已追加勘误；实际为terminal_attempt_fact。C1构造哈希错误原样保留，不作为有效比较；新批 goal-feedback-control-fixed-20261112T085326Z 用正确Host摘要完成一次C2配对。两组仍用历史quote、无状态回答，未证格式收益，状态理解UNKNOWN。
+- M1 PARTIAL，M2-A沿用限定PASS，M2-B总体PARTIAL，M3 NOT RUN，M4/M5 UNKNOWN。无正式Runtime/Schema/授权/Memory变更，未Commit/Push；本轮限定验证结束。
+
+### 2026-11-12：P1语义忠实性 / P2状态报告 / 条件式M3（启动前）
+
+批次 goal-p1-p2-m3-20261112T093455Z。独立验证并恢复最新4版本/2个修订head，不重造种子；原一Turn恢复器不改，研究副本逐层校验Goal-only追加Turn。P1冻结三个独立表达分支；P2用真实旧拒绝记录加两组相同状态核对问题，只改变反馈文本；M3仅从合格真实候选选取。原Scope/来源/Journal保留，实际工具定义锁定，CURRENT不放宽；Memory Research Reserved。M1/M2语义仍PARTIAL、P2待验证、M3未建立、M4/M5 UNKNOWN。实验结果不得提前上调成熟度。
+
+### 2026-11-12：P1三种表达 / P2状态报告限定实验结束
+
+批次 goal-p1-p2-m3-20261112T093455Z。[P1语义与M3准入](goal-p1-faithfulness-20261112.md)、[P2失败反馈报告](goal-p2-state-report-20261112.md)。
+
+- VERIFIED：最新4版本/2修订head分层恢复，7篡改反例拒绝，真实出站工具/heads/输入可追溯，原记录不变。
+- P1：3输入，2个完整Turn、1个首次quote拒绝后主动停止；0新版本。场景1仍把未知变成全部否定；场景2识别问题但以采纳禁用/版本不可变解释不能修订；场景3非CURRENT逐字引用被拒。没有合格候选，M3 NOT RUN。
+- P2：相同状态核对问题的原反馈/明确状态配对均有完整回答。A混淆旧成功form和最新失败revise；B正确报告拒绝/未保存/head未变，但仍错配实际提案正文。两组都丢失失败Call→提案正文可见绑定，模型未保留该UNKNOWN；整体PARTIAL。
+- 只提出在既有投影保留有界提交事实/身份的兼容建议，未改正式Runtime/Schema/权限；未新建语义裁判、Goal或Memory引擎。
+- M1/M2语义仍PARTIAL；保留历史M2合规操作限定PASS；P2 PARTIAL；M3 NOT RUN，M4/M5 UNKNOWN。Memory Research Reserved，未Commit/Push。本轮停止评审，不重试取得PASS。
+
+
+## 2026-11-12 Goal 失败提案历史投影工程收敛（最新）
+
+[根因、修复、预算与真实出站核验](goal-failed-proposal-history-20261112.md)：批次 goal-failed-history-projection-20261112T115442Z，最终证据 final/。真实2次成功form/6次失败revise逐Call绑定原参数、正文、目标和Host committed；缺字段保持UNKNOWN，不借旧head。24,000字节新增失败事实cap与原Host恢复块预算分别限定；省略明确，身份放不下拒绝，冲突ID拒绝转发。64项CPU及无模型真实Codex→Bridge→CPU HTTP出站通过，Audit Agent独立工程限定PASS。原历史/heads/versions不变，无模型加载，无M2/M3重跑。
+
+历史恢复限定PASS，Step–Observation已修；M2-A限定通过/语义PARTIAL；M2-B已有真实revise但语义忠实性未通过。失败状态理解旧样本受投影缺失影响，修复后模型理解UNKNOWN；M3 NOT RUN，M4/M5 UNKNOWN。Memory Research Reserved；无正式Goal/Memory采纳或权限改变。先独立工程复核，再安排下一阶段模型理解测试。
+
+
+## 2026-11-12 投影修复后的真实状态读回与纠正（最新）
+
+[限定模型验证报告](goal-postprojection-state-correction-20261112.md)：原批次 goal-postprojection-state-correction-20261112T122139Z 的P2被研究驱动误拦合法只读调用，标记CENSORED，不评为模型失败；只修研究拦截后另建 goal-postprojection-readback-repair-20261112T123257Z，相同问题得到一个完整真实回答。字段复核更正：hypothesis为4/6，另2条将quote误当hypothesis；target/committed分别6/6；旧回答quote未独立报告UNKNOWN。撤销完整绑定PASS，P2为PARTIAL，原模型记录不改。独立B提出语义忠实refine，但历史purpose quote不满足CURRENT，Host正确拒绝，0新版本，按首拒绝停止。M2-B保存闭环未成，M3 NOT RUN，M4/M5 UNKNOWN。保留两批原件与失败，未改正式Runtime/Schema/权限，未Commit/Push；没有因一次读回成功上调自主Goal或决策价值。下一步仅聚焦当前纠正触发证据与历史目的依据的工具绑定。
+
+
+## 2026-11-12 Goal 字段理解与引用选择限定验证（最新）
+
+[评分更正与新A/B](goal-field-understanding-correction-20261112.md)：旧P2按同Call字段复核为hypothesis4/6，2条quote误填；旧完整绑定PASS撤销。新A为hypothesis6/6、quote4/6、target6/6、committed6/6，前两条quote被扩写，整体PARTIAL；这些是一次回答中的相关字段，不是独立概率实验。B明确提供合法CURRENT句及历史f4依据，模型真实revise仍选择历史quote，Host正确拒绝、0新版本；语义方向基本保留但研究性质省略，PARTIAL。拒绝后状态回答CENSORED，新head投影无对象；M3按边界不运行，M4/M5 UNKNOWN。实际HTTP完整/源码与权限不变；不自动修参、重试或扩大Goal架构。原始模型记录保留，旧评价另存；独立审计已确认上述分维结果，整体PARTIAL，提交评审。
+
+
+## 2026-11-13 Goal M2 历史失败明细消融及条件式M3（最新）
+
+[限定研究报告](goal-history-ablation-m2-m3-20261113.md)：评分器问题归档不再重测；同候选/当前输入/Schema/预算，移除6条旧失败明细组仍误用历史quote被拒，保留组合法忠实revise并保存ff2a…，旧版本不可变，新head在3个后续完整请求中供给。该显式受反馈M2取得限定存在性证据；同Thread M3实际转读Apple/Alphabet且全局Goal保持。历史明细效应仅PARTIAL（固定顺序、一次、ID/时间/路径差异及条件名泄漏）；M3状态/行动一致性VERIFIED，因果使用与超Relevant History价值UNKNOWN，M3总体PARTIAL，M4/M5 UNKNOWN。财务解读仍PARTIAL；不升级长期认知成熟度为通用PASS。原架构/Schema/权限不变，无Commit/Push，独立审计已确认总体PARTIAL，交阶段评审。
+
+
+## 2026-11-13 当前结构化Goal视图ON/OFF增量（最新）
+
+[开放任务配对报告](goal-view-increment-20261113.md)：同一真实纠正checkpoint切在旧M3之前，普通用户/模型/工具历史和回执两组均保留；仅移除/保留当前Goal专用视图。CPU真实出站及3个模型请求验证0/1，审计归一化首请求一致，原件和Host状态不变。OFF重选Intel、真实读取4次但“必要前序”依据不足；ON保持跨公司方向并暂缓Intel，却0次本轮核验、将告一段落扩大为目标已完成。历史已读有依据，不判伪造读取。总体PARTIAL，不能由方向复述或ON低成本证明决策增益；M3仍PARTIAL、M4/M5 UNKNOWN，不是否定整个Goal机制。无Compaction/资源中断，保留Sideband及现有边界，不Commit/Push。
+
+独立Audit Agent已复核本批次：总体PARTIAL，可归档限定研究；没有证明当前视图增量决策收益，不支持新增正式机制。
+
+
+## 2026-11-13 本地Goal持久化与跨会话恢复（最新）
+
+[Goal Continuity报告](goal-continuity-20261113.md)：以单一追加Journal复用Sideband/版本，显式global family才跨Thread，local不重绑，不恢复旧Workflow或执行。50项CPU及真实无模型Harness供给通过；独立审计发现的Observation绑定、失败回执、摘录hash等局部缺陷已修。profile-final限定工程PASS；一次真实新Thread正确读回head/旧版/依据，但因无资料未提出研究问题，正常后续讨论PARTIAL。M3未升级、M4/M5 UNKNOWN。首次启动漏overlay失败与补齐后有效运行分别保留；未改正式Runtime/Schema/权限/阈值，不Commit/Push，Memory仍Research Reserved。使用与长期反例记录见scripts/research/README-goal-continuity.md。
+
+
+## 2026-11-13 Goal Continuity 三场景联合验证（最新）
+
+[纠正、保持及两对视图增量报告](goal-continuity-three-scenarios-20261113.md)，批次 goal-continuity-three-20261113T030425Z：同一44,867B真实checkpoint独立六分支；Global family是人工研究绑定。A一次明确纠正真实revise保存76fe…，CURRENT/历史purpose分离、父链/新head真实送达，核心目的忠实，尾部维护说明冗余PARTIAL。B零调用保持ff2a，不把Intel局部Task结束变成长期Goal完成；没有恢复/取消旧Workflow。C两对ON/OFF只去当前结构化视图，历史Goal/工具回执均保留；实际首请求归一化一致。ON仍有指标/日期错误，OFF1最终删失、OFF2单位/量纲错误；没有可靠增量决策收益。12个模型响应完整、13次新读取绑定、983有效service样本，安全正常停服。M2限定存在性VERIFIED，M3总体仍PARTIAL，M4/M5 UNKNOWN。A新head不拼接为B/C后续链；32上限是Thread可见集合，非Profile总版本。无正式架构/权限变更、未Commit/Push；Memory Research Reserved，本轮停止评审。
+
+
+## 2026-11-13 Git阶段归档
+
+[本次版本检查点](../implementation/checkpoints/goal-research-checkpoint-20261113.md)同步已完成的工程、研究工具、失败记录和当前README进度；288项CPU回归通过，不代表新的认知实验。M2限定存在性、M3 PARTIAL、M4/M5 UNKNOWN不变。Git内保留精选派生审阅摘要，完整原始证据仍在仓库外，不以push提升候选权威或研究成熟度。

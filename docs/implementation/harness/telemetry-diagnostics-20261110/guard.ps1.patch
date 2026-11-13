@@ -1,0 +1,80 @@
+--- guard.ps1.before
++++ guard.ps1
+@@ -50,19 +50,52 @@
+  return ($j|ConvertFrom-Json)
+ }
+ $script:LinuxRunId='';$script:LinuxSeq=-1;$script:LinuxSeen=[Diagnostics.Stopwatch]::StartNew()
++$script:LastGoodLinux=$null;$script:CurrentWindowsSensor=$null;$script:PrimarySensorFailure=$null
++function RejectLinux($code,$g,$timing,$detail=''){
++ $script:PrimarySensorFailure=[ordered]@{
++  code=$code;detail=$detail;active=$Active;windows_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
++  windows_monotonic=[Diagnostics.Stopwatch]::GetTimestamp();windows_frequency=[Diagnostics.Stopwatch]::Frequency
++  expected_run=$script:LinuxRunId;last_accepted_seq=$script:LinuxSeq
++  sequence_age_monotonic=$script:LinuxSeen.Elapsed.TotalSeconds
++  rejected_sample=$g;last_accepted_sample=$script:LastGoodLinux
++  current_windows_sample=$script:CurrentWindowsSensor;read_timing=$timing
++  action='FAIL_CLOSED';resource_thresholds_changed=$false
++ }
++ # Capture the primary error before cleanup can replace the current metrics file.
++ $line=$script:PrimarySensorFailure|ConvertTo-Json -Depth 12 -Compress
++ [IO.File]::AppendAllText((Join-Path $Out 'telemetry-rejections.jsonl'),$line+[Environment]::NewLine)
++ throw $code
++}
+ function ReadLinuxMetrics {
+- $g=[IO.File]::ReadAllText((Join-Path $Out 'linux-metrics.json'))|ConvertFrom-Json
+- if(-not $g.valid -or $g.run_id -ne $script:LinuxRunId){throw 'Linux metrics invalid or wrong run'}
+- if($g.seq -isnot [long] -and $g.seq -isnot [int]){throw 'Linux metric sequence invalid'}
+- if($g.seq -lt $script:LinuxSeq){throw 'Linux metric sequence reversed'}
++ $read=[Diagnostics.Stopwatch]::StartNew();$g=$null
++ $timing=[ordered]@{read_started_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0}
++ try{$raw=[IO.File]::ReadAllText((Join-Path $Out 'linux-metrics.json'));$g=$raw|ConvertFrom-Json}
++ catch{
++  $timing.read_seconds=$read.Elapsed.TotalSeconds
++  RejectLinux 'LINUX_SAMPLE_UNREADABLE' $g $timing $_.Exception.Message
++ }
++ $timing.read_seconds=$read.Elapsed.TotalSeconds
++ $timing.read_finished_utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
++ if(-not $g.valid){RejectLinux 'LINUX_SAMPLE_INVALID' $g $timing}
++ if($g.run_id -ne $script:LinuxRunId){RejectLinux 'LINUX_RUN_MISMATCH' $g $timing}
++ if($g.seq -isnot [long] -and $g.seq -isnot [int]){RejectLinux 'LINUX_SEQUENCE_INVALID' $g $timing}
++ if($g.seq -lt $script:LinuxSeq){RejectLinux 'LINUX_SEQUENCE_REVERSED' $g $timing}
+  foreach($key in @('utc','sample_seconds','wsl_available','wsl_total','swap_used','gpu_total','gpu_used','gpu_free')){
+   $value=$g.$key
+-  if($null -eq $value -or -not ($value -is [valuetype]) -or [double]::IsNaN([double]$value) -or [double]::IsInfinity([double]$value) -or [double]$value -lt 0){throw "Linux invalid metric $key"}
++  if($null -eq $value -or -not ($value -is [valuetype]) -or [double]::IsNaN([double]$value) -or [double]::IsInfinity([double]$value) -or [double]$value -lt 0){
++   RejectLinux 'LINUX_VALUE_INVALID' $g $timing $key
++  }
+  }
+- $age=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0-[double]$g.utc
+- if($age -gt 3 -or $age -lt -1 -or $g.sample_seconds -gt 3){throw 'Linux metric timestamp stale or invalid'}
++ $now=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0
++ $age=$now-[double]$g.utc
++ $timing.validation_utc=$now;$timing.sample_age_seconds=$age
++ # Same gates as before. No retry, grace window, clock correction or stale fallback.
++ if($age -gt 3){RejectLinux 'LINUX_SAMPLE_OLD' $g $timing}
++ if($age -lt -1){RejectLinux 'LINUX_CLOCK_FUTURE' $g $timing}
++ if($g.sample_seconds -gt 3){RejectLinux 'LINUX_SAMPLE_DELAY' $g $timing}
+  if($g.seq -gt $script:LinuxSeq){$script:LinuxSeq=$g.seq;$script:LinuxSeen.Restart()}
+- if($script:LinuxSeen.Elapsed.TotalSeconds -gt 3){throw 'Linux metric sequence stale'}
++ if($script:LinuxSeen.Elapsed.TotalSeconds -gt 3){RejectLinux 'LINUX_SEQUENCE_STALE' $g $timing}
++ $script:LastGoodLinux=$g
+  return $g
+ }
+ function Sensor($case){
+@@ -74,6 +107,7 @@
+  $d=[ordered]@{run_id=$RunId;seq=$script:Seq;measurement_seconds=$watch.Elapsed.TotalSeconds;source='windows_native';valid=$true;utc=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000.0;commit_limit=[double]$m.CommitLimit;commit_used=[double]$m.CommittedBytes;physical_available=[double]$m.AvailableMBytes*1MB;pages_input_per_sec=[double]$gp.PagesInputPersec;pages_output_per_sec=[double]$gp.PagesOutputPersec;page_reads_per_sec=[double]$gp.PageReadsPersec;page_writes_per_sec=[double]$gp.PageWritesPersec;cache_bytes=[double]$gp.CacheBytes;modified_bytes=[double]$gp.ModifiedPageListBytes;gpu_shared_usage=[double]$gp.SharedUsage;gpu_dedicated_usage=[double]$gp.DedicatedUsage;gpu_total_committed=[double]$gp.TotalCommitted;gpu_counter_identity=$AdapterCounterName;vmmem=$vm}
+  foreach($key in @('commit_limit','commit_used','physical_available','gpu_shared_usage','gpu_dedicated_usage')){if([double]::IsNaN($d[$key]) -or [double]::IsInfinity($d[$key]) -or $d[$key] -lt 0){throw "Invalid metric $key"}}
+  if($d.commit_limit -le 0 -or $d.commit_used -gt $d.commit_limit){throw 'Invalid Commit counters'}
++ $script:CurrentWindowsSensor=$d
+  $g=ReadLinuxMetrics
+  $Heart.WriteLine(($d|ConvertTo-Json -Depth 5 -Compress));$Heart.Flush()
+  $watch.Stop()
+@@ -147,7 +181,7 @@
+   }elseif($reason -or $state.guard_reason){throw "Safety stop during $case; reason=$reason supervisor=$($state.guard_reason); no automatic retry"}
+  }
+  Save 'completed.json' @{completed=$true;scope='controller lifecycle only';workflow_completed=$false;model_started=(-not $Smoke);per_stage_attempt_limit=1;no_automatic_retry=$true}
+-}catch{Save 'monitor-exception.json' @{message=$_.Exception.Message;active=$Active};throw}
++}catch{Save 'monitor-exception.json' @{message=$_.Exception.Message;active=$Active;primary_sensor_failure=$script:PrimarySensorFailure};throw}
+ finally{
+  if($Active){try{Save 'final-cleanup.json' (Linux 'stop' $Active)}catch{Save 'cleanup-error.json' @{message=$_.Exception.Message}}}
+  try{[void](Sensor 'postflight')}catch{Save 'postflight-error.json' @{message=$_.Exception.Message}}

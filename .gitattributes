@@ -1,1 +1,4 @@
 scripts/start_h3_harness_interactive.sh text eol=lf
+
+# Literal space-prefixed context lines in archived diffs must keep their bytes.
+docs/implementation/harness/telemetry-single-clock-20261110/*.patch whitespace=-blank-at-eol

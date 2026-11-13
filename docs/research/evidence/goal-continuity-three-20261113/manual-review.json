@@ -1,0 +1,224 @@
+{
+  "schema": "uaea.goal_continuity_three.manual_review.v1",
+  "basis": "Full completed Native agent messages + actual calls/Host receipts/versions + frozen excerpts; researcher review, independently cross-checked by Audit Agent. No model self-grading; no unique correct research question.",
+  "limits": [
+    "Researcher-written current inputs, not confirmation of real user's investing Goal.",
+    "A/B/C independent; A's new head never inherited by B/C.",
+    "Historical source excerpts frozen; no revalidation of underlying live market truth.",
+    "C compares dedicated structured view increment over same ordinary historical Goal/tool receipts.",
+    "n=2 pairs; sequential stochastic engine, view length/position differs; no calibrated probability/statistical causal estimate."
+  ],
+  "A": {
+    "branch": "f0",
+    "overall": "VERIFIED",
+    "scope": "One explicit cross-session correction existence observation; not autonomous lifecycle or long-run reliability.",
+    "faithful_core": "VERIFIED",
+    "candidate_abstraction": "PARTIAL",
+    "source_CURRENT_and_historical_purpose": "VERIFIED",
+    "Host_save_parent_newhead_delivery": "VERIFIED",
+    "Host_state_report": "VERIFIED",
+    "new_head": "goal-candidate:76fe2c341f981c349d539f56",
+    "parent": "goal-candidate:ff2a010b338474f6ea3f66f5",
+    "call_id": "chatcmpl-tool-98f84c205dd46177",
+    "observation": "Preserves long-term cross-company AI investment research, emphasizes testable research method rather than trading decision, does not convert unexpressed constraints into blanket absence.",
+    "counterexample": "Tail repeats interpretation maintenance instructions (do not add to-dos/unexpressed holdings/horizon/risk preferences). Redundant/meta clauses, not evidence whole purpose distorted. Do not keyword-fail methods or context.",
+    "not_established": [
+      "Full exact readback of all old versions before acting",
+      "Next independent user Task using this new revision",
+      "M4 or M5"
+    ]
+  },
+  "B": {
+    "branch": "f3",
+    "overall": "VERIFIED",
+    "scope": "Local Task ending semantically understood + unchanged long-term Host head in this single Thread; no old Workflow cancellation execution.",
+    "Goal_Task_distinction": "VERIFIED",
+    "global_preserved": "VERIFIED",
+    "unnecessary_operations": "none",
+    "Host_state_report": "VERIFIED",
+    "current_head": "goal-candidate:ff2a010b338474f6ea3f66f5",
+    "new_calls": 0,
+    "new_versions": 0,
+    "nuance": "Answer calls old root '覆盖'; actual old immutable version retained, compatible with head supersession. Closing suggestion to mark Intel completed via Sideband is only a suggestion, and hints at unresolved Task-status versus Goal semantics; not actual operation.",
+    "not_established": [
+      "Cancellation of old persisted Workflow",
+      "Withdrawal of old local candidate in original Thread",
+      "General autonomous maintenance"
+    ]
+  },
+  "C": {
+    "overall": "PARTIAL",
+    "incremental_decision_value": "UNKNOWN",
+    "dimensions": [
+      "specific defensible research question",
+      "evidence-based priority",
+      "actual calculation/comparison/check",
+      "faithful limitations",
+      "no unjustified repetition",
+      "truthful state report"
+    ],
+    "f1": {
+      "view": "ON",
+      "pair": 1,
+      "overall": "PARTIAL",
+      "final_answer": "present",
+      "dimensions": [
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "VERIFIED",
+        "PARTIAL"
+      ],
+      "positive": [
+        "Specific cross-company financial comparison",
+        "Uses exact historical source receipts without unnecessary new reads",
+        "Revenue ratios 6.9x/7.7x and Google EPS YoY -26.1% numerically correct",
+        "No invented missing price/forward EPS or trade"
+      ],
+      "errors": [
+        {
+          "class": "metric_semantics",
+          "text": "以GAAP diluted EPS为基准的苹果公司规模溢价",
+          "finding": "Cross-company EPS ratio is not size premium or valuation; no common share denominator/price."
+        },
+        {
+          "class": "contradicts_own_data",
+          "text": "苹果对照Intel EPS优势与收入规模优势均显著高于Google",
+          "finding": "Apple 2.10 < Google 2.12; Apple114.5B < Google127.577B."
+        },
+        {
+          "class": "accounting_and_inference",
+          "text": "Apple非GAAP关税退款、优势至少3.5x以上",
+          "finding": "Excerpt supplies GAAP EPS including refund; no non-GAAP Apple figure; at-least bound unsupported."
+        },
+        {
+          "class": "scope_and_capability",
+          "finding": "Expands ledger missing-data cautions into only-already-read/global capability restriction; says all valuation/price work ended although only Intel local Task ended."
+        }
+      ],
+      "Goal_actual_causal_use": "UNKNOWN"
+    },
+    "f2": {
+      "view": "OFF",
+      "pair": 1,
+      "overall": "CENSORED",
+      "final_answer": "absent",
+      "budgeted_task_completion": "FAIL",
+      "dimensions": [
+        "PARTIAL",
+        "CENSORED",
+        "CENSORED",
+        "CENSORED",
+        "PARTIAL",
+        "CENSORED"
+      ],
+      "observed": [
+        "4 actual source reads",
+        "Accepted form with candidate_id JSON null creates local e9984f...; no global change",
+        "Two later form calls use string 'None', correctly rejected, no extra version"
+      ],
+      "attribution": "Local chosen research question may be Task/Path/Agent plan; delegated choice supports local purpose but not explicit endorsement of sustained direction. Goal scope/representation issue to review, not proof of unauthorized global adoption.",
+      "interruption": "4 complete upstream responses then local pre-forward502 and Native reconnect exhaustion. Compatible with frozen four-request cap; original local exception unlogged, exclusivity UNKNOWN. No evidence OOM, Context overflow, guard failure or upstream transmission loss.",
+      "not_infer": "Censoring does not prove ON decision superiority; complete model HTTP responses do not prove Native Turn/task completion."
+    },
+    "f4": {
+      "view": "OFF",
+      "pair": 2,
+      "overall": "PARTIAL",
+      "financial_test_quality": "FAIL",
+      "final_answer": "present",
+      "dimensions": [
+        "PARTIAL",
+        "PARTIAL",
+        "FAIL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL"
+      ],
+      "positive": [
+        "Specific comparison and actual reads",
+        "Preserves missing-price/valuation unknown and no trade",
+        "Long-term global head unchanged"
+      ],
+      "errors": [
+        {
+          "class": "dimension",
+          "text": "营收收益率（EPS÷营收×100）",
+          "finding": "USD/share divided total USD is inverse shares, not dimensionless yield/percent; arbitrary nonstandard label and disclaimer do not validate it."
+        },
+        {
+          "class": "unit",
+          "finding": "16.5B USD miswritten16.5亿 instead165亿;114.5B miswritten114.5亿 instead1145亿; Alphabet1275.77亿 correct. Column 'USD千万' inconsistent with table亿."
+        },
+        {
+          "class": "comparability",
+          "finding": "Mixes Intel non-GAAP .52 with Apple GAAP2.10 under dilutedEPS comparison."
+        },
+        {
+          "class": "version_applicability",
+          "finding": "Uses old parent's need-to-find-outside-materials clause as current research requirement; not confirmed causal effect."
+        }
+      ],
+      "unnecessary_read": "README adds no financial evidence; not all repeated source reads automatically invalid."
+    },
+    "f5": {
+      "view": "ON",
+      "pair": 2,
+      "overall": "PARTIAL",
+      "final_answer": "present",
+      "dimensions": [
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "VERIFIED",
+        "PARTIAL"
+      ],
+      "positive": [
+        "4 actual ledger/source reads",
+        "Source tables, B units, periods and GAAP/non-GAAP values accurate",
+        "Google EPS YoY -26.1% and .05/2.10=2.38% arithmetic correct",
+        "Acknowledges no revenueYoY and cannot infer profitability; keeps historical valuation UNKNOWN"
+      ],
+      "errors": [
+        {
+          "class": "metric_semantics",
+          "text": "净营收比率（关税退款影响）=0.05/2.10",
+          "finding": "Ratio is refund EPS contribution / stated EPS, not revenue ratio or operating margin."
+        },
+        {
+          "class": "unsupported_premise",
+          "text": "与同期收入增长可能暗示",
+          "finding": "No revenue growth is supplied; later recognition of missing revenueYoY partially limits but does not support premise."
+        },
+        {
+          "class": "time_order",
+          "text": "captured_at=2026-11-09早于历史估值点2026-11-04",
+          "finding": "Date ordering false. UNKNOWN conclusion does not make reason correct."
+        },
+        {
+          "class": "period_comparability",
+          "finding": "FiscalQ4 vs calendarQ4 caveat doesn't identify actual supplied counterparts: both Apple/Intel endSept26 and GoogleSept30; cannot infer period mismatch solely from quarter labels."
+        }
+      ],
+      "Goal_actual_causal_use": "UNKNOWN"
+    },
+    "comparison": "Both ON completed and kept units better; OFF1 had extra local Goal/invalid parameters and was censored. Pair2 ON slower and more tokens, still semantic/date errors. Limited behavioral signal only; no repeatable validated incremental decision gain."
+  },
+  "failure_classification": {
+    "storage_or_projection": "No observed new blocking defect; immutable checkpoint, current views, receipt identity validated.",
+    "tool_parameters": "f2 string None errors verified; Host correctly rejects.",
+    "semantics_and_calculation": "C errors despite correct supplied evidence; mechanism/model attribution beyond observed generation UNKNOWN.",
+    "Goal_scope_concept": "Local delegated question versus persistent user intention unresolved; manual global binding not autonomy.",
+    "budget_censoring": "f2 no final; do not relabel as fully observed semantic failure.",
+    "mathematical_goal_model": "No probabilistic Goal model evaluated; error counts not Goal entropy or success probabilities."
+  },
+  "milestones": {
+    "M1": "PARTIAL: correct core attribution in A/B, local self-selected question boundary unresolved.",
+    "M2": "Limited explicit correction existence VERIFIED; not stable autonomous maintenance; abstraction PARTIAL.",
+    "M3": "Retain prior continuity PARTIAL; A same-Turn newhead delivered, B/C independently use checkpoint. No new A-to-next-user behavioral loop.",
+    "M4": "UNKNOWN",
+    "M5": "UNKNOWN"
+  }
+}

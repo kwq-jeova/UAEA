@@ -1,0 +1,19 @@
+{
+  "README.md": "84dc370c5d3bb8ee9ce72f8fbcf8af710a769314cd3491b808c5b3e66391e4b7",
+  "candidate-lock.json": "bbffca7c6854d726e2a4bf42e76d8c076539b66042629695b44b75baa7bd44f1",
+  "clock-offset-tests.json": "73bcacc52cfe0dcdc7c5999956d461a6d3f8f5fc1e4edc17691ca048eb4736d6",
+  "collector-tests-final.log": "7a8878bee5faee3c6644436b810dc5bc340964cc6ef0cadcb880e7ff05ff7432",
+  "guard.ps1.patch": "6e9c6b3dfcaaa5c15da20edc3b14b5bbd84fcb9746ea3c053a735cfac3ba46af",
+  "guard.ps1.validated": "032755d91acf805037907220eb1541de58a0ac061e73c96f1d71c4d65b0ef4aa",
+  "guard_ctl.py.patch": "d3bd484191c9698779ac44e5f58b1eb02d42b9c8188513244e943600ada5624d",
+  "guard_ctl.py.validated": "614ebbd12e7095824017f60c96b46ae19bad910ea368e0902fc7a594496224a6",
+  "probe.ps1": "7bd7965faa42bd667149dfc48f3b479dbace7bfaec2d7880d7defd9b17a993d1",
+  "production-smoke.json": "cf695283bd1648f464526c9d3e86e3b03086f22aa7d769b15596e20cb1ad0308",
+  "promotion.json": "bc4d8a757c6c3b3a0f498f4520fc3e291ce3a691cf36d83a1fd8ed6d5a214aa6",
+  "protocol-review.md": "e4ef7237a84a25adb88133c08609346a7b48a9802ae5f2d9515d581bf4419b4a",
+  "run_faults.ps1": "4cc2ca730acc6c6215f1d040cfb3687fe6db53e05745e2bd570828e98c467324",
+  "soak-observer.json": "0ae6738922cd4d2c3cecae6fb27179548e6f7646d983d70c4c5cbbc35d01ab05",
+  "test-summary.json": "507faf54308c8aac80108a10b1d5d833dc35d27f43dc0b04748ce7cc7dc4c9ae",
+  "test_collector.py": "d0c998f901f96427d75795666c095ceff493d44ca91228dba0f099734b055465",
+  "test_windows.ps1": "69984e62c08eaf75ed4e0986ea4630e3c5495dd23db6cb57e27448d1b441de7d"
+}

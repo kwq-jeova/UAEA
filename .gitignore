@@ -20,3 +20,6 @@ Thumbs.db
 .env.*
 web.env
 web.env.*
+
+# Local scratch projections; retained locally, not research source or canonical evidence.
+/unused/

@@ -1,0 +1,48 @@
+[
+  {
+    "kind": "SIMULATED sample-UTC offset, no system time change",
+    "offset": "future",
+    "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T130749Z-9406af75",
+    "result": {
+      "model_loaded": false,
+      "requested_seconds": 10,
+      "seconds": 10.0103456,
+      "samples": 9,
+      "pass": true
+    },
+    "utc_difference_range": [
+      -3600.128358364105,
+      -3599.9398698806763
+    ],
+    "max_causal_seconds": 0.2208488,
+    "cleanup": {
+      "signals": [
+        "SIGTERM"
+      ],
+      "remaining": []
+    }
+  },
+  {
+    "kind": "SIMULATED sample-UTC offset, no system time change",
+    "offset": "past",
+    "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T131025Z-c6225fad",
+    "result": {
+      "model_loaded": false,
+      "requested_seconds": 10,
+      "seconds": 11.0117316,
+      "pass": true,
+      "samples": 10
+    },
+    "utc_difference_range": [
+      3599.4527246952057,
+      3599.6901948451996
+    ],
+    "max_causal_seconds": 0.1818288,
+    "cleanup": {
+      "signals": [
+        "SIGTERM"
+      ],
+      "remaining": []
+    }
+  }
+]

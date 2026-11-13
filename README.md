@@ -1,42 +1,53 @@
 # UAEA
 
-UAEA（Unified Autonomous Evolution Architecture）当前以 **Phase-1 semantic baseline + 本地 Harness Runtime Baseline** 为主路径。
-Harness 承担成熟执行基础设施，UAEA 保留语义组织、capability contract 与 evidence/provenance，
-后续研究转向 longitudinal cognition，而不是继续扩建通用 Agent Runtime。
+UAEA（Unified Autonomous Evolution Architecture）研究如何通过持续交互理解用户方向、修正认知，并改善未来决策。现有主路径为 **冻结的 Phase-1 语义契约 + Harness 执行基础设施 + 隔离的 Goal Hypothesis 研究**。
 
-文档总入口：[Documentation Guide](docs/README.md)。按当前基线、研究基础、历史证据和维护说明阅读，不按 Phase 名称推断有效性。
+Harness 拥有 Agent Loop、工具执行与 Turn 生命周期；UAEA 维护来源、版本、候选状态和授权边界。坚持 **LLM proposes / Runtime validates**：来源合法、调用保存成功不等于语义正确，Retention 不等于 Adoption。
 
-**2026-10-22 Harness 依赖升级：默认 `rust-v0.163.0`，保留 `rust-v0.154.0` 独立对照组。**
-版本清单、双版本验证与回退见 [升级记录](docs/current/runtime/harness-upgrade-20261022.md)；
-本轮不改变下述 semantic ownership、模型及冻结 `8001`，不将既有模型行为 PARTIAL 宣称为已修复。
+## 当前进度：2026-11-13
 
-**2026-10-27 N1X 正式运行配置：32K + Hermes，与 5090D 统一 Context 规格。**
-N1X 启动、固定版本、单工具验收及 8K 归档见 [N1X 运行基线](docs/current/runtime/n1x-runtime-baseline-20261027.md)。
+最新[三场景联合报告](docs/research/goal-continuity-three-scenarios-20261113.md)及独立审计总体 **PARTIAL**：
 
-当前阶段与停止点：[2026-10-05 信息边界 Checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)。
-[2026-10-02 Boundary Audit](docs/current/architecture/boundary-integrity-audit-20261002.md) 保留此前修复依据，不能用旧测试或等待状态替代最新结论。
-**2026-10-18 最新进度：来源覆盖事实记录人工验收 PASS；单 Workflow 研究推理仍为 PARTIAL。**
-032826 人工验收为 PARTIAL：后续请求没有 Action 时仍缺少持续投影，模型误称已阅读页面。
-当前只补 [不依赖 Step 的请求保留](docs/implementation/harness/workflow-request-continuity-20261018.md)，
-等待新一轮人工验收；不进入 Goal/Memory，不把成功取得页面等同于取得充分证据。
+| 研究里程碑 | 当前结论 |
+|---|---|
+| 用户意图归属 M1 | PARTIAL；User Goal 与模型待办分离，受委托局部问题和持续目的仍有歧义 |
+| 受反馈纠正 M2 | 限定存在性 VERIFIED：真实跨会话 revise、合法 CURRENT、Host 保存及新 head 送达；抽象冗余仍 PARTIAL |
+| 后续连续性 M3 | PARTIAL；A 新 head 未由独立 B/C 继承，不拼接为新行为闭环 |
+| 自主 Goal 生命周期 M4 | UNKNOWN；显式纠正成功不等于自主维护 |
+| 超过 Relevant History 的决策价值 M5 | UNKNOWN；两对结构化 Goal View ON/OFF 质量和成本混合 |
+| Goal Continuity 工程 | 隔离 Journal 持久化/恢复、不可变版本及 Scope 有限定证据；人工 Global family 绑定不计模型自主能力 |
+| Memory | Research Reserved；不开放 Memory Admission |
 
-## 当前信息边界阶段
+本轮三场景：A 忠实核心修订并保存，B 结束 Intel 局部 Task 而保持长期 Goal，C 尚未证明结构化视图改善实际决策。12 个模型响应完整、13 次读取身份正确，不等于认知全部通过；保留金融指标、单位、时间错误和一个最终质量删失样本。
 
-| 阶段 | 当前结论 | 下一步 |
-| --- | --- | --- |
-| Harness Runtime Baseline | CLOSED，保持既有 ownership 与物理边界 | 不继续扩建 generic runtime |
-| Failed-attempt / recovery / observation | 恢复与结构边界已有验证；模型行为仍有残余风险 | 保留逐轮证据，不增加错误分类或网络补丁 |
-| Semantic Promotion Shadow Audit | 最新人工 run 已验证 audit/terminal snapshot 边界 PASS | 诊断不授予权威 |
-| Retained interpretation / execution authority | 结构与回归 PASS；整体语义正确性仍为 PARTIAL | 保留既有权威边界，按人工记录核验 |
-| 单 Workflow 来源覆盖 | 030440 人工 run：6 个发现来源、3 个已获取、3 个未尝试，事实计数 PASS | 保留来源与调用身份，不据此宣布研究完成 |
-| 请求与行动依据续接 | 032826 人工验收 PARTIAL；Step 前置依赖已确认 | 作为历史依据保留，不据此扩大认知架构 |
-| 不依赖 Step 的请求保留 | 自动/原 artifact 重放与真实四轮执行链 PASS；模型行为 PARTIAL，人工待验 | 核对请求、调用、结果及未完成事实，不以流畅回答判断通过 |
-| Goal Hypothesis / Memory / Episode | 尚未实现新的 cognition engine | 不在本 checkpoint 自动启动 |
+候选仍是 opt-in、非权威、可撤销解释，不能自动成为 ActiveGoal、可信 Memory 或执行授权。没有新增 Goal Engine、第二套 Agent Loop 或通用语义裁判。
 
-当前只把有独立依据的有限 Web directive 投影成 execution constraint；topic/source preference
-保留为低权威 interpretation。`strength`、provenance 或投影位置不自动授予权限。
-qualified constraint 走 `application`，其余 semantic context 走 `untrusted`；
-projection 与 action validation 使用同一 effective view。详见 [阶段实现与人工观察点](docs/implementation/harness/semantic-authority-boundary-20261005.md)。
+### 当前 N1X 研究配置
+
+| 配置 | 已验证的隔离研究入口 |
+|---|---|
+| UMA | GPU 56 GiB / Host 72 GiB |
+| Backend | Nemotron Bolt 74B，vLLM 0.32.0 |
+| Harness | Codex rust-v0.163.0 |
+| Context / KV / 并发 | 64K / 固定 1 GiB / 1 |
+| GPU utilization | 0.65，仅该隔离入口 |
+| 安全 | 原 Windows/WSL/AC、单时钟遥测与 Fail-Closed；不降低阈值 |
+
+这不是将所有正式入口切为64K或0.65。32K及64/64原启动配置仍保留；[历史32K运行基线](docs/current/runtime/n1x-runtime-baseline-20261027.md)不代表最新研究负载。容量、长期会话与资源证据见[Phase1 64K连续研究](docs/research/phase1-finance64-continuity-20261112.md)、[UMA限定负载](docs/research/uma56-controlled-load-20261111.md)。
+
+## 阅读与研究入口
+
+- [文档总导航](docs/README.md)与[当前进度](docs/current/README.md)：先区分冻结契约、研究机制和历史结论。
+- [研究索引](docs/research/README.md)、[研究地图](docs/research/research-foundation-map.md)：保留正面、负面及 UNKNOWN，不按旧文档中的“下一步”自动执行。
+- [Goal 连续性使用方法](scripts/research/README-goal-continuity.md)：本地研究 Journal 是单一候选 authority；不恢复旧 Workflow 为新执行。
+- [Goal Sideband 研究通道](scripts/research/README-goal-hypothesis.md)：工具提案、Host 接受、保存、投影和认知判断分别评价。
+- [本次 Git 检查点与证据范围](docs/implementation/checkpoints/goal-research-checkpoint-20261113.md)：代码、轻量回归、外部原始证据和已知限制。
+
+原始研究记录保存在仓库外 research-records，Windows 评审包保存在 UAEA_DOCS。仓库提交源码、固定场景、报告及摘要/哈希，不包含模型权重、凭据、Native SQLite 或完整会话日志；外部原始证据路径不保证在新 clone 上存在。
+
+## 保留的执行与权威边界
+
+以下冻结职责继续有效；历史人工环境的具体参数另有日期，不将其解释为最新研究配置。Phase-1 不因本轮 Git 同步而变更。
 
 ## 当前架构与职责
 
@@ -46,7 +57,7 @@ User
   -> bounded pre-turn additionalContext
   -> source-owned local Codex app-server (rust-v0.163.0; v0.154.0 retained)
   -> UAEA local provider-safe history projection
-  -> local vLLM / Qwen2.5-14B-Instruct-AWQ
+  -> replaceable model Backend / local vLLM
   -> model action proposal
   -> UAEA semantic validation / ToolRegistry capability boundary
   -> execution observation / bounded actionable evidence
@@ -69,7 +80,7 @@ UAEA → Harness：typed `additionalContext`、dynamic tool schema、经过语�
 Harness → UAEA：有序 thread/turn/item events、tool result、command execution、token usage、错误及 terminal boundary。
 执行事实以结构化 result 为准；requested provider、actual provider 和 successful execution 不可互相替代。
 
-## 物理边界与人工入口
+## 历史 5090D 人工入口与保留配置
 
 ```text
 RTX 5090 D v2
@@ -110,8 +121,8 @@ Web 代理和 `SERPAPI_KEY` 自动从仓库外 `~/.config/uaea/web.env` 加载�
 - Workflow/Step records 在 bridge 中提供 task identity/ownership 和行动事实记录，不启动旧 planner 或 execution loop。
 - ActiveGoal anchor 代码保留，但当前 Harness bridge 不激活；`ActiveGoal != future longitudinal Goal Hypothesis`。
 - 当前有限 relation/extraction surface 不是完整 intent arbitration，也不保证任意多 topic/隐含任务切换。
-- Goal Hypothesis / Working Memory / Episode / Experience engine：本轮均未实现。
-  既有 Memory Candidate/SQLite source-evidence 资产保留，不等于长期认知层已接入。
+- Goal Hypothesis Sideband 和本地 Continuity 已在隔离研究入口实现，正式 ActiveGoal 不自动采纳。
+- Working Memory / Episode / Experience engine 未接入；Memory Candidate/SQLite source-evidence 资产保留，不等于可信长期记忆已建立。
 
 ## Web Semantic / Evidence Boundary
 
@@ -167,9 +178,6 @@ Phase-1/Phase-2A、LMF 和早期 Harness 的完整描述。
 [历史索引](docs/archive/harness/README.md) 区分当前结论与阶段记录。
 LMF/其它 inference adapter 是保留的研究资产，不是当前 Harness 验证路径。
 
-下一研究方向仍是 UAEA Episode / Goal Hypothesis / Working Memory / associative relation；
-但当前先等待 retained interpretation / execution authority 的人工结果，不直接启动认知引擎。
-信息保留、解释、依据、权威与修订关系的有限阶段状态见 [当前 checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)，
-思想血缘与未决问题见 [Research Foundation Map](docs/research/research-foundation-map.md)。
-只有 missing lifecycle hook、unobservable critical state、impossible context projection
-或 generic runtime capability 真正不足，才重新打开 Harness work；不自动开始下一阶段实现。
+当前研究保持在 Goal Hypothesis 的语义忠实性、跨会话连续性及实际决策价值验证；下一轮是否扩大研究由阶段评审决定，不因归档或 push 自动开始实验。Memory 数学建模仍 Research Reserved。
+
+冻结权威关系见[信息边界 checkpoint](docs/current/architecture/cognition-boundary-checkpoint-20261005.md)；该历史文档的人工待验状态不代替2026-11-13研究结论。只有现有 Harness 缺少必要执行事实、状态可观察性或投影能力，才重新讨论基础设施；模型语义错误不自动要求新增 Runtime 纠错层。

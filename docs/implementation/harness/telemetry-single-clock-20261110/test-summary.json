@@ -1,0 +1,183 @@
+{
+  "windows_consumer": [
+    {
+      "case": "normal",
+      "pass": true,
+      "observed": null,
+      "expected": null,
+      "seconds": 0.0875875
+    },
+    {
+      "case": "utc_future",
+      "pass": true,
+      "observed": null,
+      "expected": null,
+      "seconds": 0.0362071
+    },
+    {
+      "case": "utc_past",
+      "pass": true,
+      "observed": null,
+      "expected": null,
+      "seconds": 0.0324278
+    },
+    {
+      "case": "expired",
+      "pass": true,
+      "observed": "CAUSAL_SAMPLE_TIMEOUT",
+      "expected": "CAUSAL_SAMPLE_TIMEOUT",
+      "seconds": 0.0183963
+    },
+    {
+      "case": "cross_sampler",
+      "pass": true,
+      "observed": "LINUX_RUN_MISMATCH",
+      "expected": "LINUX_RUN_MISMATCH",
+      "seconds": 0.0326345
+    },
+    {
+      "case": "cross_guard",
+      "pass": true,
+      "observed": "LINUX_GUARD_RUN_MISMATCH",
+      "expected": "LINUX_GUARD_RUN_MISMATCH",
+      "seconds": 0.0357867
+    },
+    {
+      "case": "wrong_nonce",
+      "pass": true,
+      "observed": "LINUX_ACK_MISMATCH",
+      "expected": "LINUX_ACK_MISMATCH",
+      "seconds": 0.0253741
+    },
+    {
+      "case": "replay",
+      "pass": true,
+      "observed": "LINUX_RESPONSE_REPLAY",
+      "expected": "LINUX_RESPONSE_REPLAY",
+      "seconds": 0.0581206
+    },
+    {
+      "case": "invalid",
+      "pass": true,
+      "observed": "LINUX_SAMPLE_INVALID",
+      "expected": "LINUX_SAMPLE_INVALID",
+      "seconds": 0.0225268
+    },
+    {
+      "case": "slow",
+      "pass": true,
+      "observed": "LINUX_SAMPLE_DELAY",
+      "expected": "LINUX_SAMPLE_DELAY",
+      "seconds": 0.0432367
+    },
+    {
+      "case": "missing_value",
+      "pass": true,
+      "observed": "LINUX_VALUE_INVALID",
+      "expected": "LINUX_VALUE_INVALID",
+      "seconds": 0.0402961
+    },
+    {
+      "case": "negative",
+      "pass": true,
+      "observed": "LINUX_VALUE_INVALID",
+      "expected": "LINUX_VALUE_INVALID",
+      "seconds": 0.0537823
+    },
+    {
+      "case": "bad_request_type",
+      "pass": true,
+      "observed": "LINUX_REQUEST_SEQUENCE_INVALID",
+      "expected": "LINUX_REQUEST_SEQUENCE_INVALID",
+      "seconds": 0.0320071
+    },
+    {
+      "case": "consumed",
+      "pass": true,
+      "observed": "CHALLENGE_ALREADY_CONSUMED",
+      "expected": "CHALLENGE_ALREADY_CONSUMED",
+      "seconds": 0.0050528
+    },
+    {
+      "case": "monotonic_reversed",
+      "pass": true,
+      "observed": "WINDOWS_MONOTONIC_REVERSED",
+      "expected": "WINDOWS_MONOTONIC_REVERSED",
+      "seconds": 0.0042508
+    },
+    {
+      "case": "old_response_no_refresh",
+      "pass": true,
+      "observed": "CAUSAL_SAMPLE_TIMEOUT",
+      "expected": "CAUSAL_SAMPLE_TIMEOUT",
+      "seconds": 3.0336427
+    }
+  ],
+  "process_faults": [
+    {
+      "mode": "query_error",
+      "pass": true,
+      "expected": "LINUX_SAMPLE_INVALID",
+      "actual": "LINUX_SAMPLE_INVALID",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125018Z-f29c5b0e",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "slow_query",
+      "pass": true,
+      "expected": "LINUX_SAMPLE_INVALID",
+      "actual": "LINUX_SAMPLE_INVALID",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125023Z-e6f76789",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "lost_ack",
+      "pass": true,
+      "expected": "CAUSAL_SAMPLE_TIMEOUT",
+      "actual": "CAUSAL_SAMPLE_TIMEOUT",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125029Z-dda4d0ce",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "wrong_ack",
+      "pass": true,
+      "expected": "LINUX_ACK_MISMATCH",
+      "actual": "LINUX_ACK_MISMATCH",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125035Z-f1fabfc7",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "cross_run",
+      "pass": true,
+      "expected": "LINUX_GUARD_RUN_MISMATCH",
+      "actual": "LINUX_GUARD_RUN_MISMATCH",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125039Z-7c471a25",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "replay",
+      "pass": true,
+      "expected": "LINUX_RESPONSE_REPLAY",
+      "actual": "LINUX_RESPONSE_REPLAY",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125043Z-0b031e47",
+      "remaining": [],
+      "sampler_remaining": []
+    },
+    {
+      "mode": "freeze",
+      "pass": true,
+      "expected": "CAUSAL_SAMPLE_TIMEOUT",
+      "actual": "CAUSAL_SAMPLE_TIMEOUT",
+      "record": "/home/wqkan_wsl/uaea-n1x/nemotron-bolt/records/manual-20261110T125047Z-18da019e",
+      "remaining": [],
+      "sampler_remaining": []
+    }
+  ],
+  "scope": "Unit and dedicated CPU processes; no model; finite observed intervals; no change to memory thresholds",
+  "complete_original_record_root": "/home/wqkan_wsl/uaea-n1x/research-records/singleclock-20261110T122425Z"
+}
