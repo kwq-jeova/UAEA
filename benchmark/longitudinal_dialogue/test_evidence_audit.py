@@ -17,10 +17,38 @@ class EvidenceAudit(unittest.TestCase):
   self.observation={'event_type':'OBSERVATION','identity':{'thread_id':'h','turn_id':'t','item_id':'c'},
    'payload':{'capability_called':True,'execution_observation':{'observation_id':'o','capability':'document.read_section','status':'success','data':self.data}}}
   self.payload={'ok':True,'capability':'document.read_section','identity':{'call_id':'c','observation_id':'o'},'data':{**self.data,'content':self.content}}
-  self.prepared=[{'sequence':2,'request':{'input':[{'type':'function_call_output','call_id':'c','output':json.dumps(self.payload)}]}}]
+  self.transports=[{'request_id':'req','http_status':200,'bytes_received':100,'bytes_forwarded':100,'upstream_eof':True,'http_framing_complete':True,'response_complete':True,'transport_error':None}]
+  self.prepared=[{'sequence':2,'request_id':'req','request':{'input':[{'type':'function_call_output','call_id':'c','output':json.dumps(self.payload)}]}}]
  def check(self):
-  return audit.document_delivery(self.prepared,[self.observation],self.manifest,True)
+  return audit.document_delivery(self.prepared,[self.observation],self.manifest,True,self.transports)
  def test_actual_full_delivery(self):self.assertEqual(self.check()['status'],'PASS')
+ def test_broken_pipe_does_not_prove_full_supply(self):
+  self.transports[0]['transport_error']='BrokenPipeError'
+  self.assertEqual(self.check()['status'],'FAIL')
+ def test_legacy_200_bytes_stay_unknown(self):
+  for k in ['response_complete','upstream_eof','bytes_forwarded']:self.transports[0].pop(k)
+  self.assertEqual(self.check()['status'],'UNKNOWN')
+ def test_partial_without_error_does_not_pass(self):
+  self.transports[0]['response_complete']=False
+  self.assertEqual(self.check()['status'],'FAIL')
+ def _boundary_blank_line(self):
+  self.source.write_text('## Evidence\n123 USD\n\n## Next\nOther\n')
+  content='## Evidence\n123 USD\n'
+  self.data.update(line_start=1,line_end=3,content_excerpt=content,
+   content_hash=hashlib.sha256(content.encode()).hexdigest(),source_hash=hashlib.sha256(self.source.read_bytes()).hexdigest())
+  self.manifest['sha256']=self.data['source_hash']
+  self.payload['data']={**self.data,'content':content}
+  self.prepared[0]['request']['input'][0]['output']=json.dumps(self.payload)
+ def test_preserves_section_boundary_blank_line(self):
+  self._boundary_blank_line()
+  self.assertEqual(self.check()['status'],'PASS')
+ def test_self_consistent_trimmed_observation_does_not_match_source(self):
+  self._boundary_blank_line()
+  stripped=self.data['content_excerpt'].rstrip('\n')
+  self.data.update(content_excerpt=stripped,content_hash=hashlib.sha256(stripped.encode()).hexdigest())
+  self.payload['data']={**self.data,'content':stripped}
+  self.prepared[0]['request']['input'][0]['output']=json.dumps(self.payload)
+  self.assertEqual(self.check()['status'],'FAIL')
  def test_correct_file_but_truncated_body(self):
   self.payload['data']['content']='[field truncated]';self.prepared[0]['request']['input'][0]['output']=json.dumps(self.payload)
   self.assertEqual(self.check()['status'],'FAIL')

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "kind": "explicit_negative_and_recovery_control_not_natural_goal_cognition",
+  "tool_output_chars": 12000,
+  "cases": [
+    {
+      "id": "refcheck",
+      "fixture": "catalog.md",
+      "turns": [
+        "这是独立的接口负面控制，不计自然Goal形成。研究Goal提案中的引用类型和真实回执。请通过goal_hypothesis用form、candidate_id为JSON null建立给定假设。初次有意把本轮input_index中的真实用户input_id同时填入input_ids和evidence_ids，验证Host是否拒绝；根据实际回执回答，不读文件，也不声称尚未发生的保存。hypothesis只保留上述目的句。",
+        "根据真实回执，如果尚未保存，请仅修正引用类型：真实用户输入ID只放input_ids，evidence_ids省略或用[]，通过原Goal工具显式重提相同假设；若已成功不要重复。拒绝与接受都不代表正式采纳，不读取文件。",
+        "只依据Host实际状态说明：是否存在候选、最新ID、是否经历拒绝与合法重提。若未成功如实说明，不再为这轮问答新建候选或读取文件。"
+      ]
+    }
+  ]
+}

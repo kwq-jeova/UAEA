@@ -51,6 +51,7 @@ class ProposalSemanticView:
         return self.delegate.consume_raw_event(raw_event,**kwargs)
 
 class GoalResearch(GoalIntegration):
+    source_kind = "model_semantic_tool_proposal"
     def __init__(self,semantic,path):
         super().__init__(semantic,path,mode='shadow',input_actor='test_driver',projection='optional')
         self.handled={}
@@ -125,7 +126,7 @@ class GoalResearch(GoalIntegration):
                 'input_id':state.current_input_id,'turn_id':turn_id,'request_sha256':request.metadata['raw_text_sha256'],
                 'basis_input_versions':{x:originals[x].metadata['raw_text_sha256'] for x in basis},
                 'basis_input_status_at_proposal':{x:originals[x].status for x in basis},
-                'asserted_support_input_ids':basis,'evidence_ids':evidence,'source_kind':'model_semantic_tool_proposal',
+                'asserted_support_input_ids':basis,'evidence_ids':evidence,'source_kind':self.source_kind,
                 'authority_level':'interpretation','semantic_correctness':'not_established','quote_verified':True,
                 'reference_validation':{'valid':True,'source_link_is_not_content_support':True},
                 'new_independent_external_evidence':False,'adoption_eligible':False})

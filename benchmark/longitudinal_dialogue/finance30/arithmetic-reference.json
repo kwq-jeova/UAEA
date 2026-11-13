@@ -1,0 +1,14 @@
+{
+  "scope": "Evaluator only, never exposed as source content",
+  "computed_with": "decimal.Decimal",
+  "turn4_sim_pe": "25",
+  "turn11_sim_pe": "4E+1",
+  "turn16_sim_pe": "4E+1",
+  "turn17_sim_pe": "32",
+  "turn22_sim_pe": "50",
+  "turn18_cash_min_usd": "80000.0",
+  "turn18_stock_total_max_usd": "20000.0",
+  "aapl_revenue_yi_usd": "1145.0",
+  "googl_eps_yoy_percent": "-26.13240418118466898954703833",
+  "not_investment_truth_or_goal_gold": true
+}

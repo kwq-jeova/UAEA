@@ -1,6 +1,7 @@
 """Offline structural and literal-source evaluator. No semantic judge/model."""
 from pathlib import Path
 import argparse,json,hashlib,re,collections
+from harness.request_audit import transport_state
 def rows(p):return [json.loads(x) for x in p.read_text().splitlines()] if p.exists() else []
 def grounded_literal(answer,observations):
     # A true successful document Observation is required; text/candidate alone cannot prove IO.
@@ -15,7 +16,7 @@ def document_hash_check(data,manifest):
     source=Path(manifest['path'])
     if not source.exists():return {'section_hash_matches':None,'file_version_matches':None,'scope':'fixture unavailable for replay'}
     raw=source.read_bytes();text=raw.decode()
-    section='\n'.join(text.splitlines()[data['line_start']-1:data['line_end']]).strip()
+    section='\n'.join(text.splitlines()[data['line_start']-1:data['line_end']])
     excerpt=data['content_excerpt']
     return {'section_hash_matches':hashlib.sha256(section.encode()).hexdigest()==data.get('content_hash'),
         'file_version_matches':hashlib.sha256(raw).hexdigest()==data.get('source_hash')==manifest['sha256'],
@@ -38,7 +39,19 @@ def turn_integrity(expected,turn_log,terminals,snapshots,result):
     return errors
 
 
-def goal_projection_checks(prepared,decisions,expected,control_interval=None):
+def native_compaction_intervals(messages):
+    starts={};intervals=[]
+    for event in messages:
+        params=event.get('params',{});item=params.get('item',{});instant=event.get('emittedAtMs')
+        if item.get('type')!='contextCompaction' or not isinstance(instant,(int,float)):continue
+        key=(params.get('threadId'),params.get('turnId'),item.get('id'))
+        if not all(key):continue
+        if event.get('method')=='item/started':starts[key]=instant
+        elif event.get('method')=='item/completed' and key in starts and instant>=starts[key]:
+            intervals.append((starts.pop(key),instant))
+    return intervals
+
+def goal_projection_checks(prepared,decisions,expected,control_interval=None,native_intervals=()):
     deferred={x.get('provider_request_sequence') for x in decisions
         if x.get('kind')=='host_context_deferred_for_compaction' and x.get('source')=='published_host_snapshot'}
     checks=[]
@@ -63,8 +76,15 @@ def goal_projection_checks(prepared,decisions,expected,control_interval=None):
                         and x.get('role')=='developer' and any(b.get('key')=='uaea.goal_state' for b in x.get('context_blocks',[]) if isinstance(b,dict)) for x in manifest)
                 blocks.append({'input_index':index,'valid':valid})
         instant=event.get('utc')
-        native_control=bool(control_interval and isinstance(instant,(float,int))
-            and control_interval[0]<=instant*1000<=control_interval[1] and event.get('sequence') in deferred)
+        summary_input=event['request'].get('input',[])
+        last=summary_input[-1] if summary_input else {}
+        summary_marker=isinstance(last,dict) and last.get('role')=='user' and any(
+            isinstance(part,dict) and isinstance(part.get('text'),str) and part['text'].startswith('You are performing a CONTEXT CHECKPOINT COMPACTION.')
+            for part in last.get('content',[]))
+        in_natural=summary_marker and any(
+            isinstance(instant,(float,int)) and start<=instant*1000<=end for start,end in native_intervals)
+        native_control=bool(isinstance(instant,(float,int)) and event.get('sequence') in deferred
+            and ((control_interval and control_interval[0]<=instant*1000<=control_interval[1]) or in_natural))
         valid=native_control or (len(blocks)==1 and blocks[0]['valid'] if expected else not blocks)
         checks.append({'request_sequence':event['sequence'],'goal_projection_present':bool(blocks),
             'scope':'confirmed_native_compaction' if native_control else 'normal_model_request',
@@ -126,7 +146,15 @@ def tool_attempts(messages,contract):
         entry['capability_called']=(entry.get('observation') or {}).get('capability_called')
     return list(attempts.values())
 
-def document_delivery(prepared,observations,manifest,required=False):
+def source_manifest_for(data,manifest):
+    if not manifest:return None
+    resolved=Path(data.get('resolved_path','')).resolve()
+    matches=[m for m in [manifest]+manifest.get('released_sources',[]) if Path(m['path']).resolve()==resolved]
+    return matches[0] if len(matches)==1 else None
+
+def document_delivery(prepared,observations,manifest,required=False,transports=None):
+    responses={x.get("request_id"):x for x in (transports or [])}
+    unknowns=[]
     successful={x['identity']['item_id']:x['payload']['execution_observation'] for x in observations
         if x.get('payload',{}).get('execution_observation',{}).get('status')=='success'
         and x['payload']['execution_observation'].get('capability')=='document.read_section'}
@@ -134,8 +162,9 @@ def document_delivery(prepared,observations,manifest,required=False):
     for call,body in successful.items():
         data=body.get('data',{})
         try:
-            checked=document_hash_check(data,manifest) if manifest else {'scope':'missing fixture manifest'}
-            checked['path_matches_fixture']=bool(manifest and Path(data.get('resolved_path','')).resolve()==Path(manifest['path']).resolve())
+            selected=source_manifest_for(data,manifest)
+            checked=document_hash_check(data,selected) if selected else {'scope':'missing or ambiguous source manifest'}
+            checked['path_matches_fixture']=selected is not None
         except (KeyError,TypeError,ValueError,IndexError,UnicodeError,OSError) as exc:
             checked={'error':type(exc).__name__}
         source_checks.append({'call_id':call,**checked})
@@ -154,16 +183,21 @@ def document_delivery(prepared,observations,manifest,required=False):
                 and data.get('source_hash')==expected.get('source_hash')
                 and payload.get('identity',{}).get('call_id')==call
                 and payload.get('identity',{}).get('observation_id')==body.get('observation_id'))
+            state=transport_state(responses.get(event.get('request_id')))
             checks.append({'request_sequence':event['sequence'],'call_id':call,'full_content_hash_matches':valid,
+                'content_valid':valid,'transport_state':state,'complete_transport':state=='complete_success',
                 'actual_sha256':actual,'expected_sha256':expected.get('content_hash'),
                 'content_chars':len(content) if isinstance(content,str) else 0,
-                'truncated':isinstance(content,str) and '[field truncated]' in content,'valid':valid})
+                'truncated':isinstance(content,str) and '[field truncated]' in content,'valid':valid and state=='complete_success'})
     for call in successful:
         selected=[x for x in checks if x['call_id']==call]
-        if not selected or not all(x['valid'] for x in selected):errors.append('body_not_fully_delivered:'+call)
+        if not selected or not all(x['content_valid'] for x in selected):errors.append('body_not_fully_delivered:'+call)
+        elif not any(x['valid'] for x in selected):
+            if all(x['transport_state']=='unknown' for x in selected):unknowns.append('complete_transport_unproven:'+call)
+            else:errors.append('complete_transport_missing:'+call)
     if required and not successful:errors.append('required_document_observation_missing')
-    status='FAIL' if errors else 'PASS' if successful else 'NOT_APPLICABLE'
-    return {'status':status,'required':required,'errors':errors,'source_checks':source_checks,'presentations':checks}
+    status='FAIL' if errors else 'UNKNOWN' if unknowns else 'PASS' if successful else 'NOT_APPLICABLE'
+    return {'status':status,'required':required,'errors':errors,'unknowns':unknowns,'source_checks':source_checks,'presentations':checks}
 
 
 def audit(out):
@@ -192,14 +226,14 @@ def audit(out):
             if not turn_answers[i]:turn_answers[i]=[x.get('text','') for x in terminal.get('items',[]) if x.get('type')=='agentMessage']
         final_answer='\n'.join(turn_answers[-1]) if complete and turn_answers else ''
         manifest=json.loads((f/'fixture-manifest.json').read_text()) if (f/'fixture-manifest.json').exists() else None
-        delivered=document_delivery(prepared,observations,manifest,bool(cases[item['case']].get('fixture') or item['case']=='evidence'))
+        delivered=document_delivery(prepared,observations,manifest,bool(cases[item['case']].get('fixture') or item['case']=='evidence'),[x for x in request_audit if x.get('event')=='transport_result'])
         fixture_checks=delivered['source_checks'];delivery=delivered['presentations']
         result={**item,'document_body_delivery':delivery,'result_file_present':complete,'completed':False,'controlled_compaction_native_turn':control['native_turn_id'] if control else None,'all_native_terminal_count':len(all_terminals),'native_turn_statuses':[x.get('status') for x in terminals],
             'answers':answers,'turn_answers':turn_answers,'source_hash_checks':fixture_checks,'observations':observations,'last_cumulative_usage':usage[-1] if usage else None,
             'usage_updates':len(usage),'request_prepared_count':len(prepared),
             'request_snapshot_coverage':[x.get('snapshot_coverage') for x in prepared],
             'goal_projection_in_requests':['uaea.goal_state' in json.dumps(x['request']) for x in prepared],
-            'transport_results':[{'request_id':x.get('request_id'),'http_status':x.get('http_status'),'transport_error':x.get('transport_error')} for x in request_audit if x.get('event')=='transport_result'],
+            'transport_results':[{'request_id':x.get('request_id'),'http_status':x.get('http_status'),'transport_error':x.get('transport_error'),'transport_state':transport_state(x)} for x in request_audit if x.get('event')=='transport_result'],
             'compaction_items':len(compact),'compacted_notifications':sum(x.get('method')=='thread/compacted' for x in messages),
             'normalized_files':[str(x.relative_to(f)) for x in normalized],
             'projection_and_state_files':[(p.name,p.stat().st_size) for p in [f/'context-projections.jsonl',f/'semantic-state-snapshots.jsonl',f/'provider-history-decisions.jsonl'] if p.exists()],
@@ -229,7 +263,7 @@ def audit(out):
                     or x.get('params',{}).get('turn',{}).get('id')==control['native_turn_id'])]
             if times:control_interval=(min(times),max(times))
         result['goal_projection_checks']=goal_projection_checks(prepared,rows(f/'provider-history-decisions.jsonl'),
-            item['arm']=='goal_shadow',control_interval)
+            item['arm']=='goal_shadow',control_interval,native_compaction_intervals(messages))
         if len({x.get('id') for x in all_terminals})!=len(all_terminals):result['turn_integrity_errors'].append('duplicate_native_terminal')
         native_checks=native_turn_checks(cases[item['case']]['turns'],terminals,messages)
         result['native_user_checks']=native_checks

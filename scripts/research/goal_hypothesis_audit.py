@@ -57,13 +57,14 @@ def record_binding(event,call,original,seen,observation_ids):
 def transport_binding(request,transports):
  matches=[x for x in (transports or []) if x.get('request_id')==request.get('request_id') and request.get('request_id')]
  if len(matches)!=1:return {'status':'UNKNOWN','reason':'no unique transport result'}
- event=matches[0];status=event.get('http_status')
- if event.get('transport_error') or (isinstance(status,int) and not 200<=status<300):
+ from harness.request_audit import transport_state
+ event=matches[0];status=event.get('http_status');state=transport_state(event)
+ if state in ['partial','failed_before_response','complete_http_error'] or (isinstance(status,int) and not 200<=status<300):
   return {'status':'FAIL','reason':'provider transport failed'}
- valid=(isinstance(status,int) and 200<=status<300 and isinstance(event.get('bytes_received'),int)
+ valid=(state=='complete_success' and isinstance(status,int) and 200<=status<300 and isinstance(event.get('bytes_received'),int)
   and event['bytes_received']>0 and isinstance(event.get('utc'),(int,float)) and isinstance(request.get('utc'),(int,float))
   and event['utc']>=request['utc'])
- return {'status':'PASS' if valid else 'UNKNOWN','reason':'HTTP success with response bytes; not proof of complete SSE processing or understanding'}
+ return {'status':'PASS' if valid else 'UNKNOWN','reason':'Full HTTP body forwarding required; not proof of model understanding or Workflow completion'}
 
 def projection_binding(prepared,records,committed_at=None,transports=None):
  output=[];appearances={k:[] for k in records}

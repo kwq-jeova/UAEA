@@ -34,7 +34,7 @@ The native tool uses the same canonical type:function schema as existing tools.
 Legacy optional final-envelope mode remains the default; sideband is opt-in and uses ordinary final text.
 No per-turn proposal is forced. A two-per-turn/32-per-session bound is a maximum, not a quota.
 The untrusted candidate projection is bounded to 4200 characters and exposes only recent heads / original input references.
-Host-held candidates survive model Compaction by re-projection. New-process / cross-run restoration is not implemented or claimed.
+Host-held candidates survive model Compaction by re-projection. The production channel has no general new-process / cross-run restore; see the explicitly isolated research recovery below.
 
 ## Verification
 
@@ -65,3 +65,98 @@ restart replay, semantic truth, adoption or execution authorization.
 The offline auditor was further tightened after the live bundle was frozen:
 request time must follow the commit; missing timing does not prove delivery.
 The post-hoc evaluator version is separately hashed; runtime source remains frozen.
+
+## 2026-11-10 negotiated final-envelope research contrast
+
+The existing Runner now also accepts --goal-channel envelope, only for the
+opt-in goal_shadow arm. goal_envelope.py uses the same candidate payload and
+GoalResearch validator, with the exact final object answer + goal_proposal.
+Ordinary prose and malformed/extra-field JSON never become a proposal.
+
+This is NOT the legacy G0 final schema. It records the real final agentMessage
+ID with source_kind=model_negotiated_final_proposal, not a native tool Call ID.
+Host validation occurs after native Turn completion; feedback and current heads
+can enter the next user Turn. There is no extra model loop, response_format,
+automatic natural-language extraction, formal adoption or permission change.
+
+The native-tool-only goal_hypothesis_audit.py must not label final-envelope
+commits as missing native RPC calls. The frozen interface study has a separate
+explicit source-event binding audit plus the existing projection/transport
+checks. See docs/research/goal-state-inference-interface-20261110.md.
+
+## 2026-11-10 isolated cooperation contrast
+
+--goal-channel cooperation selects goal_cooperation.py only in goal_shadow
+cases with a frozen mechanism A/B/C field. All conditions first establish
+their seed using the existing native Goal tool. No Host seed fabrication.
+
+A retains the existing channel. B accepts optional final assessments and
+explicitly declines candidate submission after the seed. C allows optional
+assessments and the same existing native Goal tool. A native call already
+contains a structured proposal and explicit submission intent: C requires
+no preliminary assessment call or additional model loop.
+
+Final assessments are journal-only interpretations, never submit commands.
+Their model text is projected as untrusted context; trusted feedback contains
+only observed event/commit references. submit_intent=true does not execute.
+Do not equate final assessment generation, payload matching or commit counts
+with semantic correctness or decision value. No JSON is extracted from prose.
+
+
+## 连续金融回放（2026-11-10）
+
+finance30脚本/来源：benchmark/longitudinal_dialogue/finance30/README.md。
+显式max_turns才可扩展至30，默认仍10；分轮资料释放不构成工具执行事实。
+只执行冻结bundle，保留失败与NOT_RUN；本次遥测中断后的Goal组未执行，
+不得作为无候选或接口失败统计。详见docs/research/finance30-goal-continuity-20261110.md。
+
+
+## 2026-11-12 research annotation correction (v2)
+
+Semantic review records expression source, intent subject, and the exact scope of
+user endorsement separately. A model-produced interpretation may describe user
+ends; a user utterance may merely mention an agent task. Speaker alone proves neither.
+
+Review material purpose/scope distortion, means/step mixing requiring context,
+and harmless background redundancy separately. Method words or source facts
+do not invalidate a candidate by themselves. Real quote/reference validity is
+not semantic support. Current user clarification updates the current
+interpretation; historical psychological truth remains unknown.
+
+A semantic classification can be reviewed without a candidate. Lifecycle
+maintain/refine/revise/withdraw is assessable only with an actual saved current
+candidate, its content and scope. Do not assign operations from isolated text.
+These are research annotations, not new Runtime fields, a semantic classifier
+or adoption rules. Structural audit PASS remains distinct from these judgments.
+
+The 2026-11-12 attribution/lifecycle study's strict clean-seed gate is a recorded
+study decision, not proof that all extra background makes a Goal invalid.
+A new one-feedback correction study preserves old evidence and uses a fresh
+real Sideband seed when full Host process restoration is unavailable.
+
+
+## 2026-11-12 isolated historical Goal recovery
+
+recover_goal_history.py validates real Journal/Native/input/Observation/HTTP
+records and restores the recorded Goal closure in a new research copy. It
+preserves Thread/Scope/record/Call identities; it never mints an old candidate
+from model prose or repeats external tools. A copied Native rollout is resumed
+as the SAME Thread. Only the copy's rollout pointer is relocated; SQLite
+schema and original files remain unchanged.
+
+This is not a production restore hook or general Runtime recovery. It only
+supports completed one-turn/single-Workflow checkpoints with the required
+records, no ActiveGoal or additional effective policy, and complete successful
+RPC receipts. Missing/contradictory evidence is rejected. Opaque model-output
+objects and old projection/planner caches are not invented or silently claimed.
+
+Tests: benchmark/longitudinal_dialogue/test_goal_recovery.py.
+Historical fixtures are external; UAEA_GOAL_HISTORY can override their path.
+Missing fixtures explicitly skip, never count as behavioral PASS.
+Report: docs/research/goal-history-recovery-correction-20261112.md.
+
+Restoration is not natural formation, a new assisted seed, semantic truth or
+adoption. Actual feedback correction must still be proved by model behavior,
+real submissions/current heads and subsequent requests. The first restored
+live sample had no update and inaccurate saved-content claims; it is retained
+as a failed correction, not a restore failure.

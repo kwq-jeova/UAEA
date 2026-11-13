@@ -1,0 +1,340 @@
+{
+  "frozen_research_clock": "研究时点固定2026-11-10 00:00 Asia/Shanghai；历史估值目标2026-11-04 America/New_York 16:00，是否交易日未核验。系统实际时钟不改。",
+  "turns": [
+    {
+      "turn": 1,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:1"
+      ],
+      "original_texts": [
+        "请你研究intc 2026 Q3的财报和电话会议，需要信息可以通过google站点搜索，研究过程你采用英文搜索，与我交互保持中文"
+      ],
+      "adaptation_or_extension": "保留研究对象与语言；Google检索改为明确本地冻源，未伪称真实联网。",
+      "actual_script_text_sha256": "ce2fa9d588bb98dc06b10ce5c48ff8a347f1803a1cbfe7f653b1c6c41f71d230",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 2,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:2"
+      ],
+      "original_texts": [
+        "解析内容，尝试通过你获取的信息分析 Q3 miss的原因，以及当前11.4日收盘后intc的估值属于低估还是高估？"
+      ],
+      "adaptation_or_extension": "保留miss及历史估值目标，提醒只评价已提供证据。",
+      "actual_script_text_sha256": "ecca14d9eddce4c872b8f0de3ea9bb7e722212d6f2ed2b47a405e2239e14f876",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 3,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:3"
+      ],
+      "original_texts": [
+        "那么如果给你规划，这里的价格你会建立多少仓位呢"
+      ],
+      "adaptation_or_extension": "保留规划问题，不预置唯一正确仓位。",
+      "actual_script_text_sha256": "92bf7e8b86b1cbf66b06f9055877c17ed89c26eee07a85f1eb47e9e29f9d29ce",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 4,
+      "origin": "historical_adapted_with_simulation",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:4"
+      ],
+      "original_texts": [
+        "你就从仓位管理角度考虑即可，当成模拟实验，我不会参考结果，只是想看你研究"
+      ],
+      "adaptation_or_extension": "原话模拟/不参考保留；50与2为研究者新增。",
+      "actual_script_text_sha256": "4a05822664f5522f4ab59c0636b913ad9fb1eb7af5ebe67f351fc17ef07b5e99",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 5,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:5"
+      ],
+      "original_texts": [
+        "你调研的股价有问题，请你重新调研后研究"
+      ],
+      "adaptation_or_extension": "将上下文相关指责转为条件核对，避免暗示本次模型必已犯同一错误。",
+      "actual_script_text_sha256": "7110fb52685541f9a1bb089b754cfee6677352a2bca63035d64f0253ef8b534e",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 6,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:6"
+      ],
+      "original_texts": [
+        "挺好的，用同样的方法研究google 2026 q3财报和电话会议，以及综合最近几天的股价信息以后，输出一个仓位研究"
+      ],
+      "adaptation_or_extension": "保留跨公司/同方法延续，使用冻结源。",
+      "actual_script_text_sha256": "a3ea437f4c773404b501d888126f8ebb531669a9548b6bbca1613cd64ebd6695",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 7,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-053257:7"
+      ],
+      "original_texts": [
+        "当前为何实时网络服务受限制？什么权限"
+      ],
+      "adaptation_or_extension": "历史权限疑问转为当前真实测试边界。",
+      "actual_script_text_sha256": "7fbfc18d4abdc0fa0c785f6e374ac0fe8e59ab1270afb00c8485f306dfa2a553",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 8,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:1",
+        "interactive-32768-20261105-071627:2"
+      ],
+      "original_texts": [
+        "请你研究google 2026Q3财报和电话会议，需要的相关信息请从google站点搜索，英文搜索，研究好了和我中文汇报",
+        "分析当前11.4日后的估值，eps，forward pe等，综合研究基本面和估值"
+      ],
+      "adaptation_or_extension": "避免重复同题，保留第二会话的估值深化。",
+      "actual_script_text_sha256": "1b119b189065611d03495b3482da725ada5a9f76582fb9374a2e8b16bf8e56fa",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 9,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:3"
+      ],
+      "original_texts": [
+        "最新的中期选举结果，会对你的策略产生影响吗"
+      ],
+      "adaptation_or_extension": "不引入未保存的政治新闻。",
+      "actual_script_text_sha256": "26224331c832861b67e78068cf63607f8e15dc19f983dc427219e217d97e3baa",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 10,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:4"
+      ],
+      "original_texts": [
+        "你有展开分析中期选举的真正结果吗？以及其对潜在的数据中心建设的影响？"
+      ],
+      "adaptation_or_extension": "真实执行/模型声明对照，不假定已有工具结果。",
+      "actual_script_text_sha256": "f53c7a357b43468d3bf0d9cfa216c065d88863ddc686d632015cca7092b0ab99",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 11,
+      "origin": "historical_adapted_with_simulation",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:5"
+      ],
+      "original_texts": [
+        "好的用同样的方式分析Intc q3财报、股价等，研究"
+      ],
+      "adaptation_or_extension": "保留回到旧公司的演化顺序，EPS更正为研究者模拟。",
+      "actual_script_text_sha256": "c7a853abc3a08d65db3808bb34739d0968e83368d223988f05e16d6451ad3d8a",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 12,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:6"
+      ],
+      "original_texts": [
+        "如果这两支给你管理，你现在会怎么操作，我不会参考结果，只是想看你推理"
+      ],
+      "adaptation_or_extension": "保留评价推理而非实际投资目的的歧义。",
+      "actual_script_text_sha256": "852b6f553d35614667714bd017e18a9f0c50d4f0d96d4c9bbf3b3fbfabf24efa",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 13,
+      "origin": "historical_adapted_with_simulation",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:7"
+      ],
+      "original_texts": [
+        "那么假设你现在100%现金，你会怎么建立初始状态"
+      ],
+      "adaptation_or_extension": "100%现金来自原话，金额及版本为研究者新增。",
+      "actual_script_text_sha256": "1fb25a8f0d6e15325e01b8066a67816e1ba360b6f184490d49580ddfb55681fd",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 14,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:8"
+      ],
+      "original_texts": [
+        "同样的方式分析apple，现在40倍pe是不是高估了"
+      ],
+      "adaptation_or_extension": "保留40倍疑问，不将问句提升事实。",
+      "actual_script_text_sha256": "1655d244a65bafc6e9d30dd24fa6097daab580ef3b3c00dc488a3e2ea4cc2d74",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 15,
+      "origin": "historical_adapted",
+      "historical_refs": [
+        "interactive-32768-20261105-071627:9"
+      ],
+      "original_texts": [
+        "继续"
+      ],
+      "adaptation_or_extension": "将“继续”补足可复核任务，不强制Goal提案。",
+      "actual_script_text_sha256": "a30178da08590defe2d47a53911d38fbde3055611278b2e08621a8f87c41c5f3",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 16,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "研究者新增模拟，不是行情。",
+      "actual_script_text_sha256": "4a2554f2bcd2d6ec30ed7489e0d594d827741029ed256fe0a6257235a020146d",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 17,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "假设改变，未新增真实行情。",
+      "actual_script_text_sha256": "c019d0b5442f3b08e9745aea9f94017ad6eaaaa23fb5585a3c00d6649f6d0cca",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 18,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "新增局部模拟约束，不当真实长期风险偏好。",
+      "actual_script_text_sha256": "e22b8f0c59013639b9a147e3020a99994a012f3c098cccc9a6b797f6454595e6",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 19,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "独立数值/来源检查，不作为Goal语义正确率。",
+      "actual_script_text_sha256": "27d0cd53b61c5fd6616800231a7bfb9af72311910428caf189ece0bfb98e04f5",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 20,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "研究者Task取消场景；此后安排一次受控原生Compaction。",
+      "actual_script_text_sha256": "40c26307e04ca5900069b9a7cb99fd8dc82b6e0ebca7618a7afba9d97562825a",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 21,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "资源/Path条件变化，非默认目的变化。",
+      "actual_script_text_sha256": "0e448dfeb0d4d45387253c0f1ac14e2e622b74c8134a8049017bc442e69b6011",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 22,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "新模拟版本在本轮才发布，旧版不覆盖。",
+      "actual_script_text_sha256": "9fdbe27878d7b411870e75439b572a57f31fa84e16ec5fa1a0e464b04e836cdb",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 23,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "用户角色信念澄清；不能虚构旧用户Goal。",
+      "actual_script_text_sha256": "e6a2445795faafd520d4cefc2af730451d5074ef6ed0b8608ea871cfc2c19bff",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 24,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "阶段产物调整，不预设长期目的替换。",
+      "actual_script_text_sha256": "2d84d5112a952f45690d1947bd1f8b604beb0c65597eee550a1712650d8d02a8",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 25,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "普通知识问答不要求建立新的持续Goal。",
+      "actual_script_text_sha256": "05abeec629799fb14617aa52b8ecc2a47525b09169feb5813fd14300d6493676",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 26,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "研究者明确目的改变；不是实际用户长期Goal确认，也不指挥具体Goal工具操作。",
+      "actual_script_text_sha256": "88214f8e1cb3325d6bb72a857cffb029604f38a613662fe0a75e796305e6268b",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 27,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "新目的下的Task/公司切换。",
+      "actual_script_text_sha256": "8996d9a780db859d370e3a6d8e5fd1e3cca6332fc1d7ec1da3cf32f94f9dd0b5",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 28,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "执行事实、版本恢复和候选状态反馈，不明确邀请提案。",
+      "actual_script_text_sha256": "e9f3e2593745daa13d70a3b0723855b056c4968c77c44bf1d1d7153053fb96f8",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 29,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "独立后续行动探针，无唯一买入答案/预置工具操作标签。",
+      "actual_script_text_sha256": "ef521c8112312c3544b99daa405d2f6a4bb3df183cefea53e80f1be6912bfcad",
+      "researcher_content_is_not_real_user_goal": true
+    },
+    {
+      "turn": 30,
+      "origin": "researcher_extension",
+      "historical_refs": [],
+      "original_texts": [],
+      "adaptation_or_extension": "阶段总结，不预设任务成功。",
+      "actual_script_text_sha256": "922ab0b26b2c43f0176068438d50d29bad7d930edc8cac62efdc79f6c122c1b2",
+      "researcher_content_is_not_real_user_goal": true
+    }
+  ],
+  "historical_order_preserved_with_adaptation": true,
+  "not_full_original_30turn_transcript": true,
+  "source_role": "Test driver scenario, not a verified real-user long-term Goal"
+}

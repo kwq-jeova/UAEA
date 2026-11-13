@@ -54,7 +54,7 @@ class ConsistencyTests(unittest.TestCase):
   event,call,original=self.fixture();r=event['record'];head=candidate_head(r)
   def prepared(h):return [{'sequence':2,'utc':2,'request_id':'req2','request':{'input':[{'role':'user','content':[{'text':'<external_uaea.goal_hypotheses>'+json.dumps(
    {'heads':[h],'is_source_evidence':False,'semantic_correctness':'not_established'})+'</external_uaea.goal_hypotheses>'}]}]}}]
-  good,found=projection_binding(prepared(head),{r['object_id']:r},{r['object_id']:1},[{'request_id':'req2','utc':3,'http_status':200,'bytes_received':100,'transport_error':None}])
+  good,found=projection_binding(prepared(head),{r['object_id']:r},{r['object_id']:1},[{'request_id':'req2','utc':3,'http_status':200,'bytes_received':100,'bytes_forwarded':100,'upstream_eof':True,'http_framing_complete':True,'response_complete':True,'transport_error':None}])
   self.assertTrue(good[0]['valid']);self.assertEqual(found[r['object_id']],[2])
   bad=copy.deepcopy(head);bad['hypothesis']='OTHER'
   result,found=projection_binding(prepared(bad),{r['object_id']:r})
@@ -81,7 +81,7 @@ class ConsistencyTests(unittest.TestCase):
   view={'heads':[candidate_head(old)],'is_source_evidence':False,'semantic_correctness':'not_established'}
   def req(time):return {'sequence':time,'utc':time,'request_id':'r'+str(time),'request':{'input':[{'role':'user','content':[{'text':
    '<external_uaea.goal_hypotheses>'+json.dumps(view)+'</external_uaea.goal_hypotheses>'}]}]}}
-  transport=[{'request_id':'r3','utc':4,'http_status':200,'bytes_received':100}]
+  transport=[{'request_id':'r3','utc':4,'http_status':200,'bytes_received':100,'bytes_forwarded':100,'upstream_eof':True,'http_framing_complete':True,'response_complete':True}]
   output,found=projection_binding([req(3)],records,{old['object_id']:1,new:2},transport)
   self.assertFalse(output[0]['valid']);self.assertFalse(output[0]['heads'][0]['current_head_at_request'])
   self.assertEqual(found[old['object_id']],[])
