@@ -87,7 +87,8 @@ class HarnessIoContractTests(unittest.TestCase):
         self.assertTrue(state["capabilities"]["web.fetch"]["available"])
         self.assertTrue(state["capabilities"]["document.read_section"]["available"])
         self.assertTrue(state["capabilities"]["fs.list"]["available"])
-        self.assertEqual(state["execution_planes"]["harness_native_shell"]["network"], "disabled")
+        self.assertEqual(state["execution_planes"]["harness_native_shell"]["network"], "unknown")
+        self.assertIsNone(state["execution_planes"]["harness_native_shell"]["available"])
         self.assertEqual(
             state["resolution"]["external_or_recent_public_information"],
             "web.search",

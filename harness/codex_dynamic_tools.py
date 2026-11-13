@@ -32,6 +32,20 @@ IDENTITY_FIELDS = frozenset({
 })
 
 
+def _successful_decision_view(decision: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep the accepted receipt on wire; the complete decision remains in the Host trace."""
+    return {
+        **{key: deepcopy(decision[key]) for key in (
+            "schema", "action_id", "input_id", "workflow_id", "effective_state_id",
+            "policy_reference", "allowed", "reason", "retryable", "authorization",
+            "request_satisfaction", "effective_parameters", "parameter_sources",
+        ) if key in decision},
+        "full_decision_sha256": hashlib.sha256(json.dumps(
+            decision, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
+        "detail_scope": "summary; full decision in Host trajectory",
+    }
+
+
 @dataclass(frozen=True)
 class DynamicToolBinding:
     """Explicit mapping from an app-server tool name to a UAEA capability."""
@@ -92,7 +106,11 @@ class HarnessToolDispatch:
             self.tool_result.data,
         )
         if self.execution_decision is not None:
-            data["execution_decision"] = deepcopy(self.execution_decision)
+            data["execution_decision"] = (
+                _successful_decision_view(self.execution_decision)
+                if self.tool_result.ok and self.execution_decision.get("allowed") is True
+                else deepcopy(self.execution_decision)
+            )
         if data.get("execution_status") == "validation_failed" and self.execution_decision is None:
             if self.semantic_validation is not None:
                 for key in ("active_constraints", "effective_state_id", "authorization"):

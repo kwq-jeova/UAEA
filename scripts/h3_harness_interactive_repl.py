@@ -304,6 +304,9 @@ class InteractiveAppServer:
     ) -> None:
         self.codex = codex
         self.codex_home = codex_home
+        import tomllib
+        config_path = codex_home / "config.toml"
+        self.harness_config = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
         self.workspace = workspace
         self.base_url = base_url.rstrip("/")
         self.adapter = adapter
@@ -532,6 +535,7 @@ class InteractiveAppServer:
             evidence_provenance=self.semantic_state.snapshot(self.thread_id)["evidence_provenance"],
             retained_requests=self.semantic_state.retained_requests(self.thread_id),
             filesystem_root=str(PROJECT_ROOT),
+            harness_config=self.harness_config, sandbox_mode="read-only",
         )
         self._last_turn_context.update(self.goals.context(self.thread_id))
         goal_input_id = self.semantic_state.snapshot(self.thread_id)["current_input_id"]
@@ -794,7 +798,7 @@ class InteractiveAppServer:
             self._dynamic_tools, model=self.model, semantic_projection=projection.payload,
             evidence_provenance=snapshot["evidence_provenance"],
             retained_requests=self.semantic_state.retained_requests(self.thread_id),
-            filesystem_root=str(PROJECT_ROOT))
+            filesystem_root=str(PROJECT_ROOT), harness_config=self.harness_config, sandbox_mode="read-only")
         current = next((x for x in snapshot["workflow_continuity"]["request_continuity"]["inputs"]
                         if x["object_id"] == snapshot["current_input_id"]), None)
         if current is not None:

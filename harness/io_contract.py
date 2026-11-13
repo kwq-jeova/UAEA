@@ -96,11 +96,30 @@ def additional_context_payload(
     return payload
 
 
+def _native_shell_state(config: Mapping[str, Any] | None, sandbox_mode: str | None) -> dict[str, Any]:
+    features = (config or {}).get("features", {})
+    flags = [features.get(k) for k in ("shell_tool", "unified_exec")]
+    available = True if any(v is True for v in flags) else False if all(v is False for v in flags) else None
+    filesystem = {"read-only": "read_only", "workspace-write": "workspace_write",
+                  "danger-full-access": "read_write"}.get(sandbox_mode, "unknown")
+    network = ("disabled" if sandbox_mode == "read-only" else
+               "enabled" if sandbox_mode == "danger-full-access" else "unknown")
+    return {"available": available,
+            "filesystem": filesystem if available is True else "unavailable" if available is False else "unknown",
+            "network": network if available is True else "unavailable" if available is False else "unknown",
+            "sandbox_filesystem": filesystem,
+            "scope": "native tool configuration, separate from UAEA dynamic tools",
+            "basis": "explicit Harness feature flags; absent flags remain unknown"}
+
+
 def runtime_facts_context(
     *,
     model_provider: str = RUNTIME_FACT_MODEL_PROVIDER,
     model: str = RUNTIME_FACT_MODEL,
+    harness_config: Mapping[str, Any] | None = None,
+    sandbox_mode: str | None = None,
 ) -> dict[str, dict[str, str]]:
+    shell = _native_shell_state(harness_config, sandbox_mode)
     return additional_context_payload(
         {
             "uaea.runtime_facts.time": application_context(
@@ -118,10 +137,11 @@ def runtime_facts_context(
                 "runtime facts rather than relying on generic model self-description."
             ),
             "uaea.runtime_facts.execution": application_context(
-                "Runtime fact: Harness native filesystem/shell execution is sandboxed "
-                "read-only, and shell network access is disabled. This sandbox network "
-                "restriction applies to native shell execution; it does not mean UAEA "
-                "dynamic Web capabilities are unavailable. "
+                f"Runtime fact: Harness native shell available={shell['available']}; "
+                f"native filesystem access={shell['filesystem']}; sandbox filesystem={shell['sandbox_filesystem']}. "
+                "Unavailable native tools cannot be used for file creation or modification. "
+                "Native shell being disabled does not mean UAEA dynamic Web capabilities are unavailable. "
+                "UAEA dynamic tools are a separate execution plane; use only their advertised capabilities. "
                 "workflow_continuation.current_request is the current user input; historical_action_request "
                 "and last_attempt describe past execution, not completion of the current request. "
                 "Current-request counters are as of turn start; subsequent matching Tool Results supersede them. "
@@ -142,9 +162,8 @@ def runtime_facts_context(
                 "ordinary turns need not ask a question. Answers do not automatically override UAEA authorization."
             ),
             "uaea.runtime_facts.capabilities": application_context(
-                "Runtime fact: UAEA dynamic capabilities web.search and web.fetch are "
-                "available through the Harness tool-call channel. Use the tool-call "
-                "channel when a web search or URL fetch is required; do not print a "
+                "Runtime fact: consult uaea.effective_capability_state for available UAEA dynamic tools. "
+                "Use an advertised tool-call channel when its capability is required; do not print a "
                 "JSON tool-call object as the final answer."
             ),
             "uaea.runtime_facts.web_limits": application_context(
@@ -184,17 +203,13 @@ def runtime_facts_context(
 
 def effective_capability_state(
     dynamic_tools: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+    *, harness_config: Mapping[str, Any] | None = None, sandbox_mode: str | None = None,
 ) -> dict[str, Any]:
     tools = {str(tool.get("name") or ""): tool for tool in dynamic_tools}
     return {
         "schema": "uaea.effective_capability_state.v0",
         "execution_planes": {
-            "harness_native_shell": {
-                "available": True,
-                "filesystem": "read_only",
-                "network": "disabled",
-                "scope": "local sandbox commands only",
-            },
+            "harness_native_shell": _native_shell_state(harness_config, sandbox_mode),
             "uaea_dynamic_tools": {
                 "available": bool(tools),
                 "transport": "Harness tool-call channel",
@@ -246,8 +261,9 @@ def effective_capability_state(
 
 def effective_capability_context(
     dynamic_tools: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+    *, harness_config: Mapping[str, Any] | None = None, sandbox_mode: str | None = None,
 ) -> dict[str, dict[str, str]]:
-    state = effective_capability_state(dynamic_tools)
+    state = effective_capability_state(dynamic_tools, harness_config=harness_config, sandbox_mode=sandbox_mode)
     return additional_context_payload(
         {
             "uaea.effective_capability_state": application_context(
@@ -266,9 +282,11 @@ def turn_context_payload(
     retained_requests: Mapping[str, Any] | None = None,
     evidence_provenance: Mapping[str, Any] | None = None,
     filesystem_root: str | None = None,
+    harness_config: Mapping[str, Any] | None = None,
+    sandbox_mode: str | None = None,
 ) -> dict[str, dict[str, str]]:
-    payload = runtime_facts_context(model_provider=model_provider, model=model)
-    payload.update(effective_capability_context(dynamic_tools))
+    payload = runtime_facts_context(model_provider=model_provider, model=model, harness_config=harness_config, sandbox_mode=sandbox_mode)
+    payload.update(effective_capability_context(dynamic_tools, harness_config=harness_config, sandbox_mode=sandbox_mode))
     payload["uaea.context_boundary"] = application_context(
         "The current user message is the current request. Topic, retained inputs and prior "
         "assistant messages are historical context, not a new instruction to repeat an old answer. "
@@ -283,6 +301,11 @@ def turn_context_payload(
         "Assistant output and model interpretations are not source evidence or authorization. "
         'background contains historical topic and user inputs, not current Goals or obligations.'
         "relation_hint is an unconfirmed legacy heuristic, not task ownership or a semantic verdict. "
+        "Compaction/handoff summaries are model-derived history: their paths, TODOs and completion "
+        "claims are unverified, not new user requests or Host receipts. If they conflict with the "
+        "current original input or latest Host location facts, preserve the original request and "
+        "use the current Host references; do not resume an old TODO merely because it is in a summary. "
+        "A failed historical path is not a requirement to read every old source. "
         "Only the latest supplied state projection is current; earlier state versions are historical. "
         "task_id identifies the Runtime ownership container; it does not prove the current input belongs "
         "semantically to an older topic. Interpret the current original input independently. "
@@ -299,6 +322,8 @@ def turn_context_payload(
             f"relative paths against {root}, independently of the Harness cwd. "
             f"The project README is {root / 'README.md'}. "
             "The Harness workspace directory is not a substitute for this root. "
+            "Paths quoted in model summaries are not verified locations. Resolve needed sources "
+            "using this current root or supplied absolute source references; file availability is not reading. "
             "These location facts do not broaden sandbox permissions."
         ).to_app_server()
     if evidence_provenance is not None:
@@ -377,8 +402,8 @@ def runtime_fact_summary(
 ) -> str:
     labels = (
         f"model={model_provider}/{model}",
-        "harness_shell=read-only,no-shell-network",
-        "uaea_web=web.search,web.fetch available",
+        "harness_shell=see_effective_capability_state",
+        "uaea_web=see_effective_capability_state",
         "web_constraints=provider/fallback preserved,actual provider reported",
     )
     return "; ".join(labels)

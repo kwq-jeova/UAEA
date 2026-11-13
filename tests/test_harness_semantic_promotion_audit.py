@@ -209,6 +209,7 @@ class InteractivePromotionAuditTests(unittest.TestCase):
             evidence_provenance=app.semantic_state.snapshot("thread")["evidence_provenance"],
             retained_requests=app.semantic_state.retained_requests("thread"),
             filesystem_root=str(PROJECT_ROOT),
+            harness_config=app.harness_config, sandbox_mode="read-only",
         )
         self.assertEqual(sent["params"]["additionalContext"], expected)
         self.assertNotIn("uaea.semantic_promotion_shadow_audit", sent["params"]["additionalContext"])

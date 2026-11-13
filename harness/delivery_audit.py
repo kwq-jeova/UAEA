@@ -2,6 +2,7 @@
 from __future__ import annotations
 import hashlib
 import json
+from .request_audit import transport_state
 
 
 def _hash(text):
@@ -77,6 +78,8 @@ def audit_deliveries(host_events, http_events):
                 content_hash = host.get("content_hash")
                 entry = {"request_id": event["request_id"], "field": field, "index": index,
                          "representation": representation, "http_status": response.get("http_status"),
+                         "transport_state": transport_state(response),
+                         "complete_transport": transport_state(response) == "complete_success",
                          "observation_id": observation["observation_id"],
                          "execution_status": status, "execution_succeeded": succeeded,
                          "status_matches_host": status == expected_status
@@ -92,6 +95,7 @@ def audit_deliveries(host_events, http_events):
                        "capability": observation["capability"],
                        "host_status": observation["data"].get("execution_status"),
                        "deliveries": deliveries[call_id],
-                       "delivery_observed": bool(deliveries[call_id])}
+                       "presentation_observed": bool(deliveries[call_id]),
+                       "delivery_observed": any(x["complete_transport"] for x in deliveries[call_id])}
                       for call_id, observation in observations.items()],
             "creates_execution_or_source_facts": False}

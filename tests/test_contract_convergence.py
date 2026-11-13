@@ -79,7 +79,11 @@ class RequestAuditTests(unittest.TestCase):
                 content=audit.read_text()
                 self.assertNotIn("BODY-SENSITIVE-47",content);self.assertNotIn("HEADER-SENSITIVE-47",content)
                 events=[json.loads(l) for l in content.splitlines()]
-                sent,done=events
+                sent,started,done=events
+                self.assertEqual(started["event"],"transport_started")
+                self.assertTrue(done["response_complete"])
+                self.assertTrue(done["upstream_eof"])
+                self.assertEqual(done["bytes_received"],done["bytes_forwarded"])
                 self.assertEqual(done["request_id"],sent["request_id"])
                 self.assertEqual(done["http_status"],200)
                 self.assertEqual(sent["message_manifest"][0]["state_versions"],[state])

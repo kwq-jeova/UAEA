@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .provider_history import project_provider_history
+from .provider_history import (
+    project_provider_history, HistoryProjectionBudgetError, HistoryProjectionBindingError,
+)
 from .request_audit import RequestAudit
 
 
@@ -32,6 +34,7 @@ class ProviderHistoryBridge:
         raw_events_path: Path | None = None,
         audit_path: Path | None = None,
         max_recovery_bytes: int = 24000,
+        stream_observer: Any = None,
     ) -> None:
         parsed = urlsplit(upstream_url)
         if (
@@ -52,12 +55,24 @@ class ProviderHistoryBridge:
         self.projected_count = 0
         self.audit = RequestAudit(audit_path) if audit_path is not None else None
         self.audit_errors = 0
+        self.stream_observer = stream_observer
+        self.stream_observer_errors = 0
         self._runtime_context: dict[str, Any] | None = None
         self._context_required = False
         if max_recovery_bytes <= 0:
             raise ValueError("Recovery byte budget must be positive")
         self.max_recovery_bytes = max_recovery_bytes
         self._compaction_turn_id: str | None = None
+
+    def _observe_stream(self, stage, identity, chunk=None, **metadata):
+        # Opt-in diagnostics only. Neither a return value nor an observer failure
+        # can replace response bytes, inference outcomes or execution decisions.
+        if self.stream_observer is None or identity is None:
+            return
+        try:
+            self.stream_observer(stage, identity, chunk, metadata)
+        except Exception:
+            self.stream_observer_errors += 1
 
     @property
     def base_url(self) -> str:
@@ -87,6 +102,9 @@ class ProviderHistoryBridge:
                 audit_id = None
                 response_status = None
                 received = 0
+                forwarded_bytes = 0
+                upstream_eof = False
+                expected_body_bytes = None
                 transport_error = None
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
@@ -105,7 +123,7 @@ class ProviderHistoryBridge:
                         if not isinstance(request, dict):
                             self.send_error(400, "Responses request must be an object")
                             return
-                        projection = project_provider_history(request)
+                        projection = project_provider_history(request, max_goal_history_bytes=owner.max_recovery_bytes)
                         forwarded, restoration = owner.restore_runtime_context(
                             projection.request, compact=self.path.split("?", 1)[0] == "/v1/responses/compact")
                         decisions = projection.decisions + tuple(restoration)
@@ -125,6 +143,12 @@ class ProviderHistoryBridge:
                         connection.sock.settimeout(None)
                     response = connection.getresponse()
                     response_status = response.status
+                    expected_body_bytes = response.length
+                    if owner.audit is not None and audit_id is not None:
+                        try:
+                            owner.audit.response_started(audit_id, response_status)
+                        except OSError:
+                            owner.audit_errors += 1
                     self.send_response(response.status)
                     for key, value in response.getheaders():
                         if key.lower() not in HOP_HEADERS:
@@ -135,19 +159,42 @@ class ProviderHistoryBridge:
                     # HTTPResponse.read1 preserves incremental SSE delivery.
                     while chunk := response.read1(65536):
                         received += len(chunk)
+                        owner._observe_stream('upstream', audit_id, chunk)
                         self.wfile.write(chunk)
                         self.wfile.flush()
-                except ContextBudgetError:
+                        forwarded_bytes += len(chunk)
+                        owner._observe_stream('downstream', audit_id, chunk)
+                    upstream_eof = True
+                    # read1() can return b"" on a truncated fixed-length body.
+                    # A physical EOF is not proof that HTTP framing completed.
+                    if expected_body_bytes is not None and received != expected_body_bytes:
+                        raise http.client.IncompleteRead(b"", expected_body_bytes - received)
+                except HistoryProjectionBindingError:
                     if owner.audit is not None:
                         owner.audit.write({"schema": "uaea.model_http_audit.v1",
-                            "event": "request_blocked", "reason": "required_host_context_over_budget",
+                            "event": "request_blocked", "reason": "goal_history_identity_conflict",
+                            "upstream_forwarded": False, "task_retained": True,
+                            "original_bytes_sha256": hashlib.sha256(original_body).hexdigest()})
+                    transport_error = "HistoryProjectionBindingError"
+                    error = json.dumps({"error": {"type": "uaea_history_identity_conflict",
+                        "code": 400, "message": "Conflicting Goal call/receipt identity; request not forwarded. Task retained."}}).encode()
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(error)))
+                    self.end_headers()
+                    self.wfile.write(error)
+                except (ContextBudgetError, HistoryProjectionBudgetError) as budget_error:
+                    if owner.audit is not None:
+                        owner.audit.write({"schema": "uaea.model_http_audit.v1",
+                            "event": "request_blocked", "reason": ("goal_failure_history_over_budget" if isinstance(budget_error, HistoryProjectionBudgetError)
+                                       else "required_host_context_over_budget"),
                             "upstream_forwarded": False, "task_retained": True,
                             "original_bytes_sha256": hashlib.sha256(original_body).hexdigest()})
                     transport_error = "ContextBudgetError"
                     if not headers_sent:
                         error = json.dumps({"error": {"type": "uaea_context_budget_exceeded",
                             "code": 413, "param": "host_context_bytes",
-                            "message": "Required Host facts exceed recovery byte budget; request not forwarded. Task retained."}}).encode()
+                            "message": "Required Host/history facts exceed byte budget; request not forwarded. Task retained."}}).encode()
                         self.send_response(413)
                         self.send_header("Content-Type", "application/json")
                         self.send_header("Content-Length", str(len(error)))
@@ -180,10 +227,18 @@ class ProviderHistoryBridge:
                     if audit_id is not None:
                         try:
                             owner.audit.response(audit_id, status=response_status,
-                                                 bytes_received=received, error=transport_error)
+                                                 bytes_received=received, error=transport_error,
+                                                 upstream_eof=upstream_eof, bytes_forwarded=forwarded_bytes,
+                                                 expected_body_bytes=expected_body_bytes)
                         except OSError:
                             # A response audit failure cannot cause a second model/tool execution.
                             owner.audit_errors += 1
+                    owner._observe_stream('finished', audit_id,
+                                          upstream_eof=upstream_eof,
+                                          bytes_received=received,
+                                          bytes_forwarded=forwarded_bytes,
+                                          transport_error=transport_error,
+                                          expected_body_bytes=expected_body_bytes)
                     self.close_connection = True
                     connection.close()
 

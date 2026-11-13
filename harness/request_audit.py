@@ -82,6 +82,33 @@ def message_manifest(request):
     return rows
 
 
+def transport_state(event):
+    """Transport evidence only; legacy success bytes do not prove EOF."""
+    if not isinstance(event, dict):
+        return "unknown"
+    status = event.get("http_status")
+    started = isinstance(status, int) or event.get("response_started") is True
+    if event.get("transport_error"):
+        return "partial" if started else "failed_before_response"
+    if event.get("http_framing_complete") is False:
+        return "partial" if started else "not_started"
+    if event.get("response_complete") is True:
+        # Legacy counters/EOF do not prove that HTTP framing was validated.
+        if event.get("http_framing_complete") is not True:
+            return "unknown"
+        if (event.get("upstream_eof") is not True or type(event.get("bytes_received")) is not int
+                or type(event.get("bytes_forwarded")) is not int
+                or event["bytes_received"] < 0 or event["bytes_forwarded"] != event["bytes_received"]):
+            return "unknown"
+        expected = event.get("expected_body_bytes")
+        if expected is not None and (type(expected) is not int or expected < 0 or event["bytes_received"] != expected):
+            return "partial" if started else "unknown"
+        return "complete_success" if isinstance(status, int) and 200 <= status < 300 else "complete_http_error"
+    if event.get("response_complete") is False:
+        return "partial" if started else "not_started"
+    return "unknown"
+
+
 class RequestAudit:
     def __init__(self, path, *, max_snapshot_bytes=2*1024*1024):
         self.path = Path(path)
@@ -121,8 +148,24 @@ class RequestAudit:
                     "message_manifest": message_manifest(payload)})
         return identity
 
-    def response(self, identity, *, status=None, bytes_received=0, error=None):
+    def response_started(self, identity, status):
+        self.write({"schema": _SCHEMA, "event": "transport_started", "request_id": identity,
+                    "utc": time.time(), "http_status": status})
+
+    def response(self, identity, *, status=None, bytes_received=0, error=None,
+                 upstream_eof=False, bytes_forwarded=0, expected_body_bytes=None):
+        framing_complete = (expected_body_bytes is None or
+                            (type(expected_body_bytes) is int and expected_body_bytes >= 0
+                             and expected_body_bytes == bytes_received))
+        complete = upstream_eof is True and error is None and bytes_forwarded == bytes_received and framing_complete
         self.write({"schema": _SCHEMA, "event": "transport_result", "request_id": identity,
                     "utc": time.time(), "http_status": status, "bytes_received": bytes_received,
                     "transport_error": error,
+                    "response_started": isinstance(status, int),
+                    "upstream_eof": upstream_eof is True,
+                    "bytes_forwarded": bytes_forwarded,
+                    "response_complete": complete,
+                    "expected_body_bytes": expected_body_bytes,
+                    "http_framing_complete": framing_complete and upstream_eof is True and error is None,
+                    "completion_scope": "HTTP body forwarded through EOF; not model correctness or Workflow completion",
                     "model_understanding": "not_established"})

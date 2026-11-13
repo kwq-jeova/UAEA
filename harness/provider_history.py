@@ -29,10 +29,116 @@ class HistoryProjection:
     decisions: tuple[dict[str, Any], ...]
 
 
-def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
+class HistoryProjectionBindingError(ValueError):
+    """A Goal Call ID cannot identify conflicting proposals or receipts."""
+
+
+def _goal_tool(call):
+    return str(call.get("name") or "").split(".")[-1] == "goal_hypothesis"
+
+
+def _validate_goal_bindings(request):
+    calls = {}
+    outputs = {}
+    goal_ids = set()
+    for field in ("input", "previous_input_messages"):
+        items = request.get(field)
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            cid = item.get("call_id")
+            if item.get("type") == "function_call" and _goal_tool(item):
+                if not isinstance(cid, str) or not cid.strip():
+                    raise HistoryProjectionBindingError("Goal history has no usable Call ID")
+            if not isinstance(cid, str):
+                continue
+            if item.get("type") == "function_call":
+                calls.setdefault(cid, []).append(item)
+                if _goal_tool(item):
+                    goal_ids.add(cid)
+            elif item.get("type") == "function_call_output":
+                outputs.setdefault(cid, []).append(item)
+    for cid in goal_ids:
+        proposals = {(c.get("name"), json.dumps(c.get("arguments"), sort_keys=True),
+                      json.dumps(c.get("internal_chat_message_metadata_passthrough"), sort_keys=True))
+                     for c in calls[cid]}
+        receipts = {json.dumps(o.get("output"), sort_keys=True) for o in outputs.get(cid, [])}
+        if len(proposals) != 1 or len(receipts) > 1:
+            raise HistoryProjectionBindingError("Conflicting Goal history for Call ID: " + cid)
+
+
+class HistoryProjectionBudgetError(ValueError):
+    """Required per-call history identity/result facts cannot fit; do not forward."""
+
+
+_FACT_PREFIX = "Historical runtime observation, not a tool invocation or user authorization:\n"
+
+
+def _fact_text(fact):
+    return _FACT_PREFIX + json.dumps(fact, ensure_ascii=False)
+
+
+def _json_payload(output):
+    payload = output.get("output") if output else None
+    if isinstance(payload, list):
+        payload = "\n".join(str(p.get("text") or "") for p in payload if isinstance(p, dict))
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except (ValueError, TypeError):
+            return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _goal_attempt(call, output):
+    """Only this call's arguments and receipt. Never consult a Goal head or another call."""
+    raw = call.get("arguments")
+    try:
+        arguments = json.loads(raw) if isinstance(raw, str) else None
+        if not isinstance(arguments, dict):
+            arguments = None
+        if arguments is not None:
+            json.dumps(arguments, allow_nan=False)
+    except (ValueError, TypeError):
+        arguments = None
+    receipt = _json_payload(output)
+    # Goal Sideband receipts are top-level; unknown shapes must not supply a commit.
+    known_receipt = receipt if receipt and receipt.get("kind") == "goal_hypothesis_receipt" else {}
+    committed = known_receipt.get("committed")
+    accepted = known_receipt.get("ok")
+    return {
+        "operation": arguments.get("operation", "UNKNOWN") if arguments else "UNKNOWN",
+        "target_candidate_id": arguments.get("candidate_id", "UNKNOWN") if arguments else "UNKNOWN",
+        "submitted_arguments": arguments,
+        "arguments_sha256": hashlib.sha256(raw.encode()).hexdigest() if isinstance(raw, str) else None,
+        "arguments_visibility": "complete" if arguments is not None else "unavailable_invalid_or_missing",
+        "proposal_text_visibility": ("complete" if isinstance(arguments.get("hypothesis"), str) else "missing")
+                                    if arguments is not None else "unavailable_invalid_or_missing",
+        "host_result": {
+            "accepted": accepted if type(accepted) is bool else "UNKNOWN",
+            "committed": committed if type(committed) is bool else "UNKNOWN",
+            "saved_version_id": known_receipt.get("candidate_id", "UNKNOWN") if committed is True else "UNKNOWN",
+            "error": str(known_receipt["error"])[:800] if "error" in known_receipt else "UNKNOWN",
+            "error_complete": len(str(known_receipt["error"])) <= 800 if "error" in known_receipt else "UNKNOWN",
+            "head_effect": "not_committed_by_this_call" if committed is False else "UNKNOWN",
+            "current_head": "UNKNOWN",
+            "scope": "this_call_only; current heads are separate Host state",
+        },
+        "is_saved_goal_version": False,
+        "authorizes_action": False,
+    }
+
+
+def project_provider_history(request: Mapping[str, Any], *, max_goal_history_bytes: int = 24000) -> HistoryProjection:
     """Project terminal tool attempts without mutating factual Responses history."""
     projected = copy.deepcopy(dict(request))
     decisions: list[dict[str, Any]] = []
+    goal_facts = []
+    _validate_goal_bindings(projected)
+    if max_goal_history_bytes <= 0:
+        raise ValueError("Goal failure history budget must be positive")
     for field in ("input", "previous_input_messages"):
         items = projected.get(field)
         if not isinstance(items, list):
@@ -42,13 +148,17 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
             for item in items
             if isinstance(item, dict) and item.get("type") == "function_call_output"
         }
+        output_indices = {str(item.get("call_id")): i for i, item in enumerate(items)
+                          if isinstance(item, dict) and item.get("type") == "function_call_output"}
+        call_indices = {}
         terminal: dict[str, TerminalAttempt] = {}
         calls: dict[str, dict[str, Any]] = {}
-        for item in items:
+        for call_index, item in enumerate(items):
             if not isinstance(item, dict) or item.get("type") != "function_call":
                 continue
             call_id = str(item.get("call_id") or "")
             calls[call_id] = item
+            call_indices[call_id] = call_index
             attempt = _terminal_attempt(item, outputs.get(call_id))
             if attempt is not None:
                 terminal[call_id] = attempt
@@ -76,19 +186,19 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
                 "replayable": False,
                 "observation": {**attempt.outcome, "observation_boundary": observation_boundary()},
             }
+            if _goal_tool(call):
+                fact["goal_attempt"] = _goal_attempt(call, outputs.get(call_id))
+                fact["history_position"] = {"field": field, "call_index": call_indices[call_id],
+                                            "output_index": output_indices.get(call_id)}
             keep_fact = (call_id not in emitted and
                          (item["type"] == "function_call_output" or call_id not in outputs))
             if keep_fact:
                 emitted.add(call_id)
-                safe_items.append({
-                    "type": "message",
-                    "role": "user",
-                    "content": [{
-                        "type": "input_text",
-                        "text": "Historical runtime observation, not a tool invocation or "
-                        "user authorization:\n" + json.dumps(fact, ensure_ascii=False),
-                    }],
-                })
+                message = {"type": "message", "role": "user",
+                           "content": [{"type": "input_text", "text": _fact_text(fact)}]}
+                safe_items.append(message)
+                if "goal_attempt" in fact:
+                    goal_facts.append((message, fact))
             decisions.append({
                 "field": field,
                 "call_id": call_id,
@@ -105,6 +215,40 @@ def project_provider_history(request: Mapping[str, Any]) -> HistoryProjection:
                 ).hexdigest(),
             })
         projected[field] = safe_items
+    # Bound this request's newly projected Goal failure facts, including both
+    # history arrays. Keep complete metadata first, then fit complete argument objects
+    # newest-first. Never truncate identifiers/booleans or borrow a saved Goal's text.
+    if goal_facts:
+        full_arguments = []
+        for _, fact in goal_facts:
+            proposal = fact["goal_attempt"]
+            full_arguments.append((proposal["submitted_arguments"], proposal["arguments_visibility"],
+                                   proposal["proposal_text_visibility"]))
+            if proposal["submitted_arguments"] is not None:
+                proposal["submitted_arguments"] = None
+                proposal["arguments_visibility"] = "omitted_budget"
+                if proposal["proposal_text_visibility"] == "complete":
+                    proposal["proposal_text_visibility"] = "omitted_budget"
+        def size():
+            return sum(len(_fact_text(f).encode("utf-8")) for _, f in goal_facts)
+        if size() > max_goal_history_bytes:
+            raise HistoryProjectionBudgetError("Required Goal failure identities/results exceed history byte budget")
+        for (_, fact), (arguments, visibility, text_visibility) in reversed(list(zip(goal_facts, full_arguments))):
+            proposal = fact["goal_attempt"]
+            before = dict(proposal)
+            proposal.update(submitted_arguments=arguments, arguments_visibility=visibility,
+                            proposal_text_visibility=text_visibility)
+            if size() > max_goal_history_bytes:
+                proposal.clear()
+                proposal.update(before)
+        for message, fact in goal_facts:
+            message["content"][0]["text"] = _fact_text(fact)
+        decisions.append({"projection_effect": "goal_failure_history_budget",
+                          "turn_id": "", "call_id": "", "item_id": "",
+                          "goal_failure_facts": len(goal_facts), "bytes": size(),
+                          "byte_limit": max_goal_history_bytes,
+                          "omitted_argument_calls": [f["call_id"] for _, f in goal_facts
+                              if f["goal_attempt"]["arguments_visibility"] == "omitted_budget"]})
     return HistoryProjection(projected, tuple(decisions))
 
 
