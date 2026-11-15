@@ -1,0 +1,23 @@
+{
+  "service_samples": 2086,
+  "valid_windows": 2086,
+  "valid_linux": 2086,
+  "commit_limit_GiB": 89.48096084594727,
+  "min_commit_remaining_GiB": 23.07378387451172,
+  "min_commit_safety_buffer_GiB_at_original_20pct_or16GiB": 5.177591705322264,
+  "min_windows_available_GiB": 32.925514221191406,
+  "max_windows_GPU_dedicated_GiB": 28.67499542236328,
+  "max_windows_GPU_shared_GiB": 0.1981201171875,
+  "max_NVML_used_GiB": 28.676006317138672,
+  "min_WSL_available_GiB": 17.592864990234375,
+  "max_swap_used_GiB": 1.1444091796875e-05,
+  "owned_model_stopped": true,
+  "guard_reason": "CONTROLLER_STOP",
+  "observer": {
+    "stop_requested": true,
+    "seconds": 2277.5561775,
+    "samples": 2254,
+    "error": null,
+    "run": "164ea313-2c49-483d-ad5a-92a889553e58"
+  }
+}

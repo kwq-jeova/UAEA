@@ -1,0 +1,26 @@
+{
+  "supplier-A": {
+    "actual_http_summary_matches_exact": true,
+    "tools_match": true,
+    "actual_first_request_id": "cfc5f0d9-ab9e-4bfb-aa0d-0dddd7a1b16d"
+  },
+  "supplier-B": {
+    "actual_http_summary_matches_exact": true,
+    "tools_match": true,
+    "actual_first_request_id": "5b548235-5a93-4f01-ac0b-3a783ba305c1"
+  },
+  "transfer-B": {
+    "actual_http_summary_matches_exact": true,
+    "tools_match": true,
+    "actual_first_request_id": "3611294a-eb7e-4212-8a2b-d6b4ed3beb3f"
+  },
+  "supplier_actual_summary_only_B_sentence": true,
+  "supplier_successor_only_summary_changed": true,
+  "transfer-A": {
+    "actual_http_summary_matches_exact": true,
+    "tools_match": true,
+    "actual_first_request_id": "ad4a304f-d487-41e8-8c49-490e726ceb50"
+  },
+  "transfer_actual_summary_only_B_sentence": true,
+  "transfer_successor_only_summary_changed": true
+}

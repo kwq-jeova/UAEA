@@ -1,0 +1,32 @@
+# 可读任务摘要后的已读字段失真：AMD期末总资产
+
+选定案例：SupplierTaskHandoff v3，同一Thread，AMD期末总资产（2026-09-26，Q3'26）。只查已有记录，不运行模型。以下时间均为2026-11-15新加坡时间。
+
+| 环节 | 证据 |
+|---|---|
+| 13:04:23 原始工具回执 | read_section读amd.md第17节，2951字符完整返回。日期September26,2026，单位In millions；r16 Total Assets=$94,812。Call chatcmpl-tool-b89a65db79f0ba7d，Observation execution:ef10e5467f670ebeeca297b2bcef3bb12ccd6da08172dc7363e1d5a78ebe464d |
+| 实际供给 | initial request3中同Call的function_call_output含完整Total Assets原文；已按Call ID逐项对上HTTP出站审计回执正文，200且framing完整 |
+| 13:14:45 第一份真实可读摘要完成 | “AMD（第一家）已完成小结：已读取Q3 2026财报……核验了……资产负债表……期末总资产$94,812M……”明确保留已读和具体金额 |
+| 13:22:56—13:25:02 第二次压缩 | 实际compaction request12仍含94,812；第二份可读任务摘要只留“完成AMD和NVIDIA的个案核验”，没有该金额，也未保留AMD资产负债表具体读取记录 |
+| 13:28:41 最终实际输入 | request17携带第二份摘要；94,812/94812/94.812均不在实际出站输入。压缩后首个普通request13也已无该数 |
+| 13:32:23 模型最终原话 | AMD、NVIDIA、Intel三列中，“总资产”行写“未读｜未读｜$228,574百万”。AMD列被明确标成未读 |
+
+**原文已经读到，第一份可读摘要也正确保留了这个字段，后来却被写成未读。** 两份都是连贯自然语言任务摘要，不是前例apply_patch样式异常产物。这里仅验证格式可读及该资产字段的传递，不保证摘要其他内容全部正确。
+
+必须区分：**最终模型看到的是第二份摘要，不是仍带94,812的第一份。** 所以不能报告成“当前摘要明确写着该项已读，模型仍无视”。本例支持的是：已读事实/金额被第一份摘要保留 → 后一次摘要未保留具体记录 → 最终把当前没有该记录改写成历史未读。它不单独证明模型内部动机或摘要、投影、推断各环节的独立因果责任。
+
+原任务有真实进程交接；第一份摘要在交接后仍正确包含94,812，不能把交接当作金额当时就丢失的证据。原Journal和Host事实没有被改成未读；这里核对的是模型回答。
+
+## 按时间查找
+检索research-records内64份含compacted的rollout，排除CPU路径、按时间及摘要去重得到57次压缩，18次后续含未读/未找到/未披露/未提供等词；按实际压缩时间排序后核对相关长任务。
+较早命中多为真实缺全年EPS、行情、电话会议；Apple“未读到可公开引用原文位置”涉及研究者摘录与官方原件的区别，未作为同字段干净冲突。11-12另有ledger读取状态错报，已单列于20261115_ReadableCompactionCase；本主例选公司、期间明确的财务数值。NVIDIA财季与终表标题不同，为避免混同选AMD。11-15较早v2压缩含工具样式文本，不用于这个可读摘要案例。
+不宣称这是全项目最早错误，只报告按时间筛查后选中的清晰数值案例。候选与检索索引附后。
+
+## 可复核文件
+original-read-event.json / original-balance-sheet-section.txt；
+early-delivery.json；
+summary-1.txt / compaction-1-input.json / after-compaction-1.json；
+summary-2.txt / compaction-2-input.json / after-compaction-2.json；
+final-input.json / final-answer.md；
+native-compaction-events.json / request-associations.json。
+审计为redacted_complete结构快照，Host JSON文本序列化及metadata有差异，**不声称整包或原始网络字节相等**；已验证选定Call正文及字段覆盖与实际出站记录对应。所选传输均200/framing完整。原始记录不覆盖，本轮无新模型请求。

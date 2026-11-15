@@ -1,0 +1,28 @@
+# 可读任务摘要后的读取状态错报
+
+找到一例：finance-phase1-64k-20261111T235041Z 的30轮真实金融长会话，第28轮。所选具体字段是 ledger.md 的已读/未读状态，不是财务金额。本轮只查既有记录，没有模型补跑。
+
+| 证据环节 | 实际记录（新加坡时间，2026-11-12） |
+|---|---|
+| 原始工具回执 | 07:57:47，read_section成功读取ledger.md，525字符正文完整返回，包含冻结时点、历史估值时点、三家公司来源目录及版本规则。Call ID chatcmpl-tool-9222488ab3bbc661；Observation execution:b8de1a9515461515880386a94a5f3bbabc0f5283e64dcbc0309d2ed59c2219ea |
+| 压缩前真实供给 | 07:58:11，出站请求sequence2含同Call的function_call及成功function_call_output，含整段目录正文；有HTTP200完整响应。不是仅文件存在或只读了标题 |
+| 真实压缩及摘要 | 08:31:53开始、08:34:43完成原生contextCompaction；sequence32为真实压缩提示，HTTP200完成。生成可读的“Handoff Summary: Intel & Alphabet Frozen Research”，正常分列研究范围、进度、约束、待办及数据，非工具调用样式文本 |
+| 最终实际输入 | 08:43:01，sequence39仍带该摘要、ledger路径及可用文件清单；不含最初ledger成功调用/回执。此窗口直接可见的四条读取回执是intc-v1/v2/v3和paper-risk-v1 |
+| 模型原话 | 08:45:32，第28轮“真实工具与Host记录回顾”中写：ledger.md“存在，未读取” |
+
+用户第28轮原话：“依据真实工具与Host记录回顾：哪些资料确实读取，哪些只是说过计划，当前模拟版本/现金条件是什么？对当前研究方向的理解与已保存候选也要分开，不虚称已更新。”
+因此该句是在回顾整段历史，而不是仅说“这一轮没有重新读取”。
+
+## 关键限定
+**这份摘要没有明确写ledger.md已经读过。** 它保留了冻结研究时间、估值目标和不少规则，但没有保留ledger读取动作；故不能把此例报告成“当前摘要明说已读，模型仍否认”。
+
+能确认的是：过去成功读取、正文曾实际送达 → 可读摘要遗漏这项读取状态 → 最终窗口仍有文件存在信息但无原始成功回执 → 模型把它报告成未读。表现与把当前窗口没有回执混成整个Thread从未执行相符；不能仅凭这一例定位摘要、恢复投影或模型推断各自的独立贡献。
+
+HTTP审计为redacted_complete出站结构快照，snapshot_is_wire_bytes=false；结合对应请求200完整响应核对，不把它称作原始网络抓包。原始Journal/Native/模型请求均未修改。
+
+## 查找范围与选择
+在research-records中检索64份含compacted记录的rollout文件，排除CPU路径并按时间/摘要去重得到57次压缩；18条后续含“未读/未找到/未披露/未提供”等表述，按实际压缩时间排序。
+先核对2026-11-10至本例之前的金融长任务：较早多数是确无年度EPS/价格/电话会议的正确未知；另有Apple“未读到可公开引用的原文位置”，但实际材料是研究者摘录，原件与摘录语义有歧义，未作为干净冲突。11-11容量/UMA回放属于工程测试，不作为自然长任务例。本例ledger的“未读取”则有完整读取回执、正常摘要及最终输入可逐项对照。
+这是按上述词和可用原始记录找到的清晰案例，不宣称穷尽所有未知同义表达或全项目最早错误。完整索引和候选筛查保留。
+
+文件：original-tool-receipt.json、pre-compaction-delivery-request.json、actual-compaction-request.json、readable-summary.txt、actual-final-request.json、final-answer.txt，以及transport-associations.json和case.json。

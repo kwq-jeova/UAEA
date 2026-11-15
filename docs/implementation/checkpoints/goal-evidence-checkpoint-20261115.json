@@ -1,0 +1,24 @@
+{
+  "before_head": "2b3edfc9fa58f47a3b7cf306efb247cf944e2562",
+  "tests": {
+    "command": "python3 -B -m unittest tests.test_document_projection tests.test_document_adapter tests.test_document_fixture tests.test_harness_dynamic_tool_adapter tests.test_harness_provider_history tests.test_goal_failed_history tests.test_goal_integration benchmark.longitudinal_dialogue.test_goal_continuity benchmark.longitudinal_dialogue.test_goal_recovery",
+    "run": 149,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 5.049,
+    "scope": "targeted CPU/offline, no model launch; not independent cognition audit"
+  },
+  "local_history_catalog": {
+    "packages": 74,
+    "files": 8756,
+    "GiB_approx": 0.54,
+    "originals_untouched": true,
+    "current_batch_excluded": true
+  },
+  "original_records_not_uploaded": true,
+  "M3": "PARTIAL",
+  "M4": "UNKNOWN",
+  "M5": "UNKNOWN",
+  "full_local_maintenance_record": "/home/wqkan_wsl/uaea-n1x/research-records/git-sync-20261115-v1"
+}

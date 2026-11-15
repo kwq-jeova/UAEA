@@ -1,0 +1,225 @@
+{
+  "scope": "One fresh A/B each. One model load. No prompt retries. Tool loop is real Native Harness/SharedExecutionHost; original historical calls never reexecuted. Frozen Provider-history replay into new Threads, NOT complete in-flight Host/Native checkpoint restoration.",
+  "preregistration": "preregistration.json and selection-rule.txt precede model execution; both original summary requests exactly match except the B sentence. Both max_output_tokens=3072. Successor initial requests match except actual generated summary.",
+  "transfer_limitation": "The selected Phase1 first compaction precedes a new integrated valuation-logic question, but the immediately prior SIM-v3 question had already been answered. It meets early-source/later-integration/raw-ground-truth criteria, but not the stronger pending-final-delivery wording in selection-rule.txt. Treat as weaker exploratory transfer evidence, not a clean replication of the supplier unfinished-delivery condition. This mismatch is disclosed, not silently marked as passed.",
+  "supplier": {
+    "A": {
+      "summary": "XML-like read_section text for Intel2..8, no real handoff facts; no tool executed during summary generation",
+      "new_reads": "Intel9..29, Intel1, index1;23 success",
+      "final": "Intel overview and unfinished comparison. Intel facts inside AMD column, NVIDIA pending. Asks permission to continue retrieving AMD/NVIDIA.",
+      "first_summary_tokens": 534,
+      "new_native_compactions": 1
+    },
+    "B": {
+      "summary": "Produced comparative draft preserving both earlier revenue figures and NVIDIA assets, plus caveats; did not preserve AMD end assets",
+      "new_reads": "index1,AMD1,NVIDIA1,Intel1;4 success. All company root bodies explicitly partial.",
+      "final": "Three-company revenue comparison delivered; original source absence falsely asserted for AMD balance sheet. Opening calls it complete, but actual API terminal status incomplete, reason max_output_tokens at3072.",
+      "first_summary_tokens": 2949,
+      "new_native_compactions": 0
+    }
+  },
+  "fields": [
+    {
+      "field": "AMD end assets",
+      "original_receipt_or_record": "Original AMD17, chatcmpl-tool-b89a65db79f0ba7d;2026-09-26;94,812 USD millions. Complete balance-sheet body in original receipt; first real summary and pre-second-compaction request retain94,812.",
+      "A": {
+        "summary": "not retained",
+        "reread": "none",
+        "final": "AMD figure not recovered; Intel financial metrics placed in AMD column (explicitly labelled Intel/Q3, so do NOT score as an invented AMD value)."
+      },
+      "B": {
+        "summary": "omits number; says AMD资产规模较小 / 未披露细致资产负债结构",
+        "reread": {
+          "call_id": "chatcmpl-tool-bd3b83b29d219a0d",
+          "identity": {
+            "thread_id": "01a1ded3-3417-7b40-8c90-e45648bf2aeb",
+            "turn_id": "01a1ded3-343d-7490-a5ac-7e8af0b29bb0",
+            "call_id": "chatcmpl-tool-bd3b83b29d219a0d",
+            "observation_id": "execution:f63a317e8cf6eadb4142415249bb3f881d6d26f9374c257d7f957a58c2602e0d"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/amd.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 9000,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final_quote": "资产规模较小（资料中未披露完整资产负债表，故未计算具体ROA",
+        "judgment": "unsupported source-absence claim. Current partial root invisibility does not establish document absence; original full AMD17 was actually read."
+      }
+    },
+    {
+      "field": "AMD total revenue",
+      "original_receipt_or_record": "pre-supplier.json original AMD1 body13,377 USD millions,Q3 2026",
+      "A": {
+        "summary": "not retained",
+        "reread": "none",
+        "final": "not covered"
+      },
+      "B": {
+        "summary": "$13.38B Q3 2026",
+        "reread": {
+          "call_id": "chatcmpl-tool-bd3b83b29d219a0d",
+          "identity": {
+            "thread_id": "01a1ded3-3417-7b40-8c90-e45648bf2aeb",
+            "turn_id": "01a1ded3-343d-7490-a5ac-7e8af0b29bb0",
+            "call_id": "chatcmpl-tool-bd3b83b29d219a0d",
+            "observation_id": "execution:f63a317e8cf6eadb4142415249bb3f881d6d26f9374c257d7f957a58c2602e0d"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/amd.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 9000,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final": "$13.38B Q3 2026; correct rounding, period and company"
+      }
+    },
+    {
+      "field": "NVIDIA total revenue",
+      "original_receipt_or_record": "pre-supplier.json original NVIDIA8 body96,221 USD millions,Q2FY2027 end2026-07-26",
+      "A": {
+        "summary": "not retained",
+        "reread": "none",
+        "final": "pending"
+      },
+      "B": {
+        "summary": "$96.2B Q2FY27",
+        "reread": {
+          "call_id": "chatcmpl-tool-969e7f7168972519",
+          "identity": {
+            "thread_id": "01a1ded3-3417-7b40-8c90-e45648bf2aeb",
+            "turn_id": "01a1ded3-343d-7490-a5ac-7e8af0b29bb0",
+            "call_id": "chatcmpl-tool-969e7f7168972519",
+            "observation_id": "execution:3028fd08c494f14a06ea63d9506be2c2797d040692565cd0d863525e5cda598d"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/nvda.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 8927,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final": "$96.2B Q2FY27; correct rounding. New root visible body includes96,221."
+      }
+    },
+    {
+      "field": "NVIDIA end assets",
+      "original_receipt_or_record": "pre-supplier.json original NVIDIA9 full body320,272 USD millions,2026-07-26",
+      "A": {
+        "summary": "not retained",
+        "reread": "none",
+        "final": "not covered"
+      },
+      "B": {
+        "summary": "$320.3B",
+        "reread": "NVIDIA1 only; its partial visible body does NOT include320,272. No new NVIDIA9 read.",
+        "final": "$320.3B, correct retained historical value, NOT newly reverified asset table."
+      }
+    },
+    {
+      "field": "Intel revenue",
+      "original_receipt_or_record": "pre-supplier.json original Intel1 actual partial body$16.5B Q3 2026",
+      "A": {
+        "summary": "no fact retained",
+        "reread": {
+          "call_id": "chatcmpl-tool-b9d1701f15097972",
+          "identity": {
+            "thread_id": "01a1dec4-6d36-7713-a349-18f01805b2b4",
+            "turn_id": "01a1dec4-6d64-7750-9cdb-cfc2b53cde19",
+            "call_id": "chatcmpl-tool-b9d1701f15097972",
+            "observation_id": "execution:c39e95245ba3c62b940dc571a2a588b869a58c972cb8c1e5e41c4bd502314f7a"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/intel.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 8948,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final": "$16.5B Q3 2026 correct; bad comparison column placement separately noted"
+      },
+      "B": {
+        "summary": "$16.5B Q3 2026",
+        "reread": {
+          "call_id": "chatcmpl-tool-a5d7762c0de4685e",
+          "identity": {
+            "thread_id": "01a1ded3-3417-7b40-8c90-e45648bf2aeb",
+            "turn_id": "01a1ded3-343d-7490-a5ac-7e8af0b29bb0",
+            "call_id": "chatcmpl-tool-a5d7762c0de4685e",
+            "observation_id": "execution:5ad28ba09e305c6dd877631c25433f2f47cff0283de64edbb11fac6d16e8a1a1"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/intel.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 8948,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final": "$16.5B Q3 2026 correct"
+      }
+    },
+    {
+      "field": "Intel GAAP diluted EPS",
+      "original_receipt_or_record": "pre-supplier.json original Intel1 body$0.60 Q3 2026 (separate from forecast$0.10)",
+      "A": {
+        "summary": "not retained",
+        "reread": "Intel1 includes it",
+        "final": "not reported, not automatically a factual error"
+      },
+      "B": {
+        "summary": "$0.60 Q3 2026",
+        "reread": {
+          "call_id": "chatcmpl-tool-a5d7762c0de4685e",
+          "identity": {
+            "thread_id": "01a1ded3-3417-7b40-8c90-e45648bf2aeb",
+            "turn_id": "01a1ded3-343d-7490-a5ac-7e8af0b29bb0",
+            "call_id": "chatcmpl-tool-a5d7762c0de4685e",
+            "observation_id": "execution:5ad28ba09e305c6dd877631c25433f2f47cff0283de64edbb11fac6d16e8a1a1"
+          },
+          "arguments": {
+            "path": "/home/wqkan_wsl/uaea-n1x/research-records/supplier-task-handoff-20261115-v1/files/sandbox/sources/intel.md",
+            "section_index": 1
+          },
+          "content_complete": false,
+          "visible_content_characters": 8948,
+          "raw_body_location": "Local original receipt/trace retained; not included in this compact Git summary."
+        },
+        "final": "$0.60 GAAP Q3 2026 correct"
+      }
+    }
+  ],
+  "transfer": {
+    "A": {
+      "summary": "Current SIM PE50, correct source paths, official quarterly EPS, paper cash and risk retained. No explicit old25/40 values.",
+      "new_reads": "3 rejected section0 calls, then5 successful section1 reads:SIM-v3,ledger,Intel,Alphabet,paper-risk. Does not actually read stopped Apple after initial rejected attempt.",
+      "final": "Correct current SIM50; distinguishes quarterly EPS from annual consensus; missing actual price/consensus remain unknown. No claim of trading or Goal change."
+    },
+    "B": {
+      "summary": "Additionally preserved25/40/50 and historicalEPS2/1.25/1; all SIM and paper cash qualifications included.",
+      "new_reads": "ledger0 and SIM-v3/0 both rejected. Zero successful new reads, no model legal-index correction.",
+      "final": "Correct25/40/50 from history/summary; says files could not be read and response based on handoff. Does not establish new source verification. No fair basis to call B better evidence use."
+    },
+    "fields": {
+      "current_sim": "A/B correct price50,EPS1,PE50",
+      "older_sim": "B correct25/40; A does not mention, not automatically an error given task",
+      "paper_cash_and_constraints": "Both summaries retain100000USD,100%cash/no trades,cash>=80%,single<=20%; final answers need not repeat unrelated position constraints",
+      "data_limits": "Both distinguish frozen partial official excerpts and missing 11-04 quote / annual forward consensus / full call transcript. A actually rereads relevant excerpt; B no new successful read."
+    }
+  },
+  "other_observations": [
+    "No causal claim that longer B summary displaced AMD assets: A also omitted it. B used2949 of3072 summary tokens versus A534, with equal budgets.",
+    "B comparative text calls AMD Data Center growth97% the highest while its own NVIDIA row says117%; retained numbers do not ensure correct comparison.",
+    "Supplier B final status was incomplete despite event named response.completed and Native turn status completed; HTTP framing completion is separate.",
+    "Old ROA-limit violation remains a separate known issue, not scored as solved here.",
+    "No supported reduction of false historical unread claims demonstrated; B still overstates source absence for AMD.",
+    "One pair per task cannot establish stable cognitive gains."
+  ],
+  "protection": "All resource thresholds unchanged, Guard active; run ended by owned controller stop, remaining model PIDs empty. Same56/72,64K,1GiBKV,1concurrency,.65 utilization. No formal Runtime/Harness/Schema edits, no Commit/Push."
+}

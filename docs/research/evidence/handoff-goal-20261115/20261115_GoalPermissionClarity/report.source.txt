@@ -1,0 +1,58 @@
+2026-11-15｜Goal 候选权限核对与两例小对照
+
+结论：现有规则允许模型直接提议修订非权威候选，不要求用户另说“保存”。本次补充中性权限说明后，方向改变例真实 revise 并保存；只恢复 AMD 例未误改长期 Goal。单次结果不证明稳定性或因果。
+
+一、规则／实际工具说明／实际用户原话并排核对
+
+项目：候选提案权限
+Host规则：GoalResearch.submit 校验当前注册输入、操作、当前 head、引用及预算，没有“用户必须说保存／再次确认”的条件。候选提交不同于正式 ActiveGoal 的 adopt/revise。
+实际工具：description 明确为“Optional non-authoritative Goal Hypothesis research channel”，允许“changing/withdrawing a prior candidate”；回执只记录 candidate，不授予执行权限。
+本例用户原话：“仍关注AI产业，但不再以寻找股票投资机会为目的，改为研究企业AI算力采购和部署风险。”
+判断：足以供模型判断提议修订；是否真调用由模型选择。旧轮没有调用，不能说发生了 Host 拒绝。
+
+项目：复盘后一轮的引用
+Host规则：quote 必须是 CURRENT 注册用户输入中的原文片段；input_ids 可指向合法的原始用户输入。PersistentGoals 保留候选关联历史，当前同 Thread 的注册输入也在来源集合中。
+实际工具：quote = “Exact substring of CURRENT registered user request”；input_ids = “Optional original user input IDs asserted as basis. Never model/summary IDs.”
+实际输入：上一轮方向原话 input:23630a6c-b667-4c7f-bbba-386cb59b981a；当前复盘 input:8c55ccef-5527-4c56-8a25-7bb7979c0a2f：“把用户本轮原话和当前保存的 Goal 放在一起看。现在这份记录还准确吗？按你的判断处理。”
+判断：上一轮方向原话仍可通过 input_ids 支撑语义；CURRENT quote 应摘自复盘。本例两条输入均在实际出站 retained_user_requests 中。CPU 原状态校验按该组合通过全部提交前检查，然后主动在写入前中止；没有制造 Native 调用、保存或回执。历史方向句不能直接代替 CURRENT quote，这是 CPU 反例，不是旧轮已发生的拒绝。
+
+项目：正式 Goal 权限
+Host规则：GoalIntegration.control 要求明确 Host 控制和 adopt 模式；研究 GoalResearch.control 禁止正式采纳或授权。
+实际工具：candidate only；actual ActiveGoal remains null；无自动 Memory Admission。
+判断：不需要把“候选可提议”解释为“模型能自行改变正式目标”。
+
+二、实验
+未找到同起点、仅澄清候选权限的完全同型对照；既有邀请／显式 revise 研究不替代本题。
+A 直接复用上一轮常规流程的原始结果，不重跑；B 独立新 Thread 恢复相同真实 Goal checkpoint、相同选择历史，用户原话逐字一致。
+唯一计划新增语义输入是一条 developer 说明：
+“你可以按现有规则提议修订非权威候选，也可以保留原记录。”
+没有指定哪例该改，没有提供标准候选，没有要求采用 revise，没有追加本轮用户“保存确认”，不修改工具 Schema 或 CURRENT 规则。
+自然生成的 Thread/Input/Call IDs 不同；这不是严格逐字节随机 A/B，也不是同一次随机生成的反事实。
+
+场景一：长期方向改变
+A：0 Goal 调用，要求再次确认，保留旧 head。
+B：1 次 revise，Call ID chatcmpl-tool-90f305eba466ee1d；Host ok=true、committed=true、active_goal_changed=false。
+parent：goal-candidate:76fe2c341f981c349d539f56
+新 head：goal-candidate:bded94b910097623599608cb
+改前全文：
+长期跨公司研究AI产业投资机会是全局范围目的；重点是形成可检验的跨公司投资研究方法，不替用户作买卖结论，不把补行情、找共识等待办写成目的，不替用户添加未明确表达的持仓、期限或风险偏好。
+实际保存的新全文：
+长期跨公司研究企业AI算力采购和部署风险是全局范围目的；此前公司财报可作为供应商经营风险材料，不能据此直接判断产品性能或部署适用性；暂时不用再做ROA或估值分析。
+支撑改动的用户全文：
+后续持续方向有一项真正变化：仍关注AI产业，但不再以寻找股票投资机会为目的，改为研究企业AI算力采购和部署风险。此前公司财报可作为供应商经营风险材料，不能据此直接判断产品性能或部署适用性。暂时不用再做ROA或估值分析，请按这个新目的理解后续研究。
+引用合法；新 head 已进入后续完整成功请求；最终回答所报 ID 与 Host 一致。
+语义核查：保留了用户新长期方向和财报用途边界；“暂时不用再做ROA或估值分析”保留了暂时性，没有变成永久禁止。但临时工作安排仍混在 Goal 文本，不能称为目的／Task 完全分离。
+
+场景二：只恢复 AMD
+用户全文：
+现在只恢复AMD季度ROA计算，NVIDIA支线不恢复。利用已经核实且仍适用的资料，必要时补取正文。说明采用的定义、分子分母期间、是否使用平均资产近似及是否年化，给出可核查计算；不足时明确实际缺口。不要替我作买卖结论。
+A：0 Goal 调用，长期 head 不变。
+B：0 Goal 调用，长期 head 和全部旧版本逐值不变，未恢复 NVIDIA 工具支线。实际读取 AMD 第17、4、1节。
+结果：没有把一次支线恢复改成长期方向变化。财务答复仍错误地把上一财年末资产作为 Q3 期初，不能由 Goal 未误改推出财务研究正确。
+
+三、执行与限制
+B 共5个 HTTP 响应完整（方向2、AMD3），两个 Native 用户轮次均 completed；AMD B 含一次自然 Compaction。所有普通生成请求都核实工具定义与旧版一致、权限说明实际送达、CURRENT 仍为原用户输入。
+没有自动代填参数、补发 Goal 调用、放宽来源、正式采纳或修改 Runtime／SQLite／Schema。
+资源保护保持；服务按 Controller Stop 正常结束，owned remaining=[]。
+旧镜子与旧复盘结论保留，镜子在此收尾，不继续扩展。
+这是一例“权限说明条件下真实修订＋不应修订时保持”的观察，不升级为稳定自主生命周期或 M5 决策增益。

@@ -100,7 +100,7 @@ class HarnessToolDispatch:
     def ok(self) -> bool:
         return self.tool_result.ok
 
-    def to_app_server_response(self) -> dict[str, Any]:
+    def to_app_server_response(self, *, legacy_document_projection: bool = False) -> dict[str, Any]:
         data = _model_visible_tool_data(
             self.observation.capability,
             self.tool_result.data,
@@ -141,7 +141,8 @@ class HarnessToolDispatch:
                          "call_id": self.call_id, "observation_id": self.observation.observation_id},
             "data": data,
         }
-        text = _bounded_json_text(payload, self.max_output_chars)
+        text = (_bounded_json_text(payload, self.max_output_chars, legacy_document_projection=True)
+                if legacy_document_projection else _bounded_json_text(payload, self.max_output_chars))
         return {
             "success": self.tool_result.ok,
             "contentItems": [{"type": "inputText", "text": text}],
@@ -438,7 +439,7 @@ def _model_visible_tool_data(capability: str, data: Mapping[str, Any]) -> dict[s
     return projected
 
 
-def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
+def _bounded_json_text(payload: dict[str, Any], max_chars: int, *, legacy_document_projection: bool = False) -> str:
     budget = max(1, int(max_chars))
     data = payload.get("data", {})
     if isinstance(data, dict) and data.get("recovery"):
@@ -472,6 +473,14 @@ def _bounded_json_text(payload: dict[str, Any], max_chars: int) -> str:
     if (payload.get("capability") == "web.fetch" and isinstance(data, dict)
             and data.get("execution_succeeded") is True and isinstance(data.get("source_excerpt"), dict)):
         return _bounded_fetch_evidence(payload, budget)
+    if (not legacy_document_projection
+            and payload.get("capability") in {"document.read_file", "document.read_section"}
+            and payload.get("ok") is True and isinstance(data, dict)
+            and isinstance(data.get("content"), str)
+            and data.get("execution_succeeded") is not False
+            and (data.get("execution_decision") or {}).get("allowed") is not False):
+        from .document_projection import bounded_document_receipt
+        return bounded_document_receipt(payload, budget)
     for candidate in (
         payload,
         _bounded_payload(payload, string_limit=800, list_limit=10),

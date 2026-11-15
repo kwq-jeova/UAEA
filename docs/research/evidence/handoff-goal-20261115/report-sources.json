@@ -1,0 +1,77 @@
+[
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_EvidenceAbsencePair/report.source.txt",
+    "original": "UAEA_DOCS/20261115_EvidenceAbsencePair/report.md",
+    "bytes": 3010
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_GoalPermissionClarity/report.source.txt",
+    "original": "UAEA_DOCS/20261115_GoalPermissionClarity/report.txt",
+    "bytes": 6348
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_GoalPostAnswerReview/report.source.txt",
+    "original": "UAEA_DOCS/20261115_GoalPostAnswerReview/report.txt",
+    "bytes": 3816
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_GoalTemporalHandoff/report.source.txt",
+    "original": "UAEA_DOCS/20261115_GoalTemporalHandoff/report.txt",
+    "bytes": 2784
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_HandoffDeliverableFocus/report.source.txt",
+    "original": "UAEA_DOCS/20261115_HandoffDeliverableFocus/report.txt",
+    "bytes": 2404
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_ReadableCompactionAssets/report.source.txt",
+    "original": "UAEA_DOCS/20261115_ReadableCompactionAssets/report.md",
+    "bytes": 3948
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_ReadableCompactionCase/report.source.txt",
+    "original": "UAEA_DOCS/20261115_ReadableCompactionCase/report.md",
+    "bytes": 3767
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_SupplierFinalReplay/report.source.txt",
+    "original": "UAEA_DOCS/20261115_SupplierFinalReplay/report.md",
+    "bytes": 5480
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_SupplierTaskHandoff/report.source.txt",
+    "original": "UAEA_DOCS/20261115_SupplierTaskHandoff/report.txt",
+    "bytes": 1510
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261115_SupplierTaskHandoff_v3/report.source.txt",
+    "original": "UAEA_DOCS/20261115_SupplierTaskHandoff_v3/report.md",
+    "bytes": 4279
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261114_194750_Mirror_v01/report.source.txt",
+    "original": "UAEA_DOCS/Claude_20261114/20261114_194750_Mirror_v01/one-screen-report.txt",
+    "bytes": 1977
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261114_205954_Mirror_NextAction/report.source.txt",
+    "original": "UAEA_DOCS/Claude_20261114/20261114_205954_Mirror_NextAction/one-screen-report.txt",
+    "bytes": 2891
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261114_211228_Mirror_Excerpt/report.source.txt",
+    "original": "UAEA_DOCS/Claude_20261114/20261114_211228_Mirror_Excerpt/one-screen-report.txt",
+    "bytes": 2597
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261114_212256_Mirror_Handoff_Final/report.source.txt",
+    "original": "UAEA_DOCS/Claude_20261114/20261114_212256_Mirror_Handoff_Final/one-screen-report.txt",
+    "bytes": 2820
+  },
+  {
+    "report": "docs/research/evidence/handoff-goal-20261115/20261114_224717_HarnessMirror_Live/report.source.txt",
+    "original": "UAEA_DOCS/Claude_20261114/20261114_224717_HarnessMirror_Live/one-screen-report.txt",
+    "bytes": 2313
+  }
+]

@@ -4,21 +4,49 @@ UAEA（Unified Autonomous Evolution Architecture）研究如何通过持续交�
 
 Harness 拥有 Agent Loop、工具执行与 Turn 生命周期；UAEA 维护来源、版本、候选状态和授权边界。坚持 **LLM proposes / Runtime validates**：来源合法、调用保存成功不等于语义正确，Retention 不等于 Adoption。
 
-## 当前进度：2026-11-13
 
-最新[三场景联合报告](docs/research/goal-continuity-three-scenarios-20261113.md)及独立审计总体 **PARTIAL**：
+## 当前进度：2026-11-15
+
+[近期研究汇总](docs/research/goal-evidence-handoff-status-20261115.md) · [历史报告简档](docs/archive/local-reports-20261115/README.md) · [本次Git同步范围](docs/implementation/checkpoints/goal-evidence-checkpoint-20261115.md)。
+
+- **M2存在性已建立，M3仍PARTIAL，M4/M5 UNKNOWN。** 真实候选可修订、保存和跨会话恢复；尚未证明稳定自主维护或相对普通历史的决策收益。
+- **镜子研究收尾，暂不正式接入。** 离线与真实Harness小样本没有显示稳定实际收益；P014不再调提示。
+- **候选权限已澄清。** 非权威提议不要求另说“保存”；中性权限说明条件下已真实改向企业AI算力采购/部署风险。临时ROA安排仍可能混进Goal，例外到期和后续证据使用不可靠。
+- **最新交付提醒：熟题局部改善，不是完整通过。** B回查前两家、补齐收入，但仍误报AMD资产未披露，最终3072上限截断；A摘要异常，迁移选点不满足较强待交付条件，只作旁证。
+- 原Windows/WSL/AC及Fail-Closed、56/72/64K/1GiB/单并发保持；本次只做归档、CPU回归和Git同步，不运行新模型。
+
+原报告/失败原件保留；以下旧日期段是历史截面，其“暂停/下一步”不是当前指令。金融和采购方向是隔离实验材料，不自动成为真实用户个人Goal。
+
+## 2026-11-14：Multi-Handoff Cognitive Continuity（历史补证）
+
+[大阶段报告](docs/research/multi-handoff-cognitive-continuity-20261114.md)，批次multi-handoff-20261114T011921Z，总体 **PARTIAL**，限定研究已完成并停止，等待外部独立Audit AI和Architect决定下一阶段。
+
+从真实B3继续主链6个新用户轮，经历3次受控压缩和Harness进程恢复；同一末端独立ON/OFF各1轮，合计8新轮、16完整响应、9真实读取，不能拼成一条连续10轮。原始版本/来源恢复限定VERIFIED；期间错配跨摘要进入实际计算，进度误报与摘要遗漏、旧open_questions共同出现，各因果贡献UNKNOWN。U8理解新目的但零Goal调用，旧head诚实保留；单次stale Goal View配对无增益证明、ON有来源错配反例。
+
+研究入口独立compact改绑Input的CPU反例已用隔离路由规避，正式adapter未改；恢复器v1跨Input绑定缺口在新增v2离线补验，实际B3/s1/s2均通过。原失败、Journal、Native及工作树修改保留。M2既有存在性不变，M3沿用PARTIAL且本批没有新修订head使用成功，M4/M5 UNKNOWN，Memory Research Reserved。Commit最低缓冲0.709GiB，未越线但不支持扩负载；无权限/配置扩大、Commit或Push。
+
+
+## 2026-11-13阶段记录（历史截面）
+
+最新[M3连续行为与限定M4报告](docs/research/goal-m3-continuity-behavior-20261113.md)及独立审计总体 **PARTIAL**：
 
 | 研究里程碑 | 当前结论 |
 |---|---|
-| 用户意图归属 M1 | PARTIAL；User Goal 与模型待办分离，受委托局部问题和持续目的仍有歧义 |
-| 受反馈纠正 M2 | 限定存在性 VERIFIED：真实跨会话 revise、合法 CURRENT、Host 保存及新 head 送达；抽象冗余仍 PARTIAL |
-| 后续连续性 M3 | PARTIAL；A 新 head 未由独立 B/C 继承，不拼接为新行为闭环 |
-| 自主 Goal 生命周期 M4 | UNKNOWN；显式纠正成功不等于自主维护 |
-| 超过 Relevant History 的决策价值 M5 | UNKNOWN；两对结构化 Goal View ON/OFF 质量和成本混合 |
-| Goal Continuity 工程 | 隔离 Journal 持久化/恢复、不可变版本及 Scope 有限定证据；人工 Global family 绑定不计模型自主能力 |
-| Memory | Research Reserved；不开放 Memory Admission |
+| 用户意图归属 M1 | PARTIAL；User Goal与模型待办分离，仍有方法/目的混写倾向 |
+| 受反馈纠正 M2 | 限定存在性 VERIFIED：真实跨会话revise、CURRENT、Host保存和新head送达；不等于自主维护 |
+| 后续连续性 M3 | PARTIAL；从A真实修订继续，跨Thread/跨便签Task后均有相容工作；Goal因果作用未确定 |
+| 自主 Goal 生命周期 M4 | UNKNOWN；本次理解替代方向却两轮零提交，未虚称保存 |
+| 超过 Relevant History 的决策价值 M5 | UNKNOWN；两次结构化View配对质量/成本混合，主ON有输出上限删失 |
+| Goal Continuity 工程 | Journal/版本/Scope继续保持；Global family人工绑定不计模型自主能力 |
+| Memory | Research Reserved；不开放Memory Admission |
 
-本轮三场景：A 忠实核心修订并保存，B 结束 Intel 局部 Task 而保持长期 Goal，C 尚未证明结构化视图改善实际决策。12 个模型响应完整、13 次读取身份正确，不等于认知全部通过；保留金融指标、单位、时间错误和一个最终质量删失样本。
+本轮三个独立批次共8用户Turn、11完整传输，10完整生成、1个2048输出上限CENSORED；不把HTTP/Native完成等同答案完整。两组普通历史均保留真实A修订/回执，实验只评价当前结构化Goal视图的增量。用户指定后续以金融/股票研究为对象，不据此推断个人投资Goal或交易偏好。
+
+随后按用户选择开展[真实金融来源案例](docs/research/goal-real-finance-case-20261113.md)：两组因预算与正文供给限制CENSORED；OFF自然保存了两个local提案版本，但没有形成合格长期维护/决策闭环。已完成独立CPU资料分段可达性验证，未重跑模型或修改正式接口。
+
+最新[长期Context与可信证据大阶段](docs/research/context-continuity-trusted-evidence-20261113.md)总体 **PARTIAL**：真实同Thread受控Compaction、Host Goal/Scope/纠正恢复及后续两项经营率形成限定闭环；完整回答仍有单位/期间/资料范围错误。累计7请求、两次加载，内部Subagent核验完成，现已停止，等待外部独立Audit AI及Architect下一阶段决定。M3总体PARTIAL，M4/M5 UNKNOWN，无新的ON/OFF、采纳或权限开放。
+
+最新[资料可达性与Context联合评估](docs/research/evidence-context-accessibility-20261113.md)总体PARTIAL：已修复800字符正文fallback与UTF-8二次截断，A自主定位完整财务表送达；A最终研究驱动Compaction删失保留，B明确缺失场景保持UNKNOWN，C两成品仍有科目/利润率和阅读完整性错误，Goal增量价值UNKNOWN。六个A/B请求的字节hash与API Token精确核账；固定64K及原资源保护，未Commit/Push。
 
 候选仍是 opt-in、非权威、可撤销解释，不能自动成为 ActiveGoal、可信 Memory 或执行授权。没有新增 Goal Engine、第二套 Agent Loop 或通用语义裁判。
 

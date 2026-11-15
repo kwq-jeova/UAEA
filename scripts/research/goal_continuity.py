@@ -82,12 +82,23 @@ def verified_observations(trajectory, native, steps):
         # Reuse actual serializer, including truthful errors and explicit budget truncation.
         # This is deterministic receipt validation, not tool execution/replay.
         from harness.codex_dynamic_tools import HarnessToolDispatch, ActionRequest, ToolResult, ExecutionObservation
+        projection = receipt.get("data", {}).get("document_projection")
+        document = o["capability"] in {"document.read_file", "document.read_section"}
+        legacy_document = document and projection is None
+        projection_budget = len(raw_receipt)
+        if document and projection is not None:
+            need(isinstance(projection, dict) and projection.get("schema") == "uaea.document_projection.v1",
+                 "Unknown document projection version")
+            projection_budget = projection.get("budget_utf8_bytes")
+            need(type(projection_budget) is int and 0 < projection_budget <= 12000
+                 and len(raw_receipt.encode()) <= projection_budget,
+                 "Invalid document receipt byte budget")
         dispatch = HarnessToolDispatch(c["threadId"], c["turnId"], cid, c["tool"],
             ActionRequest(o["capability"], deepcopy(c["arguments"]), request_id=cid),
             ToolResult(**{k: deepcopy(host["result"][k]) for k in ("ok", "message", "data")}), ExecutionObservation(**deepcopy(o)),
             semantic_validation=deepcopy(st["action"].get("validation")),
-            max_output_chars=len(raw_receipt), execution_decision=deepcopy(d))
-        expected = dispatch.to_app_server_response()
+            max_output_chars=projection_budget, execution_decision=deepcopy(d))
+        expected = dispatch.to_app_server_response(legacy_document_projection=legacy_document)
         need(json.loads(expected["contentItems"][0]["text"]) == receipt,
              "Observation/Native original result projection mismatch")
         result[oid] = deepcopy(o)

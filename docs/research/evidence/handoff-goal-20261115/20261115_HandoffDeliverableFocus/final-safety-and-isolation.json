@@ -1,0 +1,12 @@
+{
+  "supplier-A_new_native_calls_not_historical": true,
+  "supplier-A_goal_heads_unchanged": true,
+  "supplier-B_new_native_calls_not_historical": true,
+  "supplier-B_goal_heads_unchanged": true,
+  "transfer-A_new_native_calls_not_historical": true,
+  "transfer-A_goal_heads_unchanged": true,
+  "transfer-B_new_native_calls_not_historical": true,
+  "transfer-B_goal_heads_unchanged": true,
+  "no_model_listener": true,
+  "safe_owned_stop": true
+}
