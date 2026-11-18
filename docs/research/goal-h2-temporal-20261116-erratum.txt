@@ -1,0 +1,13 @@
+2026-11-16 后续实际请求核验勘误
+
+上一轮报告把控制台打印的内部 topic 与实际发给模型的字段标签混在了一起，措辞不准确。
+
+实际请求已把旧内容放在 external_uaea.semantic_interpretations.background.historical_topic，另有 uaea.context_boundary 明确说 Topic 和先前输入是历史，不是当前新指令；uaea.semantic_state_projection 的执行层载荷没有 topic 字段。CURRENT 用户请求也正确。
+
+证据：本目录 selected-evidence/c1/r2/actual-projected-request-1.json（同 c2/r1）；正式源码 harness/io_contract.py:302、347。这些原件不修改。
+
+仍然成立：模型看到了含“本次可以ROA”的旧原句，两组一次例外都被延续，持续解除两组都保留许可；原来的Call、结果、计数和金融错误不变。
+
+撤回的解释：不能把这一现象描述成已确认的“旧任务被错误标作当前任务”投影Bug。时间理解的具体因果仍未知。
+
+下一轮 A 保留已有 historical_topic，B 仅改该标签为“上一轮任务主题”，原句保留，不补充到期答案。因此测的是更明确的轮次标注，而不是把一个实际存在的 current_topic 字段修正成历史字段。

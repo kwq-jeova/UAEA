@@ -1,0 +1,29 @@
+UAEA Goal Cognitive Reliability｜2026-11-17｜待外部独立Audit AI
+
+总体PARTIAL；新增试验CENSORED；长期收益UNKNOWN。保持LLM proposes / Runtime validates，Goal为可修正非权威解释。
+
+底册复用：P0修正后7556输入出现→1237证据组；1213 Native原始消息与24项目讨论分开。37模型保存版本来自5受控家族，21 CPU探针另列。18副本已绑定、8旧envelope正文匹配修正、65db禁止修订仍提交的反例保留。不估自然率。
+
+旧原件独立核实：ff2a→76fe为纠正/细化；76fe→bded94为明确改目的；取消Intel可正确保持Global。228f4错误条件许可确实保存并投影，但误解在保存前已存在，不证明保存造成错误。三供应商v3明确说NVIDIA不执行ROA仍给18.7%；AMD原文/首摘要有94812，后续却说未读、旧ROA改1.6%。
+
+新批次：/home/wqkan_wsl/uaea-n1x/research-records/goal-cognitive-reliability-20261117-v1
+从v3真实AMD实质完成/旧进程已关闭的共同起点分两个隔离分支，每轮后完整研究状态恢复方案。计划两臂×3轮；实际仅各T1，均420秒未有最终小结。原计划T2用户自然改为数字/期间/来源审计及T3后续自主检查都未运行，不计模型Goal修订失败。六轮CPU Mock只证明接线，不加到真实成绩。
+
+实际A35次read_section=21成功/14失败，仅前5 Call回执进入后续请求；最后30次处于未完整上游流，没有后续请求送达。B4成功读取均送达。两组各完成一次自然Compaction并发出后续请求，均无最终交付。B摘要24.1B季度现金流/74.4B六个月现金流源表支持；但把未交的NVIDIA小结写作已完成，剩余转Intel。当前CURRENT仍正确，未观测到它实际完成错误Intel任务。
+
+首请求普通历史、用户全文、工具和初始状态对齐，但Goal ON引发Host预算取舍，runtime_facts.model/web_limits等非Goal块不同；不是严格只差Goal的因果对照。不得以B少读或摘要较完整宣称收益。
+
+10真实请求：8传输/SSE完整（含2压缩）、2由超时清理断流。最大完整输入49215T；Harness有效62259、后端65536，KV1GiB、UMA56/72、.65单并发。885服务样本有效；Commit最低20.890GiB、原20%线缓冲2.994GiB，NVML28.458/Shared.211GiB；无额外AC检查。CONTROLLER_STOP/remaining=[]，8003关闭。Guard包装器主动停止也写异常并exit1，primary_sensor_failure=null，不误记真实资源越界。
+
+driver依赖continue行未最终dump，保留as-run，以completion.json显式列2 CENSORED+4 NOT RUN；execution-end.success不表示任务成功。不补跑、不改提示/标准求PASS。
+
+S1：保留身份/来源/范围和离线诊断；滤波C平坦不能纠错、N仍hazard漂移，无真实留出不拟合。P1同身份新用途误放、P3困难负例/修复失败，继续不并入。P2/P4样本不足。M2存在性、M3 PARTIAL、M4/M5 UNKNOWN均不升级。
+
+报告/内部独立Subagent核查/原始新旧证据包：
+C:/Users/wqkan_file/Documents/ChatGPT/UAEA 2/UAEA_DOCS/20261117_GoalCognitiveReliability/
+report.txt、completion.json、evidence-index.json、research-evidence.zip。
+源码/数据/真实首请求差分、逐Call送达、压缩后CURRENT/head均可查。内部Subagents不替代外部Audit AI。
+
+下一阶段应先保证非Goal出站控制可核对，再检验“尚欠的交付”与取证完成的区别；暂不增加Engine、自动授权或数学融合。自然统计先冻结明确真实使用窗口，全数合格输入作分母，另记分歧与取舍；当前未开启该窗口。
+
+未改正式Runtime/SQLite Schema/权限；更新仅研究驱动/证据与文档。未Commit/Push。停止等外部审计，不自动进入S2/S3。
