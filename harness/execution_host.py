@@ -20,6 +20,9 @@ class SharedExecutionHost:
         self._boundaries = {}
         self._sequence = 0
 
+    def authority_reference(self, workflow_id, input_id):
+        return "system:h3-read-only-v1:" + workflow_id
+
     def for_context(self, thread_id, turn_id):
         state = self.semantic._state_for(thread_id)
         store = state.runtime_objects
@@ -27,7 +30,7 @@ class SharedExecutionHost:
             def resolve():
                 snapshot = self.semantic.snapshot(thread_id)
                 workflow_id, input_id = snapshot["task_id"], snapshot["current_input_id"]
-                reference = "system:h3-read-only-v1:" + workflow_id
+                reference = self.authority_reference(workflow_id, input_id)
                 allowed = tuple(x for x in self.CAPABILITIES
                                 if x in self.registry.capability_metadata)
                 if not any(x.object_id == reference for x in store.objects):

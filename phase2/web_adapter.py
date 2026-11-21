@@ -524,9 +524,13 @@ class WebAdapter:
         return WebAccessResult(access_event_id, provenance_url, "fetched", 200, content_ref, title,
                                search_results=results, related_access_event_ids=(access_event_id,))
 
+    @staticmethod
+    def open_request(request, *, timeout):
+        return urllib.request.urlopen(request, timeout=timeout)
+
     def _http_get(self, url: str) -> dict[str, Any]:
         request = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
-        with observe_open(urllib.request.urlopen, request, timeout=self.timeout_seconds) as response:
+        with observe_open(self.open_request, request, timeout=self.timeout_seconds) as response:
             body = observe_read(response, self.max_snapshot_bytes + 1)
             return {
                 "status": int(getattr(response, "status", 200)),

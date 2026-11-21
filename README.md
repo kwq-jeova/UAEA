@@ -5,7 +5,13 @@ UAEA（Unified Autonomous Evolution Architecture）研究如何通过持续交�
 Harness 拥有 Agent Loop、工具执行与 Turn 生命周期；UAEA 维护来源、版本、候选状态和授权边界。坚持 **LLM proposes / Runtime validates**：来源合法、调用保存成功不等于语义正确，Retention 不等于 Adoption。
 
 
-## 当前进度（2026-11-18）
+## 当前进度（2026-11-21）
+
+N1X Daily 已在 Harness 0.170 上完成联网授权、跨进程恢复和预算收尾的限定验证。每轮最多 6 次模型请求；末次普通请求可用已到手的证据答复。模拟交接单在第五页给出终卷时，Bolt 交对签收号和出处；第五页只有下一地址时，它仍写出未执行的工具调用。阶段答复、工具回执和任务是否交齐分别记账。
+
+M3 保持 **PARTIAL**，M4 自主维护及 M5 实际决策增益保持 **UNKNOWN**。自然 SOXX 轮暴露了压缩摘要给行情补年份的问题，涉及最新收盘价的交付仍需核对原件。[Daily 验证范围与代码快照](docs/research/daily-continuity-20261121.md) · [研究地图](docs/research/research-foundation-map.md)
+
+## 2026-11-18 阶段记录
 
 M3 的候选修订、保存与跨进程恢复已有实例，整体为 **PARTIAL**。相同普通历史下的采购对照中，两组均交齐风险和下一项核验。M4 的两次换手实验里，临时代班结束后恢复采购交付；长期改成新人练习时，当期有题有答，下期漏了可作答的题干。两支均为零提案。M4 长期可靠性和 M5 决策增益仍为 **UNKNOWN**。
 

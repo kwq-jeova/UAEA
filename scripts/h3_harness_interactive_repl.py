@@ -123,16 +123,8 @@ def utc_stamp() -> str:
     return datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
 
-def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
-    sandbox_root = PROJECT_ROOT
-    trace_root = root / "traces"
-    db_path = root / "source.sqlite"
-    snapshot_root = root / "web-snapshots"
-    trace_root.mkdir(parents=True, exist_ok=True)
-    snapshot_root.mkdir(parents=True, exist_ok=True)
-
-    registry = ToolRegistry(Sandbox(PROJECT_ROOT, sandbox_root), LedgerStub(trace_root))
-    web_adapter = WebAdapter(snapshot_root=snapshot_root, timeout_seconds=20)
+def register_web_tools(registry: ToolRegistry, db_path: Path, web_adapter: WebAdapter) -> list[DynamicToolBinding]:
+    """Bind the read-only web capabilities to the caller-owned sandbox and source store."""
     projection_limits = ProjectionLimits(max_sources=3, per_source_chars=900, total_chars=2800)
     registry.register_capability(
         web_search_metadata(),
@@ -150,6 +142,116 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
             projection_limits=projection_limits,
         ),
     )
+
+    return [
+        DynamicToolBinding.from_registry(
+            registry,
+            "web.search",
+            description=(
+                "Discover candidate public web sources from a search results page. "
+                "Preserve user constraints as structured arguments when present. "
+                "Use provider for a requested search provider such as google, bing, or duckduckgo; "
+                "when provider is set, also set allow_fallback explicitly. "
+                "Use allow_fallback=false when the user forbids fallback to another provider. "
+                "Do not encode search provider requirements as preferred_domains. "
+                "Use web.fetch on a selected result URL when page-level evidence is needed. "
+                "Constraint enforcement is best-effort and actual provider details are returned. "
+                "Only cite URLs returned by web.search or web.fetch. "
+                "Use published_from/published_to for a publication-date range; this does not verify "
+                "the period discussed in the content. Ask the user if those meanings are ambiguous."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "max_results": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "provider": {
+                        "type": "string",
+                        "enum": ["google", "bing", "duckduckgo"],
+                        "description": "Requested search provider. Google is a provider request, not a preferred result domain.",
+                    },
+                    "allow_fallback": {
+                        "type": "boolean",
+                        "description": "A proposed provider switch, not an authorization grant. true requires effective provider-switch authorization; unknown authorization is not permission. Use false for a same-provider request when switching is not authorized. The Runtime validates each proposal.",
+                    },
+                    "language": {"type": "string", "description": "Preferred language code, for example en or zh."},
+                    "region": {
+                        "type": "string",
+                        "description": "Preferred region code such as us or cn. Omit this field for global/no specific region.",
+                    },
+                    "exclude_domains": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Domains to exclude best-effort, for example baidu.com.",
+                    },
+                    "preferred_domains": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Domains to prefer best-effort.",
+                    },
+                    "source_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["academic", "forum", "news", "documentation", "general"],
+                        },
+                    },
+                    "published_from": {
+                        "type": "string", "description": "Inclusive publication-date lower bound YYYY-MM-DD; supply with published_to."
+                    },
+                    "published_to": {
+                        "type": "string", "description": "Inclusive publication-date upper bound YYYY-MM-DD, not the content's financial/research period. Native date filtering currently supports provider=google with allow_fallback=false."
+                    },
+                    "freshness": {
+                        "type": "string",
+                        "enum": ["day", "week", "month", "year", "recent", "any"],
+                    },
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
+        ),
+        DynamicToolBinding.from_registry(
+            registry,
+            "web.fetch",
+            description=(
+                "Fetch a specific public URL and return bounded page-level evidence from it. "
+                "Use this after web.search when a candidate source needs verification or summary. "
+                "Only the returned source_excerpt segment was supplied, not the full page. "
+                "For more text, reuse its source_event_id and next_start_char as start_char "
+                "with the same URL; this reads the saved snapshot without another HTTP fetch. "
+                "uaea.recovery_source_index lists older Host-acquired source IDs after compaction. "
+                "An index entry is not page content: read its saved snapshot when needed and allowed. "
+                "If unavailable or tools are forbidden, keep missing details unknown; never substitute another source. "
+                "max_chars is bounded to 3000; actual supplied end_char/next_start_char "
+                "reflect the tool output budget. HTTP success does not prove article content."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string"},
+                    "source_event_id": {"type": "string", "description": "Previous fetch access_event_id in this run; fixes snapshot version."},
+                    "start_char": {"type": "integer", "minimum": 0, "description": "Use previous next_start_char; nonzero requires source_event_id."},
+                    "max_chars": {"type": "integer", "minimum": 1, "maximum": 3000},
+                },
+                "required": ["url"],
+                "additionalProperties": False,
+            },
+        ),
+    ]
+
+
+def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
+    sandbox_root = PROJECT_ROOT
+    trace_root = root / "traces"
+    db_path = root / "source.sqlite"
+    snapshot_root = root / "web-snapshots"
+    trace_root.mkdir(parents=True, exist_ok=True)
+    snapshot_root.mkdir(parents=True, exist_ok=True)
+
+    registry = ToolRegistry(Sandbox(PROJECT_ROOT, sandbox_root), LedgerStub(trace_root))
+    web_adapter = WebAdapter(snapshot_root=snapshot_root, timeout_seconds=20)
+    web_bindings = register_web_tools(registry, db_path, web_adapter)
 
     return HarnessDynamicToolAdapter(
         registry,
@@ -183,100 +285,7 @@ def build_interactive_adapter(root: Path) -> HarnessDynamicToolAdapter:
                     "additionalProperties": False,
                 },
             ),
-            DynamicToolBinding.from_registry(
-                registry,
-                "web.search",
-                description=(
-                    "Discover candidate public web sources from a search results page. "
-                    "Preserve user constraints as structured arguments when present. "
-                    "Use provider for a requested search provider such as google, bing, or duckduckgo; "
-                    "when provider is set, also set allow_fallback explicitly. "
-                    "Use allow_fallback=false when the user forbids fallback to another provider. "
-                    "Do not encode search provider requirements as preferred_domains. "
-                    "Use web.fetch on a selected result URL when page-level evidence is needed. "
-                    "Constraint enforcement is best-effort and actual provider details are returned. "
-                    "Only cite URLs returned by web.search or web.fetch. "
-                    "Use published_from/published_to for a publication-date range; this does not verify "
-                    "the period discussed in the content. Ask the user if those meanings are ambiguous."
-                ),
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string"},
-                        "max_results": {"type": "integer", "minimum": 1, "maximum": 10},
-                        "provider": {
-                            "type": "string",
-                            "enum": ["google", "bing", "duckduckgo"],
-                            "description": "Requested search provider. Google is a provider request, not a preferred result domain.",
-                        },
-                        "allow_fallback": {
-                            "type": "boolean",
-                            "description": "A proposed provider switch, not an authorization grant. true requires effective provider-switch authorization; unknown authorization is not permission. Use false for a same-provider request when switching is not authorized. The Runtime validates each proposal.",
-                        },
-                        "language": {"type": "string", "description": "Preferred language code, for example en or zh."},
-                        "region": {
-                            "type": "string",
-                            "description": "Preferred region code such as us or cn. Omit this field for global/no specific region.",
-                        },
-                        "exclude_domains": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Domains to exclude best-effort, for example baidu.com.",
-                        },
-                        "preferred_domains": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Domains to prefer best-effort.",
-                        },
-                        "source_types": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "enum": ["academic", "forum", "news", "documentation", "general"],
-                            },
-                        },
-                        "published_from": {
-                            "type": "string", "description": "Inclusive publication-date lower bound YYYY-MM-DD; supply with published_to."
-                        },
-                        "published_to": {
-                            "type": "string", "description": "Inclusive publication-date upper bound YYYY-MM-DD, not the content's financial/research period. Native date filtering currently supports provider=google with allow_fallback=false."
-                        },
-                        "freshness": {
-                            "type": "string",
-                            "enum": ["day", "week", "month", "year", "recent", "any"],
-                        },
-                    },
-                    "required": ["query"],
-                    "additionalProperties": False,
-                },
-            ),
-            DynamicToolBinding.from_registry(
-                registry,
-                "web.fetch",
-                description=(
-                    "Fetch a specific public URL and return bounded page-level evidence from it. "
-                    "Use this after web.search when a candidate source needs verification or summary. "
-                    "Only the returned source_excerpt segment was supplied, not the full page. "
-                    "For more text, reuse its source_event_id and next_start_char as start_char "
-                    "with the same URL; this reads the saved snapshot without another HTTP fetch. "
-                    "uaea.recovery_source_index lists older Host-acquired source IDs after compaction. "
-                    "An index entry is not page content: read its saved snapshot when needed and allowed. "
-                    "If unavailable or tools are forbidden, keep missing details unknown; never substitute another source. "
-                    "max_chars is bounded to 3000; actual supplied end_char/next_start_char "
-                    "reflect the tool output budget. HTTP success does not prove article content."
-                ),
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "url": {"type": "string"},
-                        "source_event_id": {"type": "string", "description": "Previous fetch access_event_id in this run; fixes snapshot version."},
-                        "start_char": {"type": "integer", "minimum": 0, "description": "Use previous next_start_char; nonzero requires source_event_id."},
-                        "max_chars": {"type": "integer", "minimum": 1, "maximum": 3000},
-                    },
-                    "required": ["url"],
-                    "additionalProperties": False,
-                },
-            ),
+            *web_bindings,
         ],
         max_output_chars=5000,
     )
@@ -352,7 +361,7 @@ class InteractiveAppServer:
                 events_path.with_name("execution-contract.trajectory.jsonl"))
 
     def start(self, *, resume_thread_id: str = "") -> None:
-        from harness.version_manifest import codex_process_environment, identify_harness, verify_binary_digest, verify_binary_platform
+        from harness.version_manifest import codex_process_environment, current_platform, identify_harness, verify_binary_digest, verify_binary_platform
 
         env = codex_process_environment(self.codex_home)
         provenance = identify_harness(self.codex)
@@ -365,6 +374,13 @@ class InteractiveAppServer:
             raise RuntimeError("Harness binary version does not match the selected manifest entry")
         print(f"[HARNESS VERSION] tag={provenance['tag']} commit={provenance['commit']} "
               f"binary={self.codex}", flush=True)
+        # The N1X bridge owns the bounded provider view. Keep new rollouts
+        # source-tagged XML so a later process can identify the previous
+        # publication without a second persistent Host store.
+        context_args = []
+        if current_platform() == "linux-aarch64" and provenance["reported_version"] == "codex-cli 0.170.0":
+            context_args = ["-c", "features.untrusted_as_tool_output=false"]
+            provenance["untrusted_as_tool_output"] = False
         self.events_path.parent.mkdir(parents=True, exist_ok=True)
         with self.events_path.with_name("harness-versions.jsonl").open("a", encoding="utf-8") as journal:
             journal.write(json_line(provenance) + "\n")
@@ -398,6 +414,7 @@ class InteractiveAppServer:
                 str(self.codex),
                 "app-server",
                 "--stdio",
+                *context_args,
                 "-c",
                 f'model_providers.uaea_local_vllm.base_url="{self._history_bridge.base_url}/v1"',
             ],
@@ -464,6 +481,8 @@ class InteractiveAppServer:
         if thread is None or thread.get("error") is not None:
             raise RuntimeError(f"thread/start failed: {thread}")
         self.thread_id = str(thread["result"]["thread"]["id"])
+        self._history_bridge.bind_thread_rollout(
+            self.thread_id, thread["result"]["thread"].get("path"), self.codex_home)
 
     def run_turn(self, text: str) -> None:
         from harness.request_continuity import parse_request_operation

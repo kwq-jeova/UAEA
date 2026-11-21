@@ -14,6 +14,7 @@ from .provider_history import (
     project_provider_history, HistoryProjectionBudgetError, HistoryProjectionBindingError,
 )
 from .request_audit import RequestAudit
+from .native_context import NativeContextIndex
 
 
 class ContextBudgetError(ValueError):
@@ -58,6 +59,7 @@ class ProviderHistoryBridge:
         self.stream_observer = stream_observer
         self.stream_observer_errors = 0
         self._runtime_context: dict[str, Any] | None = None
+        self._native_context: NativeContextIndex | None = None
         self._context_required = False
         if max_recovery_bytes <= 0:
             raise ValueError("Recovery byte budget must be positive")
@@ -127,7 +129,7 @@ class ProviderHistoryBridge:
                         forwarded, restoration = owner.restore_runtime_context(
                             projection.request, compact=self.path.split("?", 1)[0] == "/v1/responses/compact")
                         decisions = projection.decisions + tuple(restoration)
-                        if decisions:
+                        if decisions or forwarded != request:
                             body = json.dumps(forwarded, ensure_ascii=False).encode("utf-8")
                         sequence = owner._record(decisions, self.headers.get("thread-id", ""))
                         if owner.audit is not None:
@@ -254,6 +256,15 @@ class ProviderHistoryBridge:
             self._context_required = True
             self._runtime_context = None
 
+    def bind_thread_rollout(self, thread_id: str, rollout: str | None, home: Path) -> None:
+        """Bind identities to the Native reply and the selected private session store."""
+        path = Path(rollout).resolve() if rollout else None
+        root = Path(home).resolve()
+        if path and not any(path.is_relative_to(root / part) for part in ("sessions", "archived_sessions")):
+            raise ValueError("Native rollout outside the bound Codex home")
+        with self._lock:
+            self._native_context = NativeContextIndex(path, thread_id)
+
     def set_runtime_context(self, context: dict[str, Any], *, thread_id: str, input_id: str) -> None:
         """Publish an immutable host snapshot; never obtain state from model messages."""
         with self._lock:
@@ -289,13 +300,17 @@ class ProviderHistoryBridge:
                 self._compaction_turn_id = None
 
     @staticmethod
-    def _without_host_blocks(request, blocks):
+    def _without_host_blocks(request, blocks, native_index=None):
         labels = {key if value["kind"] == "application" else "external_"+key:
                   "developer" if value["kind"] == "application" else "user"
                   for key, value in blocks.items()}
         # A new Workflow with no acquired sources intentionally publishes no
         # directory. Its previous Workflow's owned directory must still expire.
         labels.setdefault("external_uaea.recovery_source_index", "user")
+        if native_index:
+            # Even after Goal has been disabled, an older Host view may be present.
+            for key in ("uaea.goal_hypotheses", "uaea.retained_user_requests", "uaea.semantic_interpretations"):
+                labels.setdefault("external_" + key, "user")
         result = deepcopy(request)
         removed = 0
         for field in ("input", "previous_input_messages"):
@@ -316,6 +331,8 @@ class ProviderHistoryBridge:
                         and text.startswith("<"+label+">") and text.endswith("</"+label+">")
                         # A complete single envelope only; never strip quoted source text.
                         and text.count("<"+label+">") == 1
+                        and (native_index is None or
+                             native_index.xml_source(item, label.removeprefix("external_")) == "host")
                         for label, role in labels.items())
                     if owned:
                         removed += 1
@@ -398,6 +415,7 @@ class ProviderHistoryBridge:
         """Replace stale projections, never append an unbounded second Host copy."""
         with self._lock:
             state = deepcopy(self._runtime_context)
+            native = self._native_context
             required = self._context_required
             compaction = compact or self._compaction_turn_id is not None
         if state is None:
@@ -406,15 +424,24 @@ class ProviderHistoryBridge:
             return request, []
         if not isinstance(request.get("input"), list):
             raise ValueError("Recovery requires explicit Responses input messages")
-        restored, removed = self._without_host_blocks(request, state["blocks"])
+        if native and native.thread_id != state["thread_id"]:
+            raise ValueError("Native rollout and Host snapshot refer to different Threads")
+        index = native or NativeContextIndex(None, state["thread_id"])
+        normalized, bindings = index.normalize(request, state["blocks"])
+        restored, removed = self._without_host_blocks(normalized, state["blocks"], native)
+        goal_index = None
+        goal_hash = None
         if compaction:
             # The immutable Host retains authority/receipts outside the model
             # summary. Reinject them on the next ordinary model request.
             blocks, omitted, supplied_bytes = {}, [], 0
         else:
             blocks, omitted, supplied_bytes = self._bounded_blocks(state["blocks"])
+            if "uaea.goal_hypotheses" in blocks:
+                goal_index = len(restored["input"]) + list(blocks).index("uaea.goal_hypotheses")
+                goal_hash = hashlib.sha256(blocks["uaea.goal_hypotheses"]["value"].encode()).hexdigest()
             restored["input"].extend(self._render_blocks(blocks))
-        if restored == request and not compaction:
+        if restored == request and not compaction and not bindings:
             return request, []
         expected = json.loads(state["blocks"]["uaea.semantic_state_projection"]["value"])
         return restored, [{
@@ -424,7 +451,8 @@ class ProviderHistoryBridge:
             "task_id": expected["task_id"], "effective_state_id": expected["effective_state_id"],
             "host_context_sha256": state["context_sha256"],
             "block_keys": list(blocks), "source": "published_host_snapshot",
-            "removed_host_blocks": removed, "omitted_fields": omitted,
+            "removed_host_blocks": removed, "native_context_bindings": bindings,
+            "current_goal_index": goal_index, "goal_value_sha256": goal_hash, "omitted_fields": omitted,
             "recovery_bytes": supplied_bytes, "recovery_byte_limit": self.max_recovery_bytes,
             "token_count": "not_measured; byte budget is not model token count",
             "turn_id": "", "call_id": "", "item_id": "",
